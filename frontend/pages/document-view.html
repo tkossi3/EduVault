@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f8fafc">
+    <meta name="description" content="Visionneuse et lecteur de documents académiques — EduVault 2026.">
+    <title>Lecture du Document — EduVault 2026</title>
+    <link rel="manifest" href="../manifest.json">
+    <link rel="icon" href="../assets/eduvault.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../styles/variables.css">
+    <link rel="stylesheet" href="../styles/main.css">
+    <link rel="stylesheet" href="../styles/animations.css">
+    <link rel="stylesheet" href="../styles/components.css">
+    <link rel="stylesheet" href="../styles/pages.css">
+</head>
+
+<body class="reader-page">
+    <header class="topbar">
+        <a class="brand" href="../index.html">
+            <img src="../assets/eduvault.svg" alt="" width="36" height="36">
+            <span>Edu<span class="brand-accent">Vault</span></span>
+        </a>
+        <nav class="main-nav">
+            <a class="nav-link" href="../index.html">Explorer</a>
+            <a class="nav-link" href="parcours.html">Parcours & Filières</a>
+            <a class="nav-link" href="upload.html">Déposer un document</a>
+            <a class="nav-link" href="profile.html">Mon Profil</a>
+        </nav>
+        <div class="topbar-actions">
+            <a class="icon-button notification-link" href="notifications.html" aria-label="Notifications">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                <span class="notification-count" id="notification-count" hidden>0</span>
+            </a>
+            <button class="icon-button theme-toggle" data-theme-toggle aria-label="Changer de thème" type="button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </button>
+            <a class="avatar-button has-user" id="account-button" href="profile.html" aria-label="Mon compte">
+                <span id="account-initials">K</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="reader-main page-width">
+        <a class="back-link" href="../index.html">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            <span>Retour à la bibliothèque académique</span>
+        </a>
+
+        <div class="reader-header">
+            <div>
+                <p class="eyebrow"><span class="eyebrow-mark"></span> VISIONNEUSE DE DOCUMENT · 2026</p>
+                <h1 id="document-title">Document académique</h1>
+                <p id="document-course" class="reader-subtitle">ENP Campus Lomé · Algorithmique Avancée</p>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button class="button button-outline" id="print-document" type="button" title="Imprimer le document">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    <span>Imprimer</span>
+                </button>
+                <button class="button button-primary" id="download-document" type="button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Télécharger le PDF</span>
+                </button>
+            </div>
+        </div>
+
+        <section class="reader-viewer-container" aria-label="Lecteur de document">
+            <!-- BARRE D'OUTILS DU LECTEUR -->
+            <div class="reader-toolbar">
+                <div class="reader-toolbar-group">
+                    <button class="icon-button" id="previous-page" type="button" aria-label="Page précédente" title="Page précédente">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <span class="page-counter" id="page-indicator">Page 1 / 3</span>
+                    <button class="icon-button" id="next-page" type="button" aria-label="Page suivante" title="Page suivante">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+
+                <div class="reader-toolbar-group">
+                    <button class="icon-button" id="zoom-out" type="button" aria-label="Réduire" title="Zoom -">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                    </button>
+                    <span class="page-counter" id="zoom-indicator">100%</span>
+                    <button class="icon-button" id="zoom-in" type="button" aria-label="Agrandir" title="Zoom +">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                    </button>
+                </div>
+
+                <div class="reader-toolbar-group">
+                    <span class="badge badge-accent" id="reader-mode-tag">Mode Haute Définition</span>
+                </div>
+            </div>
+
+            <!-- ZONE D'AFFICHAGE DU DOCUMENT -->
+            <div class="reader-viewport" id="reader-viewport">
+                <canvas id="pdf-canvas" style="display: none;"></canvas>
+                <div id="simulated-document-container" style="width: 100%; display: flex; justify-content: center;">
+                    <!-- Contenu simulé injecté par pdf-viewer.js -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer page-width">
+        <a class="brand" href="../index.html">
+            <img src="../assets/eduvault.svg" alt="" width="28" height="28">
+            <span>Edu<span class="brand-accent">Vault</span></span>
+        </a>
+        <span>Le coffre-fort académique universitaire 2026.</span>
+        <span>© 2026 EduVault</span>
+    </footer>
+
+    <div class="cursor-dot" aria-hidden="true"></div>
+    <div class="cursor-ring" aria-hidden="true"></div>
+
+    <script src="../scripts/icons.js"></script>
+    <script src="../scripts/store.js"></script>
+    <script src="../scripts/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="../scripts/theme.js"></script>
+    <script src="../scripts/auth.js"></script>
+    <script src="../scripts/cursor.js"></script>
+    <script src="../scripts/notifications.js"></script>
+    <script src="../scripts/pdf-viewer.js"></script>
+    <script src="../scripts/service-worker.js"></script>
+</body>
+
+</html>

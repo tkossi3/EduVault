@@ -1,0 +1,1 @@
+"""Modèles et schémas de l’API."""

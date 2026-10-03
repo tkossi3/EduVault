@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="ev-grad-primary" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1E3A8A" />
+      <stop offset="100%" stop-color="#2563EB" />
+    </linearGradient>
+    <linearGradient id="ev-grad-accent" x1="16" y1="16" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <filter id="ev-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#1E3A8A" flood-opacity="0.25" />
+    </filter>
+  </defs>
+  <!-- Base arrondie -->
+  <rect width="48" height="48" rx="13" fill="url(#ev-grad-primary)" />
+  
+  <!-- Silhouette du coffre & voûte académique -->
+  <path d="M12 16C12 13.7909 13.7909 12 16 12H32C34.2091 12 36 13.7909 36 16V33C36 34.6569 34.6569 36 33 36H15C13.3431 36 12 34.6569 12 33V16Z" fill="#FFFFFF" fill-opacity="0.12" />
+  
+  <!-- Pages ouvertes d'un livre formant un coffre -->
+  <path d="M14 18C17 18 21.5 16.5 24 14.5C26.5 16.5 31 18 34 18V31.5C31 31.5 26.5 30 24 28C21.5 30 17 31.5 14 31.5V18Z" fill="#FFFFFF" />
+  <path d="M24 15V28" stroke="#1E3A8A" stroke-width="1.8" stroke-linecap="round" />
+  
+  <!-- Sceau central émeraude de sécurité / savoir -->
+  <circle cx="24" cy="21.5" r="4" fill="url(#ev-grad-accent)" filter="url(#ev-glow)" />
+  <path d="M22.5 21.5L23.5 22.5L25.5 20.5" stroke="#FFFFFF" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+  
+  <!-- Étoile d'excellence académique -->
+  <path d="M34 10.5L35.2 13L37.8 13.4L35.9 15.2L36.3 17.8L34 16.5L31.7 17.8L32.1 15.2L30.2 13.4L32.8 13L34 10.5Z" fill="#F59E0B" />
+</svg>

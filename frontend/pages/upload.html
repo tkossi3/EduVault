@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f8fafc">
+    <title>Déposer un Document — EduVault 2026</title>
+    <link rel="manifest" href="../manifest.json">
+    <link rel="icon" href="../assets/eduvault.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../styles/variables.css">
+    <link rel="stylesheet" href="../styles/main.css">
+    <link rel="stylesheet" href="../styles/animations.css">
+    <link rel="stylesheet" href="../styles/components.css">
+    <link rel="stylesheet" href="../styles/pages.css">
+</head>
+
+<body>
+    <header class="topbar">
+        <a class="brand" href="../index.html">
+            <img src="../assets/eduvault.svg" alt="" width="36" height="36">
+            <span>Edu<span class="brand-accent">Vault</span></span>
+        </a>
+        <nav class="main-nav">
+            <a class="nav-link" href="../index.html">Explorer</a>
+            <a class="nav-link" href="parcours.html">Parcours & Filières</a>
+            <a class="nav-link is-active" href="upload.html">Déposer un document</a>
+            <a class="nav-link" href="profile.html">Mon Profil</a>
+        </nav>
+        <div class="topbar-actions">
+            <a class="icon-button notification-link" href="notifications.html" aria-label="Notifications">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                <span class="notification-count" id="notification-count" hidden>0</span>
+            </a>
+            <button class="icon-button theme-toggle" data-theme-toggle aria-label="Changer de thème" type="button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </button>
+            <a class="avatar-button has-user" id="account-button" href="profile.html" aria-label="Mon Profil">
+                <span id="account-initials">K</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="page-width inner-page narrow-page">
+        <p class="eyebrow"><span class="eyebrow-mark"></span> DÉPÔT ACADÉMIQUE · 2026</p>
+        <h1>Déposer un Document</h1>
+        <p class="page-intro">Partagez vos supports de cours, fiches de révision et annales d'examens corrigées pour enrichir la bibliothèque de votre promotion.</p>
+
+        <div class="upload-box-wrapper">
+            <form id="upload-form">
+                <!-- ZONE GLISSER-DÉPOSER FICHIER -->
+                <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Zone de glisser-déposer de fichier PDF">
+                    <div class="dropzone-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    </div>
+                    <h4>Glissez votre fichier ici ou cliquez pour parcourir</h4>
+                    <p>Formats acceptés : PDF (taille maximale 20 Mo)</p>
+                    <input type="file" id="upload-file" name="file" accept="application/pdf,.pdf" style="display: none;" required>
+                    <div id="dropzone-file-info" class="dropzone-selected-file" style="display: none;"></div>
+                </div>
+
+                <!-- TITRE DU DOCUMENT -->
+                <div class="field-group" style="margin-bottom: 16px;">
+                    <label class="field-label" for="upload-title">Titre clair et précis du document *</label>
+                    <input class="field-control" id="upload-title" name="title" minlength="5" maxlength="160" placeholder="Ex. Examen Corrigé Algorithmique S3 — Session 2026" required>
+                </div>
+
+                <!-- ÉTABLISSEMENT & DÉTECTION DOUBLON -->
+                <div class="upload-grid-fields" style="margin-bottom: 16px;">
+                    <div class="field-group">
+                        <label class="field-label" for="upload-institution">Établissement / Université *</label>
+                        <select class="field-control" id="upload-institution" name="institution" required>
+                            <!-- Chargé dynamiquement -->
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="upload-category">Type de document *</label>
+                        <select class="field-control" id="upload-category" name="category" required>
+                            <option value="Support de Cours">Support de Cours</option>
+                            <option value="TD/TP">TD & Travaux Pratiques</option>
+                            <option value="Examen/Annales" selected>Examens & Annales Corrigées</option>
+                            <option value="Fiche de révision">Fiche de Révision & Synthèse</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- ALERTE ANTI-DOUBLON ÉTABLISSEMENT -->
+                <div id="institution-duplicate-alert" class="alert-box alert-warning" style="display: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <div>
+                        <strong id="duplicate-inst-title">Établissement déjà existant !</strong>
+                        <p id="duplicate-inst-desc" style="margin: 4px 0 0; font-size: 12px;"></p>
+                    </div>
+                </div>
+
+                <!-- MATIÈRE & ANNÉE ACADÉMIQUE -->
+                <div class="upload-grid-fields" style="margin-bottom: 20px;">
+                    <div class="field-group">
+                        <label class="field-label" for="upload-course">Matière / UE *</label>
+                        <input class="field-control" id="upload-course" name="course" placeholder="Ex. Algorithmique Avancée" required>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="upload-year">Année académique *</label>
+                        <input class="field-control" id="upload-year" name="academic_year" value="2025-2026" pattern="\d{4}-\d{4}" placeholder="2025-2026" required>
+                    </div>
+                </div>
+
+                <div id="upload-feedback" class="form-feedback" style="margin-bottom: 16px;"></div>
+
+                <button class="button button-primary button-full" type="submit">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <span>Déposer le document dans le coffre</span>
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <footer class="site-footer page-width">
+        <a class="brand" href="../index.html">
+            <img src="../assets/eduvault.svg" alt="" width="28" height="28">
+            <span>Edu<span class="brand-accent">Vault</span></span>
+        </a>
+        <span>Le coffre-fort académique universitaire 2026.</span>
+        <span>© 2026 EduVault</span>
+    </footer>
+
+    <div class="cursor-dot" aria-hidden="true"></div>
+    <div class="cursor-ring" aria-hidden="true"></div>
+
+    <script src="../scripts/icons.js"></script>
+    <script src="../scripts/store.js"></script>
+    <script src="../scripts/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../scripts/theme.js"></script>
+    <script src="../scripts/auth.js"></script>
+    <script src="../scripts/cursor.js"></script>
+    <script src="../scripts/notifications.js"></script>
+    <script src="../scripts/upload.js"></script>
+    <script src="../scripts/service-worker.js"></script>
+</body>
+
+</html>

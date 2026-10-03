@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f8fafc">
+    <meta name="description" content="EduVault — Le coffre-fort académique universitaire 2026. Consultez, téléchargez et partagez vos cours, TD et annales d'examens.">
+    <title>EduVault — Le Coffre-Fort Académique Universitaire</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="assets/eduvault.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Manrope:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/animations.css">
+    <link rel="stylesheet" href="styles/components.css">
+</head>
+
+<body>
+    <a class="skip-link" href="#contenu">Aller au contenu</a>
+    
+    <header class="topbar">
+        <a class="brand" href="index.html" aria-label="EduVault, accueil">
+            <img src="assets/eduvault.svg" alt="Logo EduVault" width="36" height="36">
+            <span>Edu<span class="brand-accent">Vault</span></span>
+        </a>
+        
+        <button class="icon-button menu-toggle" id="menu-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        
+        <nav class="main-nav" id="main-nav" aria-label="Navigation principale">
+            <a class="nav-link is-active" href="index.html">Explorer</a>
+            <a class="nav-link" href="pages/parcours.html">Parcours & Filières</a>
+            <a class="nav-link" href="pages/upload.html">Déposer un document</a>
+            <a class="nav-link" href="pages/profile.html">Mon Profil</a>
+        </nav>
+        
+        <div class="topbar-actions">
+            <a class="icon-button notification-link" href="pages/notifications.html" aria-label="Notifications" title="Consulter mes notifications">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                <span class="notification-count" id="notification-count" hidden>0</span>
+            </a>
+            
+            <button class="icon-button theme-toggle" data-theme-toggle type="button" aria-label="Changer de thème">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </button>
+            
+            <a class="avatar-button has-user" id="account-button" href="pages/profile.html" aria-label="Mon Profil" title="Espace étudiant">
+                <span id="account-initials">K</span>
+            </a>
+        </div>
+    </header>
+
+    <main id="contenu">
+        <!-- SECTION HERO -->
+        <section class="hero-section page-width">
+            <div class="hero-copy reveal">
+                <p class="eyebrow"><span class="eyebrow-mark"></span> LE COFFRE ACADÉMIQUE · 2026</p>
+                <h1>Tout ton campus.<br><span>Dans un seul coffre.</span></h1>
+                <p class="hero-description">Accédez à des centaines de cours, TD, examens et annales corrigées vérifiés par vos pairs et professeurs. Un savoir universel, libre et sans friction.</p>
+                
+                <form class="hero-search" id="search-form" role="search">
+                    <div class="search-icon-wrapper" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </div>
+                    <label class="visually-hidden" for="global-search">Rechercher un cours ou un document</label>
+                    <input id="global-search" name="q" type="search" placeholder="Rechercher un document, un examen, une école (ex: ENP Lomé, Algorithmique)..." autocomplete="off">
+                    <button class="button button-primary search-submit" type="submit">
+                        <span>Explorer</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </button>
+                </form>
+                
+                <div class="popular-searches">
+                    <span>Suggestions :</span>
+                    <button type="button" data-query="Algorithmique">Algorithmique</button>
+                    <button type="button" data-query="Bases de Données">Bases de Données</button>
+                    <button type="button" data-query="Analyse">Analyse Mathématique</button>
+                    <button type="button" data-query="ENP Campus Lomé">ENP Campus Lomé</button>
+                </div>
+            </div>
+            
+            <div class="hero-art reveal" aria-label="Aperçu du coffre académique">
+                <div class="vault-card-hero">
+                    <div class="vault-icon-badge">
+                        <img src="assets/eduvault.svg" alt="" width="44" height="44">
+                    </div>
+                    <h3>Coffre Numérique Certifié</h3>
+                    <p>Banque d'épreuves & ressources académiques vérifiées pour le Togo et l'international.</p>
+                    <div class="hero-stats-mini">
+                        <div>
+                            <strong>100% PDF</strong>
+                            <small>Lecture haute définition</small>
+                        </div>
+                        <div>
+                            <strong>Session 2026</strong>
+                            <small>Mise à jour continue</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="float-chip float-chip-top">
+                    <span class="badge badge-accent">Nouveau 2026</span>
+                    <span style="font-size: 13px; font-weight: 700;">Corrigé Algorithmique S3</span>
+                </div>
+                
+                <div class="float-chip float-chip-bottom">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span style="font-size: 13px; font-weight: 600;">ENP Campus Lomé</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- BANDEAU STATISTIQUES -->
+        <section class="stats-strip page-width" aria-label="Chiffres clés">
+            <div class="stats-strip-item">
+                <div class="stats-strip-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                </div>
+                <div>
+                    <strong>Documents PDF</strong>
+                    <span>Lecture directe dans le navigateur</span>
+                </div>
+            </div>
+            
+            <div class="stats-strip-item">
+                <div class="stats-strip-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="12"></line><line x1="15" y1="12" x2="15" y2="22"></line><line x1="9" y1="12" x2="15" y2="12"></line></svg>
+                </div>
+                <div>
+                    <strong>Établissements</strong>
+                    <span>ENP Lomé, UL, Kara, ESA...</span>
+                </div>
+            </div>
+            
+            <div class="stats-strip-item">
+                <div class="stats-strip-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
+                <div>
+                    <strong>Modération Rapide</strong>
+                    <span>Documents filtrés et certifiés</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION DOCUMENTS DISPONIBLES -->
+        <section class="page-width" id="results-section">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">BIBLIOTHÈQUE ACADÉMIQUE</p>
+                    <h2 id="results-title">Documents récents & populaires</h2>
+                </div>
+                <a class="text-link" href="pages/parcours.html">
+                    <span>Explorer par filière</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </a>
+            </div>
+
+            <div class="filter-row" aria-label="Filtrer par catégorie">
+                <button class="filter-chip is-selected" type="button" data-category="">Tous les types</button>
+                <button class="filter-chip" type="button" data-category="Support de Cours">Supports de Cours</button>
+                <button class="filter-chip" type="button" data-category="TD/TP">TD & Travaux Pratiques</button>
+                <button class="filter-chip" type="button" data-category="Examen/Annales">Examens & Annales</button>
+                <button class="filter-chip" type="button" data-category="Fiche de révision">Fiches de Révision</button>
+            </div>
+
+            <div class="document-grid" id="document-results" aria-live="polite">
+                <!-- Les cartes de documents sont injectées dynamiquement par store/app.js -->
+            </div>
+
+            <div class="empty-state" id="empty-state" hidden>
+                <div class="empty-state-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </div>
+                <h3>Aucun document trouvé</h3>
+                <p>Essayez un autre mot-clé ou parcourez l'arborescence des filières.</p>
+            </div>
+        </section>
+
+        <!-- SECTION ÉTABLISSEMENTS & CAMPUS -->
+        <section class="institution-band">
+            <div class="page-width">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">CAMPUS PARTENAIRES</p>
+                        <h2>Vos universités & grandes écoles</h2>
+                    </div>
+                </div>
+                
+                <div class="institution-grid" id="institution-list">
+                    <!-- Rendu dynamique -->
+                </div>
+            </div>
+        </section>
+
+        <!-- BANDEAU CTA PARTAGE -->
+        <section class="page-width">
+            <div class="share-band">
+                <div>
+                    <p class="eyebrow" style="color: #a7f3d0;">CONTRIBUTION ÉTUDIANTE 2026</p>
+                    <h2>Vous possédez un document ou une annale utile ?</h2>
+                    <p>Déposez votre support en 30 secondes pour aider toute votre promotion à réussir.</p>
+                </div>
+                <a class="button button-accent" href="pages/upload.html">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <span>Déposer un document</span>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- PIED DE PAGE -->
+    <footer class="site-footer page-width">
+        <a class="brand" href="index.html">
+            <img src="assets/eduvault.svg" alt="" width="30" height="30">
+            <span>Edu<span class="brand-accent">Vault</span></span>
+        </a>
+        <span>La plateforme académique de partage et consultation de documents universitaires.</span>
+        <span>© 2026 EduVault. Tous droits réservés.</span>
+    </footer>
+
+    <!-- DIALOGUE AUTHENTIFICATION -->
+    <dialog class="auth-dialog" id="auth-dialog" aria-labelledby="auth-title">
+        <button class="dialog-close icon-button" data-close-dialog aria-label="Fermer" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+        <p class="eyebrow">ESPACE ÉTUDIANT</p>
+        <h2 id="auth-title">Connexion à EduVault</h2>
+        <p id="auth-message">Accédez à l'ensemble des fonctionnalités du coffre académique.</p>
+        
+        <button class="button button-outline google-button" id="google-sign-in" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+            <span>Continuer avec Google</span>
+        </button>
+        
+        <div class="dialog-divider"><span>ou par email</span></div>
+        
+        <form id="auth-form">
+            <div class="field-group">
+                <label class="field-label" for="auth-email">Adresse e-mail universitaire</label>
+                <input class="field-control" id="auth-email" type="email" placeholder="etudiant@universite.tg" autocomplete="email" required>
+            </div>
+            <div class="field-group">
+                <label class="field-label" for="auth-password">Mot de passe</label>
+                <input class="field-control" id="auth-password" type="password" placeholder="••••••••" autocomplete="current-password" minlength="6" required>
+            </div>
+            <p class="form-feedback" id="auth-feedback" role="status"></p>
+            <button class="button button-primary button-full" type="submit">Se connecter</button>
+        </form>
+        
+        <button class="text-button" id="auth-mode-toggle" type="button">Créer un nouveau compte</button>
+    </dialog>
+
+    <div class="cursor-dot" aria-hidden="true"></div>
+    <div class="cursor-ring" aria-hidden="true"></div>
+
+    <script src="scripts/icons.js"></script>
+    <script src="scripts/store.js"></script>
+    <script src="scripts/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="scripts/theme.js"></script>
+    <script src="scripts/auth.js"></script>
+    <script src="scripts/cursor.js"></script>
+    <script src="scripts/notifications.js"></script>
+    <script src="scripts/app.js"></script>
+    <script src="scripts/service-worker.js"></script>
+</body>
+
+</html>

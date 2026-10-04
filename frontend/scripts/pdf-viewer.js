@@ -20,6 +20,23 @@
     if (titleEl) titleEl.textContent = title;
     if (courseEl) courseEl.textContent = `${institution} · ${course} (${year})`;
 
+    if (store?.isExplorationMode()) {
+        const readerHeader = document.querySelector(".reader-header");
+        if (readerHeader && !document.querySelector("#reader-exploration-notice")) {
+            const noticeHtml = `
+            <div id="reader-exploration-notice" class="alert-box alert-info" style="width: 100%; margin-top: 14px; margin-bottom: 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                <div style="flex: 1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;">
+                    <span><strong>Mode Exploration :</strong> Vous consultez ce document en accès libre et illimité.</span>
+                    <button class="button button-primary button-sm" type="button" onclick="window.EduVaultAuth?.open('login')">
+                        <span>Se connecter</span>
+                    </button>
+                </div>
+            </div>`;
+            readerHeader.insertAdjacentHTML("afterend", noticeHtml);
+        }
+    }
+
     let currentPage = 1;
     const totalPages = 3;
     let zoomLevel = 100;

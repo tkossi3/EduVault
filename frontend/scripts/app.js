@@ -165,23 +165,8 @@
     });
 
     // Menu toggle mobile
-    document.querySelector("#menu-toggle")?.addEventListener("click", (event) => {
-        const nav = document.querySelector("#main-nav");
-        if (nav) {
-            const isFlex = nav.style.display === "flex";
-            nav.style.display = isFlex ? "none" : "flex";
-            if (!isFlex) {
-                nav.style.position = "absolute";
-                nav.style.top = "72px";
-                nav.style.left = "0";
-                nav.style.right = "0";
-                nav.style.background = "var(--surface)";
-                nav.style.flexDirection = "column";
-                nav.style.padding = "20px";
-                nav.style.boxShadow = "var(--shadow-soft)";
-                nav.style.borderBottom = "1px solid var(--line)";
-            }
-        }
+    document.querySelector("#menu-toggle")?.addEventListener("click", () => {
+        document.querySelector("#main-nav")?.classList.toggle("is-open-mobile");
     });
 
     // Initialisation

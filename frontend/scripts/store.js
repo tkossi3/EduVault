@@ -183,7 +183,31 @@
         }
     };
 
-    // Gestion du profil utilisateur courant
+    // Gestion du profil utilisateur courant et mode exploration
+    const AUTH_MODE_KEY = "eduvault_auth_mode_v2026";
+
+    const isExplorationMode = () => {
+        try {
+            const mode = localStorage.getItem(AUTH_MODE_KEY);
+            return mode === "exploration";
+        } catch {
+            return false;
+        }
+    };
+
+    const setExplorationMode = (enable = true) => {
+        try {
+            if (enable) {
+                localStorage.setItem(AUTH_MODE_KEY, "exploration");
+            } else {
+                localStorage.setItem(AUTH_MODE_KEY, "authenticated");
+            }
+            document.dispatchEvent(new CustomEvent("eduvault:auth_mode_changed", { detail: { isExploration: enable } }));
+        } catch (e) {
+            console.warn("Could not set auth mode", e);
+        }
+    };
+
     const getCurrentUserProfile = () => {
         try {
             const raw = localStorage.getItem(USER_KEY);
@@ -220,8 +244,14 @@
         const current = getCurrentUserProfile();
         const updated = { ...current, ...profile };
         localStorage.setItem(USER_KEY, JSON.stringify(updated));
+        setExplorationMode(false);
         document.dispatchEvent(new CustomEvent("eduvault:profile_updated", { detail: updated }));
         return updated;
+    };
+
+    const logoutUser = () => {
+        setExplorationMode(true);
+        document.dispatchEvent(new CustomEvent("eduvault:logout", { detail: { isExploration: true } }));
     };
 
     // Gestion des notifications
@@ -374,6 +404,9 @@
     window.EduVaultStore = {
         loadState,
         saveState,
+        isExplorationMode,
+        setExplorationMode,
+        logoutUser,
         getCurrentUserProfile,
         saveUserProfile,
         getNotifications,

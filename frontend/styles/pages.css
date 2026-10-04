@@ -660,11 +660,187 @@
     color: var(--primary);
 }
 
-@media (max-width: 860px) {
+/* CARTE MODE EXPLORATION SUR LA PAGE PROFIL */
+.profile-exploration-card {
+    padding: 32px;
+    margin-bottom: 32px;
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 80%, var(--surface)) 0%, var(--surface) 100%);
+    box-shadow: var(--shadow-card);
+}
+
+.exploration-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.exploration-big-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    font-size: 32px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--accent-border);
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+}
+
+.exploration-card-header h2 {
+    margin: 6px 0 6px;
+    font-family: var(--font-display);
+    font-size: clamp(20px, 3.5vw, 26px);
+    font-weight: 800;
+    color: var(--text);
+}
+
+.exploration-card-header p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.exploration-card-benefits {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+}
+
+.benefit-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.exploration-cta-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+.profile-layout.is-dimmed-exploration {
+    opacity: 0.65;
+    pointer-events: none;
+    user-select: none;
+    filter: grayscale(0.2);
+}
+
+/* ==================== RESPONSIVE RULES ==================== */
+@media (max-width: 992px) {
     .profile-layout {
         grid-template-columns: 1fr;
+        gap: 24px;
     }
+}
+
+@media (max-width: 768px) {
+    .inner-page {
+        padding-block: 28px 48px;
+    }
+    
+    .inner-page > h1 {
+        font-size: 26px;
+    }
+
+    .profile-card {
+        padding: 20px;
+    }
+
+    .profile-section-card {
+        padding: 18px;
+    }
+
+    .upload-box-wrapper {
+        padding: 20px;
+    }
+
     .upload-grid-fields {
         grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .exploration-cta-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .exploration-cta-group .button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .user-doc-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .user-doc-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .reader-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .reader-header > div:last-child {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .pdf-mockup-page {
+        padding: 24px;
+        min-height: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .exploration-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .profile-avatar-large {
+        width: 68px;
+        height: 68px;
+        font-size: 28px;
+    }
+
+    .notifications-header-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .notifications-tabs {
+        width: 100%;
+        overflow-x: auto;
     }
 }

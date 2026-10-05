@@ -34,6 +34,8 @@
                 title: item.title, 
                 course: item.course || "Ressource académique",
                 institution: item.institution || "ENP Campus Lomé",
+                program: item.program || "Filière Académique",
+                semester: item.semester || 1,
                 category: item.category || "Support de cours"
             });
             
@@ -43,18 +45,28 @@
                 ? "badge-accent" 
                 : "badge-primary";
 
+            const semesterTag = item.semester ? `S${item.semester}` : "S1";
+
             return `
             <article class="document-card">
                 <div class="document-card-top">
                     <span class="badge ${categoryBadgeClass}">${escapeHtml(item.category)}</span>
-                    <span class="badge badge-outline" style="border: 1px solid var(--line); font-size: 10px; color: var(--muted);">
-                        ${icons?.fileText || ''} PDF
+                    <span class="badge badge-accent" style="font-weight: 700; font-size: 11px;">
+                        Semestre ${item.semester || 1} (${semesterTag})
                     </span>
                 </div>
+                
                 <h3>${escapeHtml(item.title)}</h3>
-                <p>
-                    <strong>${escapeHtml(item.institution || "ENP Campus Lomé")}</strong> · ${escapeHtml(item.course || "Cours académique")}
+
+                <div class="doc-card-hierarchy-tags">
+                    <span class="doc-chip doc-chip-inst">${escapeHtml(item.institution || "ENP Campus Lomé")}</span>
+                    <span class="doc-chip doc-chip-prog">${escapeHtml(item.program || "Tronc Commun")}</span>
+                </div>
+
+                <p class="doc-card-course">
+                    <strong>Matière :</strong> ${escapeHtml(item.course || "Cours académique")}
                 </p>
+
                 <div class="document-card-footer">
                     <span>${escapeHtml(item.academic_year || "2025-2026")} · ${formatSize(item.file_size)}</span>
                     <a class="action-read" href="pages/document-view.html?${params}">
@@ -78,7 +90,6 @@
 
         const normalizedQuery = query.toLowerCase().trim();
 
-        // Tentative d'appel API, sinon fallback immédiat sur le store local
         try {
             const response = await fetch(`${config.API_BASE_URL}/documents/search?q=${encodeURIComponent(query)}`);
             if (!response.ok) throw new Error("API Offline");
@@ -94,7 +105,7 @@
                 currentDocuments = allDocs;
             } else {
                 currentDocuments = allDocs.filter((doc) => {
-                    const text = `${doc.title} ${doc.course} ${doc.program} ${doc.institution} ${doc.category}`.toLowerCase();
+                    const text = `${doc.title} ${doc.course} ${doc.program} ${doc.institution} ${doc.category} s${doc.semester} semestre ${doc.semester}`.toLowerCase();
                     return text.includes(normalizedQuery);
                 });
             }
@@ -162,11 +173,6 @@
             });
             render();
         });
-    });
-
-    // Menu toggle mobile
-    document.querySelector("#menu-toggle")?.addEventListener("click", () => {
-        document.querySelector("#main-nav")?.classList.toggle("is-open-mobile");
     });
 
     // Initialisation

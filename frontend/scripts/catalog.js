@@ -34,6 +34,8 @@
                 title: doc.title,
                 course: course.name,
                 institution: instName,
+                program: doc.program || "",
+                semester: doc.semester || course.semester || 1,
                 category: doc.category
             });
 

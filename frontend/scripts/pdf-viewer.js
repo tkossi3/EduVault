@@ -1,10 +1,15 @@
-/* Visionneuse haute fidélité & Lecteur de documents PDF réels — EduVault 2026 */
-(() => {
+/* Lecteur & Visionneuse de documents PDF réels — EduVault 2026 */
+(async () => {
     const params = new URLSearchParams(location.search);
     const documentId = params.get("id") || "doc-algo-2026";
     const store = window.EduVaultStore;
 
-    // Récupération des données du document
+    // Configuration du worker PDF.js
+    if (window.pdfjsLib) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+
+    // Récupération des métadonnées du document
     const state = store ? store.loadState() : null;
     let currentDoc = (store && typeof store.getDocumentById === "function") 
         ? store.getDocumentById(documentId) 
@@ -15,20 +20,22 @@
             id: documentId,
             title: params.get("title") || "Document Académique",
             course: params.get("course") || "Cours Universitaire",
-            institution: params.get("institution") || "Établissement Universitaire",
+            institution: params.get("institution") || "ENP Campus Lomé",
+            program: params.get("program") || "Génie Logiciel & Systèmes d'Information",
+            semester: parseInt(params.get("semester") || "3", 10),
             category: params.get("category") || "Support de Cours",
-            academic_year: "2025-2026",
-            program: "Génie Logiciel & Systèmes d'Information",
-            file_data: null
+            academic_year: params.get("year") || "2025-2026",
+            file_name: "document.pdf"
         };
     }
 
     const title = currentDoc.title || "Document Académique";
     const course = currentDoc.course || "Cours Universitaire";
     const institution = currentDoc.institution || "Établissement Universitaire";
-    const category = currentDoc.category || "Support";
+    const program = currentDoc.program || "Filière Académique";
+    const semester = currentDoc.semester || 1;
+    const category = currentDoc.category || "Support de Cours";
     const year = currentDoc.academic_year || "2025-2026";
-    const program = currentDoc.program || "";
 
     // Helper: escape HTML
     const escapeHtml = (value = "") =>
@@ -36,15 +43,26 @@
             "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
         })[c]);
 
-    // En-tête de page
+    // 1. Mise à jour de l'en-tête et du titre
     const titleEl = document.querySelector("#document-title");
     const courseEl = document.querySelector("#document-course");
+    const badgesEl = document.querySelector("#reader-meta-badges");
+
     if (titleEl) titleEl.textContent = title;
-    if (courseEl) courseEl.textContent = `${institution}${program ? " · " + program : ""} · ${course} (${year})`;
+    if (courseEl) courseEl.textContent = `${institution} · ${program} · ${course} (${year})`;
+    document.title = `${title} — EduVault`;
 
-    document.title = `${title} — EduVault 2026`;
+    if (badgesEl) {
+        const catBadgeClass = category === "Examen/Annales" ? "badge-warning" : category === "TD/TP" ? "badge-accent" : "badge-primary";
+        badgesEl.innerHTML = `
+            <span class="badge ${catBadgeClass}">${escapeHtml(category)}</span>
+            <span class="badge badge-primary" style="background: var(--surface-raised); color: var(--text-secondary); border: 1px solid var(--line);">${escapeHtml(institution)}</span>
+            <span class="badge badge-outline" style="border: 1px solid var(--line); color: var(--text-secondary);">${escapeHtml(program)}</span>
+            <span class="badge badge-accent" style="font-weight: 700;">Semestre ${semester} (S${semester})</span>
+        `;
+    }
 
-    // Incrémenter le nombre de vues dans le store
+    // Incrémenter le compteur de vues
     if (state && currentDoc.id) {
         const storedDoc = state.documents.find(d => d.id === currentDoc.id);
         if (storedDoc) {
@@ -53,358 +71,318 @@
         }
     }
 
-    // Bannière Mode Exploration
-    if (store?.isExplorationMode()) {
-        const readerHeader = document.querySelector(".reader-header");
-        if (readerHeader && !document.querySelector("#reader-exploration-notice")) {
-            const noticeHtml = `
-            <div id="reader-exploration-notice" class="alert-box alert-info" style="width: 100%; margin-top: 14px; margin-bottom: 0;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
-                <div style="flex: 1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;">
-                    <span><strong>Mode Consultation Libre :</strong> Vous lisez ce document certifié en accès intégral.</span>
-                    <a class="button button-primary button-sm" href="login.html">
-                        <span>Se connecter</span>
-                    </a>
-                </div>
-            </div>`;
-            readerHeader.insertAdjacentHTML("afterend", noticeHtml);
-        }
-    }
-
-    const viewport = document.querySelector("#reader-viewport");
-    const container = document.querySelector("#simulated-document-container");
+    // Éléments UI
+    const loadingIndicator = document.querySelector("#pdf-loading-indicator");
+    const canvasWrapper = document.querySelector("#pdf-canvas-wrapper");
+    const canvas = document.querySelector("#pdf-canvas");
+    const nativeWrapper = document.querySelector("#pdf-native-wrapper");
     const pageIndicator = document.querySelector("#page-indicator");
+    const pageInput = document.querySelector("#page-input");
     const zoomIndicator = document.querySelector("#zoom-indicator");
     const modeTag = document.querySelector("#reader-mode-tag");
+    const toggleViewBtn = document.querySelector("#toggle-view-mode");
+    const toggleViewText = document.querySelector("#toggle-view-text");
 
-    let currentPage = 1;
-    let totalPages = 3;
-    let zoomLevel = 100;
-    let generatedPages = [];
+    let pdfDoc = null;
+    let pageNum = 1;
+    let totalPages = 1;
+    let pageRendering = false;
+    let pageNumPending = null;
+    let scale = 1.35;
+    let rawPdfBlobUrl = null;
+    let rawPdfBytes = null;
+    let isNativeView = false;
 
-    // ==================== RENDU 1 : FICHIER PDF RÉEL TRANSMIS ====================
-    const renderNativePdf = (dataUrl) => {
-        if (!viewport) return;
-        if (modeTag) modeTag.textContent = "Lecture PDF Haute Fidélité";
-
-        viewport.innerHTML = `
-            <div style="width: 100%; height: 820px; position: relative;">
-                <object data="${dataUrl}" type="application/pdf" class="pdf-native-frame" style="width: 100%; height: 100%; min-height: 750px;">
-                    <iframe src="${dataUrl}#toolbar=1&navpanes=1" class="pdf-native-frame" style="width: 100%; height: 100%; min-height: 750px;">
-                        <p>Votre navigateur ne prend pas en charge l'affichage direct des PDF. <a href="${dataUrl}" download="${currentDoc.file_name || 'document.pdf'}">Cliquez ici pour télécharger le fichier</a>.</p>
-                    </iframe>
-                </object>
-            </div>
-        `;
-
-        if (pageIndicator) pageIndicator.textContent = "Fichier PDF Réel";
-        if (zoomIndicator) zoomIndicator.textContent = "100%";
-    };
-
-    // ==================== RENDU 2 : DOCUMENT STRUCTURÉ COMPLET ====================
-    const generateCompleteAcademicDocument = () => {
-        const catLower = category.toLowerCase();
-        const isExam = catLower.includes("exam") || catLower.includes("annale");
-        const isTD = catLower.includes("td") || catLower.includes("tp");
-        const isFiche = catLower.includes("fiche");
-
-        if (isExam) {
-            return [
-                {
-                    pageNumber: 1,
-                    title: `ÉPREUVE OFFICIELLE — ${category.toUpperCase()} — SESSION ${year}`,
-                    sections: [
-                        {
-                            heading: `1. Informations et Consignes Générales`,
-                            content: `
-                                <table style="width: 100%; margin-bottom: 16px; font-size: 13px; border-collapse: collapse;">
-                                    <tr><td style="padding: 6px; border: 1px solid #e2e8f0; font-weight: 600;">Matière / UE :</td><td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(course)}</td></tr>
-                                    <tr><td style="padding: 6px; border: 1px solid #e2e8f0; font-weight: 600;">Établissement :</td><td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(institution)}</td></tr>
-                                    <tr><td style="padding: 6px; border: 1px solid #e2e8f0; font-weight: 600;">Filière :</td><td style="padding: 6px; border: 1px solid #e2e8f0;">${escapeHtml(program || "Tronc Commun")}</td></tr>
-                                    <tr><td style="padding: 6px; border: 1px solid #e2e8f0; font-weight: 600;">Durée de l'épreuve :</td><td style="padding: 6px; border: 1px solid #e2e8f0;">3 heures — Calculatrice autorisée</td></tr>
-                                </table>
-                                <p style="padding: 12px; background: #eff6ff; border-left: 4px solid #2563eb; font-size: 13px; border-radius: 4px;">
-                                    <strong>Recommandations :</strong> Lisez attentivement l'intégralité du sujet avant de commencer. Justifiez systématiquement vos réponses et soignez la présentation.
-                                </p>
-                            `
-                        },
-                        {
-                            heading: `Partie I — Questions de Cours & Fondements Théoriques (6 points)`,
-                            content: `
-                                <p><strong>Question 1.1 :</strong> Définissez les concepts clés de <em>${escapeHtml(course)}</em> et présentez leurs principales propriétés mathématiques ou algorithmiques.</p>
-                                <p><strong>Question 1.2 :</strong> Exposez la différence fondamentale entre les structures séquentielles et les structures arborescentes dans ce contexte d'étude.</p>
-                                <p><strong>Question 1.3 :</strong> Soit une complexité temporelle exprimée par la relation $T(n) = 2T(n/2) + O(n)$. Démontrez par le théorème maître l'ordre de grandeur asymptotique final.</p>
-                            `
-                        }
-                    ]
-                },
-                {
-                    pageNumber: 2,
-                    title: `ÉPREUVE OFFICIELLE — ${category.toUpperCase()} (SUITE)`,
-                    sections: [
-                        {
-                            heading: `Partie II — Problème Pratique & Modélisation (8 points)`,
-                            content: `
-                                <p>On considère un système distribué de traitement de données universitaires. Les données d'entrée se présentent sous la forme d'un ensemble ordonné :</p>
-                                <div class="doc-mock-code">
-ENTRÉE : G = (V, E) où |V| = n sommets et |E| = m arêtes pondérées
-Objectif : Calculer le plus court chemin et le flot maximal admissible.
-Poids des arcs : W = [ (A,B,4), (A,C,2), (B,C,1), (B,D,5), (C,D,8), (C,E,10), (D,E,2) ]
-                                </div>
-                                <p><strong>Travail à effectuer :</strong></p>
-                                <ol style="padding-left: 20px; font-size: 13px; line-height: 1.8;">
-                                    <li>Représentez graphiquement le réseau avec les pondérations associées.</li>
-                                    <li>Appliquez l'algorithme pas à pas en complétant le tableau d'état des valuations.</li>
-                                    <li>Évaluez la complexité spatiale et temporelle au pire des cas.</li>
-                                </ol>
-                            `
-                        },
-                        {
-                            heading: `Partie III — Implémentation & Optimisation (6 points)`,
-                            content: `
-                                <p>Écrivez la fonction de résolution optimisée dans le langage de votre choix en respectant une complexité minimale :</p>
-                                <div class="doc-mock-code">
-def solve_system(graph_nodes, source, sink):
-    # Initialisation des distances et des prédécesseurs
-    distances = {node: float('inf') for node in graph_nodes}
-    distances[source] = 0
-    priority_queue = [(0, source)]
-    # Traitement des priorités
-    return distances
-                                </div>
-                            `
-                        }
-                    ]
-                },
-                {
-                    pageNumber: 3,
-                    title: `CORRIGÉ TYPE DÉTAILLÉ & BARÈME OFFICIEL`,
-                    sections: [
-                        {
-                            heading: `Éléments de Correction & Barème Détaillé`,
-                            content: `
-                                <p><strong>Correction Partie I (6 pts) :</strong></p>
-                                <p>1.1 Définition rigoureuse (2 pts) : Le modèle repose sur la décomposition hiérarchique et la conservation des flux.</p>
-                                <p>1.2 Démonstration (2 pts) : D'après le théorème maître, $a = 2$, $b = 2$, $d = 1$, or $a = b^d \implies T(n) = \Theta(n \log n)$.</p>
-                                <p style="margin-top: 14px;"><strong>Correction Partie II (8 pts) :</strong></p>
-                                <p>Chemin optimal trouvé : $A \rightarrow C \rightarrow B \rightarrow D \rightarrow E$ avec un coût total minimal de $10$ unités.</p>
-                                <div style="margin-top: 16px; padding: 12px; background: #ecfdf5; border: 1px solid #10b981; border-radius: 6px; color: #065f46; font-size: 13px;">
-                                    ✓ Document académique vérifié par le comité pédagogique d'EduVault — Session 2026.
-                                </div>
-                            `
-                        }
-                    ]
-                }
-            ];
-        }
-
-        if (isTD) {
-            return [
-                {
-                    pageNumber: 1,
-                    title: `TRAVAUX DIRIGÉS & PRATIQUES — ${course.toUpperCase()}`,
-                    sections: [
-                        {
-                            heading: `Fiche de TD — Objectifs & Prérequis`,
-                            content: `
-                                <p><strong>Établissement :</strong> ${escapeHtml(institution)} &nbsp;·&nbsp; <strong>Filière :</strong> ${escapeHtml(program || "Licence")}</p>
-                                <p><strong>Matière :</strong> ${escapeHtml(course)} (${year})</p>
-                                <p style="margin-top: 8px;"><strong>Objectifs pédagogiques :</strong> Maîtriser l'application concrète des théorèmes et algorithmes étudiés en cours magistral.</p>
-                            `
-                        },
-                        {
-                            heading: `Exercice 1 : Application directe et calculs`,
-                            content: `
-                                <p>Soit la suite de données suivante : $S = \{ 14, 28, 9, 42, 61, 3, 19 \}$.</p>
-                                <p>1. Appliquez le traitement séquentiel et déterminez l'état des registres à chaque étape.</p>
-                                <p>2. Tracez la courbe représentative des temps d'exécution en fonction de $N$.</p>
-                            `
-                        }
-                    ]
-                },
-                {
-                    pageNumber: 2,
-                    title: `TRAVAUX DIRIGÉS (SUITE ET APPLICATIONS)`,
-                    sections: [
-                        {
-                            heading: `Exercice 2 : Cas pratique d'ingénierie`,
-                            content: `
-                                <p>Un serveur web reçoit en moyenne $\lambda = 150$ requêtes par seconde selon un processus de Poisson. Le temps moyen de traitement est $\mu = 200$ req/s.</p>
-                                <p>1. Calculez le taux d'occupation du système $\rho$.</p>
-                                <p>2. Déterminez le temps d'attente moyen d'une requête dans la file.</p>
-                            `
-                        },
-                        {
-                            heading: `Corrigé synthétique de l'exercice 2`,
-                            content: `
-                                <p>$\rho = \frac{\lambda}{\mu} = \frac{150}{200} = 0.75$ (soit $75\%$ de charge serveur).</p>
-                                <p>Temps d'attente moyen : $W_q = \frac{\rho}{\mu(1 - \rho)} = \frac{0.75}{200 \times 0.25} = 0.015\text{ s} = 15\text{ ms}$.</p>
-                            `
-                        }
-                    ]
-                }
-            ];
-        }
-
-        // Support de cours par défaut
-        return [
-            {
-                pageNumber: 1,
-                title: `SUPPORT DE COURS MAGISTRAL — ${course.toUpperCase()}`,
-                sections: [
-                    {
-                        heading: `Chapitre 1 — Introduction Générale & Cadre Théorique`,
-                        content: `
-                            <p><strong>Établissement :</strong> ${escapeHtml(institution)} &nbsp;·&nbsp; <strong>Filière :</strong> ${escapeHtml(program || "Université")}</p>
-                            <p><strong>Unité d'Enseignement :</strong> ${escapeHtml(course)} &nbsp;·&nbsp; <strong>Session :</strong> ${escapeHtml(year)}</p>
-                            <h4 style="margin-top: 14px; font-size: 14px;">1.1 Contexte & Définitions</h4>
-                            <p>La discipline <em>${escapeHtml(course)}</em> constitue un pilier fondamental de la formation universitaire. Elle permet de modéliser avec rigueur les problématiques complexes et d'établir des solutions systématiques, robustes et extensibles.</p>
-                            <h4 style="margin-top: 14px; font-size: 14px;">1.2 Principes directeurs</h4>
-                            <ul style="padding-left: 20px; line-height: 1.8;">
-                                <li>Modularité et décomposition des sous-systèmes.</li>
-                                <li>Validation empirique et preuves formelles de convergence.</li>
-                                <li>Optimisation des ressources et passage à l'échelle.</li>
-                            </ul>
-                        `
-                    }
-                ]
-            },
-            {
-                pageNumber: 2,
-                title: `CHAPITRE 2 — MODÉLISATION AVANCÉE & CAS PRATIQUES`,
-                sections: [
-                    {
-                        heading: `2.1 Architecture & Démonstrations`,
-                        content: `
-                            <p>Considérons le théorème fondamental de la matière :</p>
-                            <div class="doc-mock-code">
-THÉORÈME : Pour toute structure ordonnée S de taille n,
-l'espace mémoire requis est borné supérieurement par O(n)
-et le temps de recherche moyen est en O(log n).
-                            </div>
-                            <p>La démonstration repose sur le découpage récursif en sous-espaces disjoints.</p>
-                            <h4 style="margin-top: 14px; font-size: 14px;">2.2 Exemples de mise en œuvre</h4>
-                            <p>Dans les environnements industriels et académiques actuels, ce paradigme est mis en œuvre pour garantir la haute disponibilité et la cohérence forte des données.</p>
-                        `
-                    }
-                ]
-            },
-            {
-                pageNumber: 3,
-                title: `RÉSUMÉ DU COURS, GLOSSAIRE & RÉFÉRENCES BIBLIOGRAPHIQUES`,
-                sections: [
-                    {
-                        heading: `Points Clés à Retenir pour l'Examen`,
-                        content: `
-                            <ol style="padding-left: 20px; line-height: 1.8;">
-                                <li>Toujours vérifier les conditions d'initialisation et les invariants de boucle.</li>
-                                <li>Maîtriser les ordres de grandeur de complexité temporelle et spatiale.</li>
-                                <li>Savoir reproduire les schémas d'architecture et les équations directrices.</li>
-                            </ol>
-                            <div style="margin-top: 20px; padding: 12px; background: #eff6ff; border-radius: 6px; font-size: 12px; color: #1e3a8a;">
-                                📚 Support certifié par la communauté universitaire EduVault — Version 2026.
-                            </div>
-                        `
-                    }
-                ]
+    // Conversion DataURL Base64 -> Uint8Array
+    const dataUrlToUint8Array = (dataUrl) => {
+        try {
+            const base64Index = dataUrl.indexOf(";base64,");
+            const base64 = base64Index !== -1 ? dataUrl.slice(base64Index + 8) : dataUrl;
+            const binaryStr = atob(base64);
+            const len = binaryStr.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryStr.charCodeAt(i);
             }
-        ];
+            return bytes;
+        } catch (e) {
+            console.warn("Base64 decode error:", e);
+            return null;
+        }
     };
 
-    // Affichage d'une page du document structuré
-    const renderStructuredPage = (pageIndex) => {
-        if (!container || !generatedPages.length) return;
-        const pageData = generatedPages[pageIndex - 1] || generatedPages[0];
+    // ==================== RENDU EXACT VIA PDF.JS ====================
+    const renderPage = async (num) => {
+        if (!pdfDoc || !canvas) return;
+        pageRendering = true;
 
-        const sectionsHtml = pageData.sections.map((sec) => `
-            <div class="doc-mock-section">
-                <h4>${sec.heading}</h4>
-                <div>${sec.content}</div>
-            </div>
-        `).join("");
+        try {
+            const page = await pdfDoc.getPage(num);
+            const dpr = window.devicePixelRatio || 1.5;
+            const viewport = page.getViewport({ scale: scale });
 
-        container.innerHTML = `
-            <article class="pdf-mockup-page" style="transform: scale(${zoomLevel / 100}); transform-origin: top center; transition: transform 0.2s ease;">
-                <div class="doc-mock-header">
-                    <div>
-                        <span class="doc-mock-stamp">DOCUMENT OFFICIEL CERTIFIÉ · ${escapeHtml(institution)}</span>
-                        <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Filière : ${escapeHtml(program || "Université")} · Année ${escapeHtml(year)}</div>
+            canvas.width = Math.floor(viewport.width * dpr);
+            canvas.height = Math.floor(viewport.height * dpr);
+            canvas.style.width = `${Math.floor(viewport.width)}px`;
+            canvas.style.height = `${Math.floor(viewport.height)}px`;
+
+            const ctx = canvas.getContext("2d");
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            const renderContext = {
+                canvasContext: ctx,
+                viewport: viewport
+            };
+
+            await page.render(renderContext).promise;
+            pageRendering = false;
+
+            if (pageNumPending !== null) {
+                renderPage(pageNumPending);
+                pageNumPending = null;
+            }
+        } catch (err) {
+            console.warn("PDF Page render error:", err);
+            pageRendering = false;
+        }
+
+        // Mise à jour indicateurs
+        if (pageIndicator) pageIndicator.textContent = `/ ${totalPages}`;
+        if (pageInput) pageInput.value = num;
+        if (zoomIndicator) zoomIndicator.textContent = `${Math.round(scale * 100)}%`;
+        if (modeTag) modeTag.textContent = "Document Original Intégral";
+    };
+
+    const queueRenderPage = (num) => {
+        if (pageRendering) {
+            pageNumPending = num;
+        } else {
+            renderPage(num);
+        }
+    };
+
+    // ==================== CHARGEMENT DU FICHIER PDF EXACT ====================
+    const loadPdfDocument = async () => {
+        if (loadingIndicator) loadingIndicator.style.display = "flex";
+
+        try {
+            // 1. Recherche du fichier dans les différents caches
+            let fileRawData = sessionStorage.getItem(`eduvault_file_${currentDoc.id}`);
+            
+            if (!fileRawData && currentDoc.id) {
+                const activePdf = sessionStorage.getItem("eduvault_active_pdf");
+                if (activePdf) {
+                    fileRawData = activePdf;
+                }
+            }
+
+            if (!fileRawData && store) {
+                fileRawData = await store.getPdfFile(currentDoc.id);
+            }
+
+            if (!fileRawData) {
+                fileRawData = currentDoc.file_data || currentDoc.file_url;
+            }
+
+            let pdfSource = null;
+
+            if (fileRawData) {
+                if (typeof fileRawData === "string" && fileRawData.startsWith("data:")) {
+                    rawPdfBytes = dataUrlToUint8Array(fileRawData);
+                    if (rawPdfBytes) {
+                        const blob = new Blob([rawPdfBytes], { type: "application/pdf" });
+                        rawPdfBlobUrl = URL.createObjectURL(blob);
+                        pdfSource = { data: rawPdfBytes };
+                    } else {
+                        pdfSource = fileRawData;
+                    }
+                } else if (fileRawData instanceof Uint8Array || fileRawData instanceof ArrayBuffer) {
+                    const blob = new Blob([fileRawData], { type: "application/pdf" });
+                    rawPdfBlobUrl = URL.createObjectURL(blob);
+                    pdfSource = { data: fileRawData };
+                } else if (fileRawData instanceof Blob) {
+                    rawPdfBlobUrl = URL.createObjectURL(fileRawData);
+                    const buf = await fileRawData.arrayBuffer();
+                    pdfSource = { data: new Uint8Array(buf) };
+                } else {
+                    pdfSource = fileRawData;
+                }
+            }
+
+            if (!pdfSource) {
+                throw new Error("Fichier introuvable");
+            }
+
+            // Chargement PDF.js
+            const loadingTask = pdfjsLib.getDocument(pdfSource);
+            pdfDoc = await loadingTask.promise;
+            totalPages = pdfDoc.numPages;
+
+            if (loadingIndicator) loadingIndicator.style.display = "none";
+            if (canvasWrapper) canvasWrapper.style.display = "flex";
+
+            pageNum = 1;
+            renderPage(pageNum);
+
+        } catch (err) {
+            console.warn("Erreur chargement PDF.js:", err);
+
+            // Si le fichier existe sous forme d'URL Blob, afficher directement dans l'iframe
+            if (rawPdfBlobUrl && nativeWrapper) {
+                if (loadingIndicator) loadingIndicator.style.display = "none";
+                nativeWrapper.style.display = "block";
+                nativeWrapper.innerHTML = `
+                    <iframe src="${rawPdfBlobUrl}#toolbar=1" style="width: 100%; height: 850px; border: none; border-radius: var(--radius-sm);" title="${escapeHtml(title)}"></iframe>
+                `;
+                return;
+            }
+
+            if (loadingIndicator) {
+                loadingIndicator.innerHTML = `
+                    <div style="text-align: center; padding: 24px;">
+                        <p style="font-weight: 700; color: var(--text); font-size: 16px;">Lecture du document</p>
+                        <p style="font-size: 13px; color: var(--muted); margin: 8px 0 16px;">Le fichier est prêt dans votre espace.</p>
+                        <button class="button button-primary" id="btn-reload-pdf">
+                            <span>Recharger la page</span>
+                        </button>
                     </div>
-                    <div style="font-size: 12px; font-weight: 700; color: #1e3a8a;">Page ${pageData.pageNumber} / ${totalPages}</div>
-                </div>
-                <h2 class="doc-mock-title">${pageData.title}</h2>
-                <div class="doc-mock-body">
-                    ${sectionsHtml}
-                </div>
-                <div style="margin-top: 32px; padding-top: 14px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8;">
-                    <span>EduVault 2026 — Coffre Académique</span>
-                    <span>Document certifié : ${escapeHtml(title)}</span>
-                </div>
-            </article>
-        `;
-
-        if (pageIndicator) {
-            pageIndicator.textContent = `Page ${pageIndex} / ${totalPages}`;
+                `;
+                document.querySelector("#btn-reload-pdf")?.addEventListener("click", () => location.reload());
+            }
         }
     };
 
-    // ==================== INITIALISATION DU LECTEUR ====================
-    if (currentDoc.file_data && currentDoc.file_data.startsWith("data:application/pdf")) {
-        // Rendu direct du PDF réel téléchargé
-        renderNativePdf(currentDoc.file_data);
-    } else {
-        // Rendu haute fidélité du document structuré
-        generatedPages = generateCompleteAcademicDocument();
-        totalPages = generatedPages.length;
-        renderStructuredPage(currentPage);
-    }
+    // ==================== CONTRÔLES & INTERACTIONS ====================
 
-    // ==================== CONTRÔLES DE NAVIGATION & OUTILS ====================
+    // Page précédente
     document.querySelector("#previous-page")?.addEventListener("click", () => {
-        if (currentPage > 1) {
-            currentPage--;
-            renderStructuredPage(currentPage);
-        }
+        if (pageNum <= 1) return;
+        pageNum--;
+        queueRenderPage(pageNum);
     });
 
+    // Page suivante
     document.querySelector("#next-page")?.addEventListener("click", () => {
-        if (currentPage < totalPages) {
-            currentPage++;
-            renderStructuredPage(currentPage);
+        if (pageNum >= totalPages) return;
+        pageNum++;
+        queueRenderPage(pageNum);
+    });
+
+    // Saisie directe de page
+    pageInput?.addEventListener("change", () => {
+        const val = parseInt(pageInput.value, 10);
+        if (val >= 1 && val <= totalPages) {
+            pageNum = val;
+            queueRenderPage(pageNum);
+        } else {
+            pageInput.value = pageNum;
         }
     });
 
+    pageInput?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            pageInput.blur();
+        }
+    });
+
+    // Zoom +
     document.querySelector("#zoom-in")?.addEventListener("click", () => {
-        if (zoomLevel < 180) {
-            zoomLevel += 15;
-            if (zoomIndicator) zoomIndicator.textContent = `${zoomLevel}%`;
-            const pageEl = document.querySelector(".pdf-mockup-page");
-            if (pageEl) pageEl.style.transform = `scale(${zoomLevel / 100})`;
+        if (scale < 3.0) {
+            scale += 0.15;
+            queueRenderPage(pageNum);
         }
     });
 
+    // Zoom -
     document.querySelector("#zoom-out")?.addEventListener("click", () => {
-        if (zoomLevel > 60) {
-            zoomLevel -= 15;
-            if (zoomIndicator) zoomIndicator.textContent = `${zoomLevel}%`;
-            const pageEl = document.querySelector(".pdf-mockup-page");
-            if (pageEl) pageEl.style.transform = `scale(${zoomLevel / 100})`;
+        if (scale > 0.5) {
+            scale -= 0.15;
+            queueRenderPage(pageNum);
         }
     });
 
+    // Reset Zoom
+    document.querySelector("#zoom-reset")?.addEventListener("click", () => {
+        scale = 1.35;
+        queueRenderPage(pageNum);
+    });
+
+    // Ajuster à la largeur
+    document.querySelector("#zoom-fit")?.addEventListener("click", () => {
+        const containerWidth = canvasWrapper ? canvasWrapper.clientWidth - 40 : 800;
+        if (pdfDoc) {
+            pdfDoc.getPage(pageNum).then((page) => {
+                const unscaledViewport = page.getViewport({ scale: 1.0 });
+                scale = Math.min(2.5, Math.max(0.6, containerWidth / unscaledViewport.width));
+                queueRenderPage(pageNum);
+            });
+        }
+    });
+
+    // Basculer mode vue Navigateur / Lecteur Canvas
+    toggleViewBtn?.addEventListener("click", () => {
+        isNativeView = !isNativeView;
+        if (isNativeView) {
+            if (canvasWrapper) canvasWrapper.style.display = "none";
+            if (nativeWrapper) {
+                nativeWrapper.style.display = "block";
+                const sourceUrl = rawPdfBlobUrl || currentDoc.file_url;
+                nativeWrapper.innerHTML = `
+                    <iframe src="${sourceUrl}#toolbar=1&navpanes=1" style="width: 100%; height: 850px; border: none; border-radius: var(--radius-sm);" title="${escapeHtml(title)}"></iframe>
+                `;
+            }
+            if (toggleViewText) toggleViewText.textContent = "Vue Lecteur HD";
+            if (modeTag) modeTag.textContent = "Mode Navigateur Intégré";
+        } else {
+            if (nativeWrapper) {
+                nativeWrapper.style.display = "none";
+                nativeWrapper.innerHTML = "";
+            }
+            if (canvasWrapper) canvasWrapper.style.display = "flex";
+            if (toggleViewText) toggleViewText.textContent = "Vue Navigateur";
+            if (modeTag) modeTag.textContent = "Document Original Intégral";
+            queueRenderPage(pageNum);
+        }
+    });
+
+    // Télécharger le PDF EXACT
+    document.querySelector("#download-document")?.addEventListener("click", () => {
+        const fileName = currentDoc.file_name || `${title.replace(/[^a-zA-Z0-9_-]/g, "_")}.pdf`;
+        const urlToDownload = rawPdfBlobUrl || currentDoc.file_data;
+
+        if (urlToDownload) {
+            const a = document.createElement("a");
+            a.href = urlToDownload;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } else {
+            window.print();
+        }
+    });
+
+    // Imprimer le document
     document.querySelector("#print-document")?.addEventListener("click", () => {
         window.print();
     });
 
-    document.querySelector("#download-document")?.addEventListener("click", () => {
-        if (currentDoc.file_data) {
-            const a = document.createElement("a");
-            a.href = currentDoc.file_data;
-            a.download = currentDoc.file_name || `${title.replace(/\s+/g, "_")}.pdf`;
-            a.click();
-        } else {
-            // Téléchargement version imprimée / PDF
-            window.print();
+    // Navigation au clavier (Flèches gauche / droite)
+    window.addEventListener("keydown", (e) => {
+        if (document.activeElement?.tagName === "INPUT") return;
+        if (e.key === "ArrowLeft") {
+            if (pageNum > 1) {
+                pageNum--;
+                queueRenderPage(pageNum);
+            }
+        } else if (e.key === "ArrowRight") {
+            if (pageNum < totalPages) {
+                pageNum++;
+                queueRenderPage(pageNum);
+            }
         }
     });
+
+    // Démarrage
+    await loadPdfDocument();
 })();

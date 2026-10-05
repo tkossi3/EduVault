@@ -154,11 +154,11 @@
                     <div class="auth-explore-box">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
                         <div style="flex: 1;">
-                            <strong>Mode Exploration :</strong>
+                            <strong>Visiteur libre</strong>
                             <span>Consultez librement les documents sans inscription.</span>
                         </div>
-                        <a class="button button-outline button-sm" href="../index.html?mode=exploration">
-                            <span>Explorer</span>
+                        <a class="button button-outline button-sm" href="../index.html">
+                            <span>Bibliothèque</span>
                         </a>
                     </div>
                 </div>
@@ -236,14 +236,13 @@
                 if (feedback) feedback.textContent = "";
 
                 if (store) {
-                    store.saveUserProfile({
+                    store.loginUser({
                         name,
                         email,
                         institution,
                         program,
                         level
                     });
-                    store.setExplorationMode(false);
                 }
 
                 feedback.className = "form-feedback is-success";
@@ -251,25 +250,24 @@
 
                 setTimeout(() => {
                     location.href = "profile.html";
-                }, 700);
+                }, 600);
             });
 
             // Google signup
             googleBtn?.addEventListener("click", () => {
                 if (store) {
-                    store.saveUserProfile({
+                    store.loginUser({
                         name: "Étudiant Google",
                         email: "etudiant.google@eduvault.tg",
                         institution: instSelect?.value || "ENP Campus Lomé",
                         program: progSelect?.value || "Génie Logiciel"
                     });
-                    store.setExplorationMode(false);
                 }
                 feedback.className = "form-feedback is-success";
                 feedback.textContent = "Compte créé via Google ! Redirection...";
                 setTimeout(() => {
                     location.href = "profile.html";
-                }, 600);
+                }, 500);
             });
 
             populateHierarchy();

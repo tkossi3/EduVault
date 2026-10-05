@@ -1,9 +1,8 @@
-/* Client Auth, Mode Exploration & Gestionnaire d'Identité EduVault 2026 */
+/* Gestionnaire d'Authentification et d'Identité EduVault 2026 */
 (() => {
     const config = window.EDUVAULT_CONFIG || {};
     const sdk = window.supabase;
     const store = window.EduVaultStore;
-    const icons = window.EduVaultIcons || {};
     
     let client = null;
     let requestedAction = null;
@@ -94,23 +93,20 @@
 
                         <div class="form-feedback" id="auth-feedback" role="status" style="margin-top: 6px;"></div>
 
-                        <button class="button button-primary button-full" id="auth-submit-btn" type="submit" style="margin-top: 12px;">
+                        <button class="button button-primary button-full" id="auth-submit-btn" type="submit" style="margin-top: 14px;">
                             <span>Se connecter</span>
                         </button>
                     </form>
 
                     <div class="auth-footer-actions">
                         <button class="text-button" id="auth-switch-mode-btn" type="button">Pas encore de compte ? S'inscrire</button>
-                        <button class="text-button text-muted-btn" id="auth-continue-explore-btn" type="button">
-                            <span>🧭 Continuer en Mode Exploration</span>
-                        </button>
                     </div>
                 </div>
             </dialog>`;
             document.body.insertAdjacentHTML("beforeend", authDialogHtml);
         }
 
-        // 2. Dialogue Quick Popup Compte & Mode Exploration
+        // 2. Dialogue Quick Popup Compte
         if (!document.querySelector("#account-popup-dialog")) {
             const popupHtml = `
             <dialog class="account-popup-dialog" id="account-popup-dialog" aria-labelledby="popup-heading">
@@ -118,7 +114,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
                 <div class="popup-content" id="popup-content-body">
-                    <!-- Rempli dynamiquement selon l'état : Connecté ou Mode Exploration -->
+                    <!-- Rempli dynamiquement -->
                 </div>
             </dialog>`;
             document.body.insertAdjacentHTML("beforeend", popupHtml);
@@ -131,7 +127,7 @@
         }
     };
 
-    // Afficher une notification toast discrète et élégante
+    // Afficher une notification toast
     const showToast = (message, type = "info") => {
         const toast = document.querySelector("#eduvault-toast");
         if (!toast) return;
@@ -168,9 +164,9 @@
             tabLogin?.classList.remove("is-active");
             tabLogin?.setAttribute("aria-selected", "false");
             if (signupFields) signupFields.style.display = "block";
-            if (eyebrow) eyebrow.textContent = "CRÉATION DE COMPTE · 2026";
+            if (eyebrow) eyebrow.textContent = "CRÉATION DE COMPTE ÉTUDIANT";
             if (modalHeading) modalHeading.textContent = "Créer votre compte EduVault";
-            if (modalMessage) modalMessage.textContent = "Rejoignez la communauté étudiante pour partager et consulter les ressources certifiées.";
+            if (modalMessage) modalMessage.textContent = "Rejoignez votre campus pour partager et consulter les ressources certifiées.";
             if (submitBtn) submitBtn.textContent = "Créer mon compte";
             if (switchBtn) switchBtn.textContent = "Déjà un compte ? Se connecter";
         } else {
@@ -200,14 +196,14 @@
         dialog?.showModal();
     };
 
-    // Ouvrir le Popup Rapide de gestion de compte / Mode Exploration
+    // Ouvrir le Popup Rapide de gestion de compte
     const openAccountPopup = () => {
         ensureDialogsInDOM();
         const popup = document.querySelector("#account-popup-dialog");
         const container = document.querySelector("#popup-content-body");
         if (!popup || !container) return;
 
-        const isExploration = store ? store.isExplorationMode() : false;
+        const isUserLoggedIn = store ? store.isLoggedIn() : false;
         const profile = store ? store.getCurrentUserProfile() : { name: "Étudiant", email: "etudiant@eduvault.tg" };
         const isInPages = window.location.pathname.includes("/pages/");
         const loginUrl = isInPages ? "login.html" : "pages/login.html";
@@ -215,37 +211,32 @@
         const profileUrl = isInPages ? "profile.html" : "pages/profile.html";
         const uploadUrl = isInPages ? "upload.html" : "pages/upload.html";
 
-        if (isExploration) {
-            // Vue : MODE EXPLORATION ACTIF
+        if (!isUserLoggedIn) {
+            // Vue : NON CONNECTÉ
             container.innerHTML = `
-                <div class="popup-header-exploration">
-                    <div class="popup-badge-compass">🧭</div>
-                    <div>
-                        <span class="badge badge-accent">Mode Exploration Actif</span>
-                        <h3>Navigation Invité Libre</h3>
+                <div class="popup-user-header">
+                    <div class="popup-avatar" style="background: var(--surface-raised); color: var(--primary);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </div>
+                    <div class="popup-user-info">
+                        <strong>Espace Étudiant</strong>
+                        <small>Connectez-vous pour déposer des documents et gérer votre profil.</small>
                     </div>
                 </div>
-                <p class="popup-text">
-                    Vous explorez actuellement le coffre académique en mode consultation libre. Vous pouvez rechercher et consulter les documents PDF sans restrictions.
-                </p>
-                <div class="popup-actions-list">
-                    <button class="button button-outline button-full popup-btn-consult" id="btn-popup-consult" type="button">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <span>Mode Consulter (Continuer l'exploration)</span>
-                    </button>
+                <div class="popup-actions-list" style="margin-top: 16px;">
                     <a class="button button-primary button-full" href="${loginUrl}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
-                        <span>Se connecter à son compte</span>
+                        <span>Se connecter</span>
                     </a>
                     <a class="button button-outline button-full" href="${registerUrl}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-                        <span>Créer un nouveau compte</span>
+                        <span>Créer un compte</span>
                     </a>
                 </div>
             `;
         } else {
             // Vue : UTILISATEUR CONNECTÉ
-            const initial = (profile.name || "K").slice(0, 1).toUpperCase();
+            const initial = (profile.name || "E").slice(0, 1).toUpperCase();
 
             container.innerHTML = `
                 <div class="popup-user-header">
@@ -262,7 +253,7 @@
                 <div class="popup-actions-list" style="margin-top: 16px;">
                     <a class="button button-primary button-full" href="${profileUrl}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                        <span>Voir mon profil complet</span>
+                        <span>Voir mon profil</span>
                     </a>
                     <a class="button button-outline button-full" href="${uploadUrl}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
@@ -271,7 +262,7 @@
                     <hr class="popup-divider">
                     <button class="button button-danger button-full" id="btn-popup-logout" type="button">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                        <span>Se déconnecter (Mode Visiteur)</span>
+                        <span>Se déconnecter</span>
                     </button>
                 </div>
             `;
@@ -279,47 +270,67 @@
 
         popup.showModal();
 
-        // Événements boutons du popup
-        document.querySelector("#btn-popup-consult")?.addEventListener("click", () => {
-            popup.close();
-            showToast("🧭 Mode Consultation actif : Profitez de toutes les ressources libres !", "info");
-        });
-
         document.querySelector("#btn-popup-logout")?.addEventListener("click", () => {
             popup.close();
             if (store) store.logoutUser();
             updateAccountUI();
-            showToast("Vous êtes maintenant déconnecté et en Mode Exploration.", "info");
-            // Si on est sur la page profil, mettre à jour l'UI
-            document.dispatchEvent(new CustomEvent("eduvault:auth_state_changed"));
+            showToast("Vous êtes maintenant déconnecté.", "info");
+            document.dispatchEvent(new CustomEvent("eduvault:auth_state_changed", { detail: { isLoggedIn: false } }));
         });
     };
 
     // Mise à jour de l'icône de compte dans la barre supérieure
     const updateAccountUI = async () => {
         ensureDialogsInDOM();
-        const label = document.querySelector("#account-initials");
-        const button = document.querySelector("#account-button");
-        const isExploration = store ? store.isExplorationMode() : false;
+        const isInPages = window.location.pathname.includes("/pages/");
+        const loginUrl = isInPages ? "login.html" : "pages/login.html";
+        const profileUrl = isInPages ? "profile.html" : "pages/profile.html";
+        const isUserLoggedIn = store ? store.isLoggedIn() : false;
 
-        if (isExploration) {
-            if (label) label.textContent = "🧭";
-            if (button) {
-                button.setAttribute("aria-label", "Mode Exploration (Cliquer pour options)");
-                button.setAttribute("title", "Mode Exploration (Cliquer pour vous connecter ou explorer)");
-                button.classList.remove("has-user");
-                button.classList.add("is-exploration");
+        // 1. Navigation : Afficher / masquer "Mon Profil"
+        document.querySelectorAll(".nav-link[href*='profile.html']").forEach((link) => {
+            if (isUserLoggedIn) {
+                link.style.display = "";
+            } else {
+                link.style.display = "none";
+            }
+        });
+
+        // 2. Bouton d'action supérieur droit (Top bar)
+        const actionsContainer = document.querySelector(".topbar-actions");
+        if (!actionsContainer) return;
+
+        let accountSlot = document.querySelector("#account-button, .header-auth-btn");
+
+        if (!isUserLoggedIn) {
+            // Utilisateur non connecté -> Bouton "Se connecter"
+            if (accountSlot) {
+                accountSlot.outerHTML = `
+                <a class="button button-sm button-primary header-auth-btn" id="account-button" href="${loginUrl}" aria-label="Se connecter" title="Se connecter à votre compte">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                    <span>Se connecter</span>
+                </a>`;
             }
         } else {
-            const profile = store ? store.getCurrentUserProfile() : { name: "K", email: "etudiant@eduvault.tg" };
-            const initial = (profile.name || "K").slice(0, 1).toUpperCase();
-            if (label) label.textContent = initial;
-            if (button) {
-                button.setAttribute("aria-label", `Espace membre (${profile.email || "etudiant@eduvault.tg"})`);
-                button.setAttribute("title", `Connecté : ${profile.name || "Étudiant"} (Cliquer pour gérer)`);
-                button.classList.add("has-user");
-                button.classList.remove("is-exploration");
+            // Utilisateur connecté -> Cercle Avatar
+            const profile = store ? store.getCurrentUserProfile() : { name: "E", email: "etudiant@eduvault.tg" };
+            const initial = (profile.name || "E").slice(0, 1).toUpperCase();
+
+            if (accountSlot) {
+                accountSlot.outerHTML = `
+                <a class="avatar-button has-user" id="account-button" href="${profileUrl}" aria-label="Espace étudiant (${profile.name})" title="Connecté : ${profile.name}">
+                    <span id="account-initials">${initial}</span>
+                </a>`;
             }
+        }
+
+        // Re-lier le clic sur le bouton de compte
+        const newAccountBtn = document.querySelector("#account-button");
+        if (newAccountBtn && isUserLoggedIn) {
+            newAccountBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                openAccountPopup();
+            });
         }
     };
 
@@ -327,25 +338,11 @@
     const setupEventListeners = () => {
         ensureDialogsInDOM();
 
-        // Clic sur l'icône compte de la barre supérieure -> Ouvre le popup rapide
-        document.querySelector("#account-button")?.addEventListener("click", (event) => {
-            event.preventDefault();
-            openAccountPopup();
-        });
-
         // Tabs Auth
         document.querySelector("#tab-auth-login")?.addEventListener("click", () => setAuthTab("login"));
         document.querySelector("#tab-auth-signup")?.addEventListener("click", () => setAuthTab("signup"));
         document.querySelector("#auth-switch-mode-btn")?.addEventListener("click", () => {
             setAuthTab(currentAuthTab === "login" ? "signup" : "login");
-        });
-
-        // Continuer en Mode Exploration depuis la modale Auth
-        document.querySelector("#auth-continue-explore-btn")?.addEventListener("click", () => {
-            document.querySelector("#auth-dialog")?.close();
-            if (store) store.setExplorationMode(true);
-            updateAccountUI();
-            showToast("🧭 Mode Exploration activé : Consultez librement les cours & annales !", "info");
         });
 
         // Toggle visibilité mot de passe
@@ -391,9 +388,8 @@
             if (feedback) feedback.textContent = "";
 
             if (!client) {
-                // Mode simulation locale
                 if (store) {
-                    store.saveUserProfile({ email, name, institution });
+                    store.loginUser({ email, name, institution });
                 }
                 if (feedback) {
                     feedback.className = "form-feedback is-success";
@@ -407,8 +403,8 @@
                     showToast(`Bienvenue, ${name} ! Espace académique prêt.`, "success");
                     requestedAction?.(null);
                     requestedAction = null;
-                    document.dispatchEvent(new CustomEvent("eduvault:auth_state_changed"));
-                }, 600);
+                    document.dispatchEvent(new CustomEvent("eduvault:auth_state_changed", { detail: { isLoggedIn: true } }));
+                }, 500);
                 return;
             }
 
@@ -434,18 +430,18 @@
                 }
 
                 if (store) {
-                    store.saveUserProfile({ email, name, institution });
+                    store.loginUser({ email, name, institution });
                 }
                 await updateAccountUI();
                 document.querySelector("#auth-dialog")?.close();
                 showToast(`Ravi de vous revoir sur EduVault !`, "success");
                 requestedAction?.(result.data.session);
                 requestedAction = null;
-                document.dispatchEvent(new CustomEvent("eduvault:auth_state_changed"));
+                document.dispatchEvent(new CustomEvent("eduvault:auth_state_changed", { detail: { isLoggedIn: true } }));
             } catch (err) {
                 if (feedback) {
                     feedback.className = "form-feedback";
-                    feedback.textContent = "Erreur de connexion. Veuillez réessayer.";
+                    feedback.textContent = "Erreur de connexion. Veuillez vérifier vos identifiants.";
                 }
             }
         });
@@ -454,12 +450,12 @@
         document.querySelector("#google-sign-in")?.addEventListener("click", async () => {
             if (!client) {
                 if (store) {
-                    store.saveUserProfile({ email: "etudiant.google@eduvault.tg", name: "Étudiant Google" });
+                    store.loginUser({ email: "etudiant.google@eduvault.tg", name: "Étudiant Google" });
                 }
                 updateAccountUI();
                 document.querySelector("#auth-dialog")?.close();
-                showToast("Connexion Google effectuée !", "success");
-                document.dispatchEvent(new CustomEvent("eduvault:auth_state_changed"));
+                showToast("Connexion réussie avec Google !", "success");
+                document.dispatchEvent(new CustomEvent("eduvault:auth_state_changed", { detail: { isLoggedIn: true } }));
                 return;
             }
             await client.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.href } });
@@ -475,8 +471,8 @@
             });
         });
 
-        // Écouteur d'événements personnalisés
-        document.addEventListener("eduvault:auth_mode_changed", () => updateAccountUI());
+        // Écouteurs d'événements
+        document.addEventListener("eduvault:auth_state_changed", () => updateAccountUI());
         document.addEventListener("eduvault:logout", () => updateAccountUI());
         document.addEventListener("eduvault:profile_updated", () => updateAccountUI());
     };

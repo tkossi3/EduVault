@@ -20,6 +20,15 @@
     let selectedFile = null;
     let fileDataUrl = null;
 
+    const readFileAsDataUrl = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = (e) => reject(e);
+            reader.readAsDataURL(file);
+        });
+    };
+
     // 1. Charger les matières du semestre et de la filière
     const populateCourses = () => {
         if (!courseSelect || !store) return;
@@ -80,7 +89,6 @@
         let programs = store.getProgramsByInstitutionAndDegree(instId || instName, degreeType);
 
         if (!programs || !programs.length) {
-            // Repli sur toutes les filières de l'établissement
             programs = store.getProgramsByInstitution(instId || instName);
         }
 
@@ -122,7 +130,7 @@
     // Événements cascade hiérarchique
     instSelect?.addEventListener("change", () => {
         if (instSelect.value === "__NEW__") {
-            const newName = prompt("Entrez le nom complet de l'établissement universitaire :");
+            const newName = prompt("Entrez le nom complet du nouvel établissement universitaire :");
             if (!newName || !newName.trim()) {
                 populateInstitutions();
                 return;
@@ -250,20 +258,20 @@
         });
     }
 
-    const handleFile = (file) => {
+    const handleFile = async (file) => {
         if (!file) return;
         if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
             if (feedback) {
                 feedback.className = "form-feedback";
-                feedback.textContent = "Seuls les fichiers PDF sont acceptés.";
+                feedback.textContent = "Seuls les fichiers PDF sont acceptés pour la bibliothèque académique.";
             }
             return;
         }
 
-        if (file.size > 20 * 1024 * 1024) {
+        if (file.size > 30 * 1024 * 1024) {
             if (feedback) {
                 feedback.className = "form-feedback";
-                feedback.textContent = "Le fichier dépasse la taille maximale autorisée de 20 Mo.";
+                feedback.textContent = "Le fichier dépasse la taille maximale autorisée de 30 Mo.";
             }
             return;
         }
@@ -271,12 +279,11 @@
         selectedFile = file;
         const sizeFormatted = (file.size / (1024 * 1024)).toFixed(2) + " Mo";
 
-        // Convertir le PDF en data URL pour lecture immédiate par le lecteur de document
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            fileDataUrl = e.target.result;
-        };
-        reader.readAsDataURL(file);
+        try {
+            fileDataUrl = await readFileAsDataUrl(file);
+        } catch (e) {
+            console.warn("Read file error:", e);
+        }
 
         if (fileInfo) {
             fileInfo.innerHTML = `
@@ -298,14 +305,16 @@
     // Soumission du formulaire
     form?.addEventListener("submit", async (event) => {
         event.preventDefault();
-        if (!selectedFile && (!fileInput || !fileInput.files[0])) {
+        const fileToUpload = selectedFile || (fileInput?.files ? fileInput.files[0] : null);
+
+        if (!fileToUpload) {
             feedback.className = "form-feedback";
             feedback.textContent = "Veuillez sélectionner un fichier PDF à déposer.";
             return;
         }
 
         const formData = new FormData(form);
-        const title = formData.get("title")?.trim() || "Document Sans Titre";
+        const title = formData.get("title")?.trim() || fileToUpload.name.replace(/\.[^/.]+$/, "");
         const institution = formData.get("institution") || "ENP Campus Lomé";
         const degreeType = formData.get("degree_type") || "Licence Professionnelle";
         const program = progSelect?.value || "Génie Logiciel & Systèmes d'Information";
@@ -325,7 +334,6 @@
                 return;
             }
             courseName = customName;
-            // Créer la matière dans le store
             const selectedProgOption = progSelect.selectedOptions[0];
             const progId = selectedProgOption?.dataset.id || "prog-1";
             store.addCourse({ name: courseName, program_id: progId, semester });
@@ -334,7 +342,16 @@
         }
 
         feedback.className = "form-feedback is-success";
-        feedback.textContent = "Validation et enregistrement du document PDF dans le coffre…";
+        feedback.textContent = "Traitement et enregistrement du document PDF dans le coffre…";
+
+        // S'assurer que le fichier est converti en DataURL
+        if (!fileDataUrl && fileToUpload) {
+            try {
+                fileDataUrl = await readFileAsDataUrl(fileToUpload);
+            } catch (e) {
+                console.warn("Conversion error:", e);
+            }
+        }
 
         const docPayload = {
             title,
@@ -345,17 +362,22 @@
             course: courseName,
             category,
             academic_year: academicYear,
-            file_name: selectedFile ? selectedFile.name : "document.pdf",
-            file_size: selectedFile ? selectedFile.size : 2048576,
-            file_data: fileDataUrl // Stockage du PDF pour affichage direct
+            file_name: fileToUpload.name || "document.pdf",
+            file_size: fileToUpload.size || 2048576,
+            file_data: fileDataUrl
         };
 
         try {
-            const created = store.addDocument(docPayload);
-            feedback.textContent = "Document déposé avec succès ! Ouverture du lecteur…";
-            setTimeout(() => {
-                location.href = `document-view.html?id=${encodeURIComponent(created.id)}`;
-            }, 700);
+            const created = await store.addDocument(docPayload);
+            
+            // Stocker également dans la clé de transition immédiate
+            if (fileDataUrl) {
+                sessionStorage.setItem("eduvault_active_pdf", fileDataUrl);
+                sessionStorage.setItem(`eduvault_file_${created.id}`, fileDataUrl);
+            }
+
+            feedback.textContent = "Document déposé avec succès ! Ouverture immédiate du lecteur…";
+            location.href = `document-view.html?id=${encodeURIComponent(created.id)}`;
         } catch (error) {
             feedback.className = "form-feedback";
             feedback.textContent = "Une erreur est survenue lors de l'enregistrement : " + error.message;

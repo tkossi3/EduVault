@@ -1,8 +1,108 @@
-/* Gestionnaire de données EduVault — Stockage local réactif & passerelle Supabase/API */
+/* Gestionnaire de données EduVault — Stockage local réactif, IndexedDB & passerelle Supabase/API */
 (() => {
     const STORAGE_KEY = "eduvault_data_v2026";
     const USER_KEY = "eduvault_current_user_v2026";
     const NOTIF_KEY = "eduvault_notifications_v2026";
+    const AUTH_KEY = "eduvault_auth_session_v2026";
+    const DB_NAME = "eduvault_files_db_v2026";
+    const DB_VERSION = 1;
+    const STORE_FILES = "pdf_files";
+
+    // Cache mémoire temporaire
+    const memoryFilesCache = new Map();
+
+    // ==================== INDEXEDDB POUR FICHIERS PDF EXACTS ====================
+    const openFilesDB = () => {
+        return new Promise((resolve) => {
+            if (!window.indexedDB) {
+                resolve(null);
+                return;
+            }
+            try {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_FILES)) {
+                        db.createObjectStore(STORE_FILES, { keyPath: "id" });
+                    }
+                };
+                request.onsuccess = (event) => resolve(event.target.result);
+                request.onerror = () => resolve(null);
+            } catch (err) {
+                resolve(null);
+            }
+        });
+    };
+
+    const storePdfFile = async (docId, fileData, fileName) => {
+        if (!docId || !fileData) return false;
+        
+        // 1. Stocker en mémoire
+        memoryFilesCache.set(docId, fileData);
+
+        // 2. Stocker en sessionStorage pour accès immédiat inter-pages
+        try {
+            sessionStorage.setItem(`eduvault_file_${docId}`, fileData);
+        } catch (e) {
+            console.warn("SessionStorage full for file:", e);
+        }
+
+        // 3. Stocker de façon permanente dans IndexedDB
+        try {
+            const db = await openFilesDB();
+            if (!db) return true;
+            return new Promise((resolve) => {
+                const tx = db.transaction(STORE_FILES, "readwrite");
+                const store = tx.objectStore(STORE_FILES);
+                store.put({ id: docId, data: fileData, name: fileName, updated_at: Date.now() });
+                tx.oncomplete = () => resolve(true);
+                tx.onerror = () => resolve(false);
+            });
+        } catch (e) {
+            console.warn("IndexedDB put error:", e);
+            return false;
+        }
+    };
+
+    const getPdfFile = async (docId) => {
+        if (!docId) return null;
+
+        // 1. Essai en mémoire vive
+        if (memoryFilesCache.has(docId)) {
+            return memoryFilesCache.get(docId);
+        }
+
+        // 2. Essai en sessionStorage
+        try {
+            const sessionData = sessionStorage.getItem(`eduvault_file_${docId}`);
+            if (sessionData) {
+                memoryFilesCache.set(docId, sessionData);
+                return sessionData;
+            }
+        } catch {}
+
+        // 3. Essai dans IndexedDB
+        try {
+            const db = await openFilesDB();
+            if (db) {
+                const idbResult = await new Promise((resolve) => {
+                    const tx = db.transaction(STORE_FILES, "readonly");
+                    const store = tx.objectStore(STORE_FILES);
+                    const req = store.get(docId);
+                    req.onsuccess = () => resolve(req.result ? req.result.data : null);
+                    req.onerror = () => resolve(null);
+                });
+                if (idbResult) {
+                    memoryFilesCache.set(docId, idbResult);
+                    return idbResult;
+                }
+            }
+        } catch (e) {
+            console.warn("IndexedDB read error:", e);
+        }
+
+        return null;
+    };
 
     // Données initiales enrichies (Année 2026)
     const initialInstitutions = [
@@ -84,13 +184,16 @@
             title: "Algorithmique Avancée & Graphes — Examen Corrigé 2026",
             category: "Examen/Annales",
             academic_year: "2025-2026",
-            course_id: "course-1",
-            course: "Algorithmique Avancée & Structures de Données",
+            course_id: "course-5",
+            course: "Structures de Données Avancées & Graphes",
+            semester: 2,
+            degree_type: "Licence Professionnelle",
             program: "Génie Logiciel & Systèmes d'Information",
             institution: "ENP Campus Lomé",
-            uploaded_by: "user-demo",
+            uploaded_by: "user-academic",
             uploader_name: "Kossi Tech",
             file_size: 2411724,
+            file_name: "Examen_Algo_Avancee_2026.pdf",
             status: "approved",
             is_public: true,
             downloads_count: 142,
@@ -102,13 +205,16 @@
             title: "Bases de Données & Modélisation UML/SQL — Support de Cours Complet",
             category: "Support de Cours",
             academic_year: "2025-2026",
-            course_id: "course-2",
+            course_id: "course-6",
             course: "Bases de Données Relationnelles & SQL",
+            semester: 3,
+            degree_type: "Licence Professionnelle",
             program: "Génie Logiciel & Systèmes d'Information",
             institution: "ENP Campus Lomé",
-            uploaded_by: "user-demo",
+            uploaded_by: "user-academic",
             uploader_name: "Kossi Tech",
             file_size: 4194304,
+            file_name: "Support_BDD_SQL_UML.pdf",
             status: "approved",
             is_public: true,
             downloads_count: 89,
@@ -120,13 +226,16 @@
             title: "Analyse II : Séries, Intégrales Multiples & Corrigés TD",
             category: "TD/TP",
             academic_year: "2025-2026",
-            course_id: "course-5",
+            course_id: "course-14",
             course: "Analyse Mathématique II & Équations Différentielles",
+            semester: 2,
+            degree_type: "Licence Fondamentale",
             program: "Mathématiques & Informatique Fondamentale",
             institution: "Université de Lomé",
             uploaded_by: "user-academic",
             uploader_name: "Ami A.",
             file_size: 1845120,
+            file_name: "TD_Analyse_II_Corriges.pdf",
             status: "approved",
             is_public: true,
             downloads_count: 215,
@@ -138,13 +247,16 @@
             title: "Fiche de Révision Synthétique : Circuits Logiques & Bascules",
             category: "Fiche de révision",
             academic_year: "2025-2026",
-            course_id: "course-4",
+            course_id: "course-19",
             course: "Électronique Numérique & Microprocesseurs",
+            semester: 4,
+            degree_type: "Diplôme d'Ingénieur",
             program: "Génie Électrique & Télécommunications",
             institution: "ENP Campus Lomé",
-            uploaded_by: "user-demo",
+            uploaded_by: "user-academic",
             uploader_name: "Kossi Tech",
             file_size: 940000,
+            file_name: "Fiche_Circuits_Logiques.pdf",
             status: "approved",
             is_public: true,
             downloads_count: 67,
@@ -156,45 +268,40 @@
             title: "Microéconomie : Théorie du Consommateur & Exercices Types",
             category: "TD/TP",
             academic_year: "2025-2026",
-            course_id: "course-6",
+            course_id: "course-16",
             course: "Microéconomie Appliquée & Marchés",
+            semester: 2,
+            degree_type: "Licence Fondamentale",
             program: "Sciences Économiques & Gestion (FASEG)",
             institution: "Université de Lomé",
-            uploaded_by: "user-faseg",
-            uploader_name: "David K.",
-            file_size: 1350000,
+            uploaded_by: "user-academic",
+            uploader_name: "Koffi M.",
+            file_size: 1520000,
+            file_name: "Microeconomie_Consommateur_TD.pdf",
             status: "approved",
             is_public: true,
-            downloads_count: 53,
-            views_count: 190,
-            created_at: "2026-03-05T08:45:00Z"
+            downloads_count: 112,
+            views_count: 430,
+            created_at: "2026-02-25T10:00:00Z"
         }
     ];
 
     const initialNotifications = [
         {
             id: "notif-1",
-            title: "Votre document « Algorithmique Avancée — Examen Corrigé 2026 » a été validé et publié !",
-            type: "approval",
-            document_id: "doc-algo-2026",
-            created_at: "2026-03-10T10:15:00Z",
+            title: "Bienvenue sur EduVault — Le coffre-fort académique universitaire 2026 !",
+            type: "welcome",
+            document_id: null,
+            created_at: "2026-03-01T08:00:00Z",
             is_read: false
         },
         {
             id: "notif-2",
-            title: "Nouveau document déposé pour ENP Campus Lomé : « Bases de Données & Modélisation UML »",
+            title: "Nouveau document disponible : Examen Corrigé Algorithmique Avancée S3.",
             type: "new_document",
-            document_id: "doc-sql-2026",
-            created_at: "2026-03-09T14:30:00Z",
+            document_id: "doc-algo-2026",
+            created_at: "2026-03-02T11:30:00Z",
             is_read: false
-        },
-        {
-            id: "notif-3",
-            title: "Nouvelle ressource disponible en Analyse II (Université de Lomé).",
-            type: "new_document",
-            document_id: "doc-math-2026",
-            created_at: "2026-03-08T09:00:00Z",
-            is_read: true
         }
     ];
 
@@ -231,56 +338,42 @@
         }
     };
 
-    // Gestion du profil utilisateur courant et mode exploration
-    const AUTH_MODE_KEY = "eduvault_auth_mode_v2026";
-
-    const isExplorationMode = () => {
+    // ==================== AUTHENTIFICATION & STATUT CONNECTÉ ====================
+    const isLoggedIn = () => {
         try {
-            const mode = localStorage.getItem(AUTH_MODE_KEY);
-            return mode === "exploration";
+            return localStorage.getItem(AUTH_KEY) === "active";
         } catch {
             return false;
         }
     };
 
-    const setExplorationMode = (enable = true) => {
-        try {
-            if (enable) {
-                localStorage.setItem(AUTH_MODE_KEY, "exploration");
-            } else {
-                localStorage.setItem(AUTH_MODE_KEY, "authenticated");
-            }
-            document.dispatchEvent(new CustomEvent("eduvault:auth_mode_changed", { detail: { isExploration: enable } }));
-        } catch (e) {
-            console.warn("Could not set auth mode", e);
-        }
+    const isExplorationMode = () => {
+        return !isLoggedIn();
     };
 
     const getCurrentUserProfile = () => {
         try {
             const raw = localStorage.getItem(USER_KEY);
-            if (!raw) {
-                const defaultProfile = {
-                    id: "user-demo",
-                    name: "Kossi Tech",
-                    email: "etudiant@eduvault.tg",
-                    institution: "ENP Campus Lomé",
-                    institution_id: "inst-1",
-                    program: "Génie Logiciel & Systèmes d'Information",
-                    program_id: "prog-1",
-                    level: "Licence 3",
-                    bio: "Étudiant passionné d'informatique, de partage de ressources académiques et d'innovation technologique à Lomé.",
-                    avatar: "K",
-                    joined_year: "2026"
-                };
-                localStorage.setItem(USER_KEY, JSON.stringify(defaultProfile));
-                return defaultProfile;
+            if (raw) {
+                return JSON.parse(raw);
             }
-            return JSON.parse(raw);
+            return {
+                id: "user-student",
+                name: "Étudiant Universitaire",
+                email: "etudiant@eduvault.tg",
+                institution: "ENP Campus Lomé",
+                institution_id: "inst-1",
+                program: "Génie Logiciel & Systèmes d'Information",
+                program_id: "prog-1",
+                level: "Licence 3",
+                bio: "Étudiant à Lomé, partage et consultation de documents académiques.",
+                avatar: "E",
+                joined_year: "2026"
+            };
         } catch {
             return {
-                id: "user-demo",
-                name: "Étudiant EduVault",
+                id: "user-student",
+                name: "Étudiant Universitaire",
                 email: "etudiant@eduvault.tg",
                 institution: "ENP Campus Lomé",
                 level: "Licence 3"
@@ -288,18 +381,44 @@
         }
     };
 
+    const loginUser = (profileData = {}) => {
+        try {
+            localStorage.setItem(AUTH_KEY, "active");
+            const current = getCurrentUserProfile();
+            const updated = {
+                ...current,
+                ...profileData,
+                id: profileData.id || current.id || `user-${Date.now()}`
+            };
+            localStorage.setItem(USER_KEY, JSON.stringify(updated));
+            document.dispatchEvent(new CustomEvent("eduvault:auth_state_changed", { detail: { isLoggedIn: true, profile: updated } }));
+            return updated;
+        } catch (e) {
+            console.warn("Could not save login", e);
+            return null;
+        }
+    };
+
     const saveUserProfile = (profile) => {
-        const current = getCurrentUserProfile();
-        const updated = { ...current, ...profile };
-        localStorage.setItem(USER_KEY, JSON.stringify(updated));
-        setExplorationMode(false);
-        document.dispatchEvent(new CustomEvent("eduvault:profile_updated", { detail: updated }));
-        return updated;
+        return loginUser(profile);
     };
 
     const logoutUser = () => {
-        setExplorationMode(true);
-        document.dispatchEvent(new CustomEvent("eduvault:logout", { detail: { isExploration: true } }));
+        try {
+            localStorage.removeItem(AUTH_KEY);
+            document.dispatchEvent(new CustomEvent("eduvault:auth_state_changed", { detail: { isLoggedIn: false } }));
+            document.dispatchEvent(new CustomEvent("eduvault:logout"));
+        } catch (e) {
+            console.warn("Could not logout", e);
+        }
+    };
+
+    const setExplorationMode = (enable = true) => {
+        if (enable) {
+            logoutUser();
+        } else {
+            loginUser();
+        }
     };
 
     // Gestion des notifications
@@ -366,7 +485,6 @@
             .trim();
     };
 
-    // Vérification d'unicité d'établissement (ex: ENP Campus Lomé)
     const checkInstitutionExists = (name) => {
         if (!name || !name.trim()) return null;
         const normalized = normalizeName(name);
@@ -399,8 +517,6 @@
     };
 
     // ==================== GESTION DE LA HIÉRARCHIE ACADÉMIQUE ====================
-    // Établissement -> Diplôme/Cycle -> Filière -> Semestre -> Matière/Cours -> Documents
-
     const getDegreeTypes = () => initialDegreeTypes;
 
     const getDegreesByInstitution = (institutionIdentifier) => {
@@ -512,26 +628,26 @@
         return state.documents.find((d) => d.id === docId) || null;
     };
 
-    // Ajout d'un document
-    const addDocument = (docData) => {
+    // Ajout d'un document (asynchrone pour persistance garantie)
+    const addDocument = async (docData) => {
         const state = loadState();
         const user = getCurrentUserProfile();
+        const docId = `doc-${Date.now()}`;
         const newDoc = {
-            id: `doc-${Date.now()}`,
+            id: docId,
             title: docData.title.trim(),
             category: docData.category || "Support de Cours",
             academic_year: docData.academic_year || "2025-2026",
             course_id: docData.course_id || "course-1",
             course: docData.course || "Ressource Académique",
-            semester: docData.semester || 1,
+            semester: parseInt(docData.semester, 10) || 1,
             degree_type: docData.degree_type || "Licence Professionnelle",
             program: docData.program || user.program || "Génie Logiciel & Systèmes d'Information",
             institution: docData.institution || user.institution || "ENP Campus Lomé",
-            uploaded_by: user.id,
-            uploader_name: user.name,
+            uploaded_by: user.id || "user-student",
+            uploader_name: user.name || "Étudiant",
             file_size: docData.file_size || 2048576,
             file_name: docData.file_name || "document.pdf",
-            file_data: docData.file_data || null, // data URL du fichier réel
             file_url: docData.file_url || null,
             status: "approved",
             is_public: true,
@@ -539,6 +655,12 @@
             views_count: 1,
             created_at: new Date().toISOString()
         };
+
+        // Sauvegarder le fichier PDF réel intégralement de manière synchrone & asynchrone
+        if (docData.file_data) {
+            await storePdfFile(docId, docData.file_data, newDoc.file_name);
+        }
+
         state.documents.unshift(newDoc);
         saveState(state);
 
@@ -570,9 +692,11 @@
     window.EduVaultStore = {
         loadState,
         saveState,
+        isLoggedIn,
+        loginUser,
+        logoutUser,
         isExplorationMode,
         setExplorationMode,
-        logoutUser,
         getCurrentUserProfile,
         saveUserProfile,
         getNotifications,
@@ -593,7 +717,9 @@
         addProgram,
         getDocumentById,
         addDocument,
-        deleteDocument
+        deleteDocument,
+        storePdfFile,
+        getPdfFile
     };
 
     document.addEventListener("DOMContentLoaded", () => {

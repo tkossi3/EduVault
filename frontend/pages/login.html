@@ -126,11 +126,11 @@
                     <div class="auth-explore-box">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
                         <div style="flex: 1;">
-                            <strong>Vous voulez juste jeter un œil ?</strong>
-                            <span>Consultez librement les cours sans compte.</span>
+                            <strong>Visiteur libre</strong>
+                            <span>Consultez librement l'ensemble des documents sans compte.</span>
                         </div>
-                        <a class="button button-outline button-sm" href="../index.html?mode=exploration" id="link-explore-mode">
-                            <span>Explorer</span>
+                        <a class="button button-outline button-sm" href="../index.html">
+                            <span>Bibliothèque</span>
                         </a>
                     </div>
                 </div>
@@ -158,11 +158,6 @@
                 passwordInput.type = isPassword ? "text" : "password";
             });
 
-            // Bouton Mode Exploration
-            document.querySelector("#link-explore-mode")?.addEventListener("click", () => {
-                if (store) store.setExplorationMode(true);
-            });
-
             // Soumission connexion
             form?.addEventListener("submit", (e) => {
                 e.preventDefault();
@@ -172,8 +167,7 @@
                 if (feedback) feedback.textContent = "";
 
                 if (store) {
-                    store.saveUserProfile({ email, name: email.split("@")[0] });
-                    store.setExplorationMode(false);
+                    store.loginUser({ email, name: email.split("@")[0] });
                 }
 
                 feedback.className = "form-feedback is-success";
@@ -181,20 +175,19 @@
 
                 setTimeout(() => {
                     location.href = "profile.html";
-                }, 700);
+                }, 600);
             });
 
             // Google login
             googleBtn?.addEventListener("click", () => {
                 if (store) {
-                    store.saveUserProfile({ email: "etudiant.google@eduvault.tg", name: "Étudiant Google" });
-                    store.setExplorationMode(false);
+                    store.loginUser({ email: "etudiant.google@eduvault.tg", name: "Étudiant Google" });
                 }
                 feedback.className = "form-feedback is-success";
                 feedback.textContent = "Connexion Google réussie ! Redirection...";
                 setTimeout(() => {
                     location.href = "profile.html";
-                }, 600);
+                }, 500);
             });
 
             document.querySelector("#forgot-password-link")?.addEventListener("click", (e) => {

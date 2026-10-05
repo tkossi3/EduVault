@@ -131,12 +131,27 @@
     transform: translateY(-1px);
 }
 
-.avatar-button {
-    border-color: var(--primary-border);
-    background: var(--primary-light);
-    color: var(--primary);
+.header-auth-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
     font-size: 13px;
     font-weight: 700;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 2px 8px rgba(30, 58, 138, 0.2);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+}
+
+.header-auth-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(30, 58, 138, 0.35);
+}
+
+.header-auth-btn svg {
+    width: 15px;
+    height: 15px;
 }
 
 .avatar-button.has-user {
@@ -725,4 +740,154 @@ textarea.field-control {
     background: transparent;
     color: var(--muted);
     border: 1px solid var(--line);
+}
+
+/* ==================== HIÉRARCHIE & CHIPS SUR LES CARTES DE DOCUMENTS ==================== */
+.doc-card-hierarchy-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 8px 0;
+}
+
+.doc-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: var(--radius-xs);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.doc-chip-inst {
+    background: var(--surface-raised);
+    color: var(--text);
+    border: 1px solid var(--line);
+}
+
+.doc-chip-prog {
+    background: color-mix(in srgb, var(--primary) 8%, transparent);
+    color: var(--primary);
+    border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.doc-card-course {
+    margin: 4px 0 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* ==================== VISIONNEUSE PDF EXACTE ==================== */
+.reader-nav-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.reader-meta-badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.reader-top-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.page-jump-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-xs);
+    background: var(--surface);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.page-jump-wrapper input[type="number"] {
+    width: 48px;
+    padding: 3px 6px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--surface-raised);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    outline: none;
+    -moz-appearance: textfield;
+}
+
+.page-jump-wrapper input[type="number"]::-webkit-outer-spin-button,
+.page-jump-wrapper input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.zoom-badge {
+    padding: 4px 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-xs);
+    background: var(--surface);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+}
+
+.pdf-canvas-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 600px;
+    padding: 24px 12px;
+    overflow-x: auto;
+}
+
+#pdf-canvas {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-xs);
+    background: #ffffff;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
+    transition: transform var(--transition-fast);
+}
+
+.pdf-loading-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+}
+
+.spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--line);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }

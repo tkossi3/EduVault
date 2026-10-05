@@ -86,7 +86,9 @@
                 <div class="program-list">
                     ${programs.length ? programs.map((program) => {
                         const courses = data.courses.filter((course) => course.program_id === program.id);
-                        const semesters = Array.from({ length: 6 }, (_, index) => index + 1);
+                        const semesters = (store && typeof store.getSemestersForProgram === "function")
+                            ? store.getSemestersForProgram(program.id)
+                            : Array.from({ length: 6 }, (_, index) => index + 1);
                         
                         return `
                         <details class="program-accordion">

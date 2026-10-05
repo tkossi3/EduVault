@@ -209,6 +209,11 @@
 
         const isExploration = store ? store.isExplorationMode() : false;
         const profile = store ? store.getCurrentUserProfile() : { name: "Étudiant", email: "etudiant@eduvault.tg" };
+        const isInPages = window.location.pathname.includes("/pages/");
+        const loginUrl = isInPages ? "login.html" : "pages/login.html";
+        const registerUrl = isInPages ? "register.html" : "pages/register.html";
+        const profileUrl = isInPages ? "profile.html" : "pages/profile.html";
+        const uploadUrl = isInPages ? "upload.html" : "pages/upload.html";
 
         if (isExploration) {
             // Vue : MODE EXPLORATION ACTIF
@@ -228,22 +233,19 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                         <span>Mode Consulter (Continuer l'exploration)</span>
                     </button>
-                    <button class="button button-primary button-full" id="btn-popup-login" type="button">
+                    <a class="button button-primary button-full" href="${loginUrl}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
                         <span>Se connecter à son compte</span>
-                    </button>
-                    <button class="button button-outline button-full" id="btn-popup-signup" type="button">
+                    </a>
+                    <a class="button button-outline button-full" href="${registerUrl}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
                         <span>Créer un nouveau compte</span>
-                    </button>
+                    </a>
                 </div>
             `;
         } else {
             // Vue : UTILISATEUR CONNECTÉ
             const initial = (profile.name || "K").slice(0, 1).toUpperCase();
-            const isInPages = window.location.pathname.includes("/pages/");
-            const profileUrl = isInPages ? "profile.html" : "pages/profile.html";
-            const uploadUrl = isInPages ? "upload.html" : "pages/upload.html";
 
             container.innerHTML = `
                 <div class="popup-user-header">
@@ -251,13 +253,16 @@
                     <div class="popup-user-info">
                         <strong>${profile.name || "Étudiant EduVault"}</strong>
                         <small>${profile.email || "etudiant@eduvault.tg"}</small>
-                        <span class="badge badge-primary" style="margin-top: 4px;">${profile.institution || "ENP Campus Lomé"}</span>
+                        <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">
+                            <span class="badge badge-primary" style="font-size: 10px;">${profile.institution || "ENP Campus Lomé"}</span>
+                            <span class="badge badge-outline" style="font-size: 10px;">${profile.program || "Génie Logiciel"}</span>
+                        </div>
                     </div>
                 </div>
                 <div class="popup-actions-list" style="margin-top: 16px;">
-                    <a class="button button-outline button-full" href="${profileUrl}">
+                    <a class="button button-primary button-full" href="${profileUrl}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                        <span>Mon Profil & Mes Dépôts</span>
+                        <span>Voir mon profil complet</span>
                     </a>
                     <a class="button button-outline button-full" href="${uploadUrl}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
@@ -266,7 +271,7 @@
                     <hr class="popup-divider">
                     <button class="button button-danger button-full" id="btn-popup-logout" type="button">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                        <span>Se déconnecter (Mode Exploration)</span>
+                        <span>Se déconnecter (Mode Visiteur)</span>
                     </button>
                 </div>
             `;
@@ -278,16 +283,6 @@
         document.querySelector("#btn-popup-consult")?.addEventListener("click", () => {
             popup.close();
             showToast("🧭 Mode Consultation actif : Profitez de toutes les ressources libres !", "info");
-        });
-
-        document.querySelector("#btn-popup-login")?.addEventListener("click", () => {
-            popup.close();
-            openAuthDialog("login");
-        });
-
-        document.querySelector("#btn-popup-signup")?.addEventListener("click", () => {
-            popup.close();
-            openAuthDialog("signup");
         });
 
         document.querySelector("#btn-popup-logout")?.addEventListener("click", () => {

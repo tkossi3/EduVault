@@ -61,14 +61,14 @@
                         </div>
                     </div>
                     <div class="exploration-cta-group">
-                        <button class="button button-primary" id="btn-explore-login" type="button">
+                        <a class="button button-primary" href="login.html">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
                             <span>Se connecter à mon compte</span>
-                        </button>
-                        <button class="button button-outline" id="btn-explore-signup" type="button">
+                        </a>
+                        <a class="button button-outline" href="register.html">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
                             <span>Créer un compte étudiant</span>
-                        </button>
+                        </a>
                         <a class="button button-accent" href="../index.html">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                             <span>Continuer à Explorer</span>
@@ -77,8 +77,6 @@
                 </div>`;
                 if (profileLayout) {
                     profileLayout.insertAdjacentHTML("beforebegin", guestCardHtml);
-                    document.querySelector("#btn-explore-login")?.addEventListener("click", () => auth?.open("login"));
-                    document.querySelector("#btn-explore-signup")?.addEventListener("click", () => auth?.open("signup"));
                 }
             } else {
                 const card = document.querySelector("#profile-exploration-card");

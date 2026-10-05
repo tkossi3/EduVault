@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f8fafc">
+    <meta name="description" content="Connexion à votre espace universitaire EduVault — Le coffre académique certifié 2026.">
+    <title>Connexion — EduVault 2026</title>
+    <link rel="manifest" href="../manifest.json">
+    <link rel="icon" href="../assets/eduvault.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Manrope:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../styles/variables.css">
+    <link rel="stylesheet" href="../styles/main.css">
+    <link rel="stylesheet" href="../styles/animations.css">
+    <link rel="stylesheet" href="../styles/components.css">
+    <link rel="stylesheet" href="../styles/pages.css">
+</head>
+
+<body class="auth-page-body">
+    <div class="auth-page-wrapper">
+        <!-- PANNEAU GAUCHE : VITRINE & MARQUE -->
+        <aside class="auth-showcase-panel">
+            <a class="brand auth-brand" href="../index.html">
+                <img src="../assets/eduvault.svg" alt="Logo EduVault" width="38" height="38">
+                <span>Edu<span class="brand-accent">Vault</span></span>
+            </a>
+
+            <div class="auth-showcase-content">
+                <div class="showcase-badge">
+                    <span class="badge badge-accent">Session 2026</span>
+                    <span>Banque Universitaire Certifiée</span>
+                </div>
+                <h1>Votre coffre académique.<br><span>Toujours à portée de main.</span></h1>
+                <p>Retrouvez vos cours, TD corrigés et annales d'examens classés par école et par filière. Partagez vos documents et réussissez votre semestre.</p>
+
+                <div class="auth-stats-strip">
+                    <div class="auth-stat-item">
+                        <strong>100% PDF</strong>
+                        <small>Lecture haute fidélité</small>
+                    </div>
+                    <div class="auth-stat-item">
+                        <strong>Campus Réunis</strong>
+                        <small>ENP Lomé, UL, Kara, ESA...</small>
+                    </div>
+                    <div class="auth-stat-item">
+                        <strong>Filières & Parcours</strong>
+                        <small>Génie Logiciel, Éco, Droit...</small>
+                    </div>
+                </div>
+
+                <div class="auth-testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p>« EduVault m'a permis d'accéder à toutes les annales corrigées de ma filière en un seul clic avant les partiels. »</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">K</div>
+                        <div>
+                            <strong>Kossi T.</strong>
+                            <small>Génie Logiciel · ENP Campus Lomé</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="auth-showcase-footer">
+                <span>© 2026 EduVault · Plateforme Universitaire Libre</span>
+            </div>
+        </aside>
+
+        <!-- PANNEAU DROIT : FORMULAIRE DE CONNEXION -->
+        <main class="auth-form-panel">
+            <div class="auth-form-card">
+                <div class="auth-form-header">
+                    <div class="mobile-brand-wrapper">
+                        <a class="brand" href="../index.html">
+                            <img src="../assets/eduvault.svg" alt="" width="32" height="32">
+                            <span>Edu<span class="brand-accent">Vault</span></span>
+                        </a>
+                    </div>
+                    <p class="eyebrow"><span class="eyebrow-mark"></span> ESPACE ÉTUDIANT</p>
+                    <h2>Ravi de vous revoir</h2>
+                    <p class="auth-subtitle">Connectez-vous pour accéder à vos documents, vos filières et vos statistiques.</p>
+                </div>
+
+                <!-- BOUTON GOOGLE -->
+                <button class="button button-outline google-button" id="login-google-btn" type="button">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                    <span>Continuer avec Google</span>
+                </button>
+
+                <div class="dialog-divider"><span>ou avec votre e-mail</span></div>
+
+                <form id="standalone-login-form">
+                    <div class="field-group">
+                        <label class="field-label" for="login-email">Adresse e-mail universitaire</label>
+                        <input class="field-control" id="login-email" name="email" type="email" placeholder="etudiant@universite.tg" autocomplete="email" required>
+                    </div>
+
+                    <div class="field-group" style="margin-top: 14px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label class="field-label" for="login-password">Mot de passe</label>
+                            <a class="text-link-mini" href="#" id="forgot-password-link">Mot de passe oublié ?</a>
+                        </div>
+                        <div class="password-input-wrapper">
+                            <input class="field-control" id="login-password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" minlength="6" required>
+                            <button type="button" class="password-toggle-btn" id="toggle-login-password" aria-label="Afficher/masquer le mot de passe">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="login-feedback" class="form-feedback" style="margin-top: 8px;"></div>
+
+                    <button class="button button-primary button-full" type="submit" style="margin-top: 16px; min-height: 46px; font-size: 15px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                        <span>Se connecter à mon compte</span>
+                    </button>
+                </form>
+
+                <div class="auth-page-foot">
+                    <p>Pas encore inscrit ? <a class="text-link-bold" href="register.html">Créer un compte étudiant</a></p>
+                    <div class="auth-explore-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                        <div style="flex: 1;">
+                            <strong>Vous voulez juste jeter un œil ?</strong>
+                            <span>Consultez librement les cours sans compte.</span>
+                        </div>
+                        <a class="button button-outline button-sm" href="../index.html?mode=exploration" id="link-explore-mode">
+                            <span>Explorer</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../scripts/icons.js"></script>
+    <script src="../scripts/store.js"></script>
+    <script src="../scripts/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../scripts/theme.js"></script>
+    <script>
+        (() => {
+            const store = window.EduVaultStore;
+            const form = document.querySelector("#standalone-login-form");
+            const feedback = document.querySelector("#login-feedback");
+            const passwordInput = document.querySelector("#login-password");
+            const togglePasswordBtn = document.querySelector("#toggle-login-password");
+            const googleBtn = document.querySelector("#login-google-btn");
+
+            // Toggle mot de passe
+            togglePasswordBtn?.addEventListener("click", () => {
+                const isPassword = passwordInput.type === "password";
+                passwordInput.type = isPassword ? "text" : "password";
+            });
+
+            // Bouton Mode Exploration
+            document.querySelector("#link-explore-mode")?.addEventListener("click", () => {
+                if (store) store.setExplorationMode(true);
+            });
+
+            // Soumission connexion
+            form?.addEventListener("submit", (e) => {
+                e.preventDefault();
+                const email = document.querySelector("#login-email").value.trim();
+                const password = passwordInput.value;
+
+                if (feedback) feedback.textContent = "";
+
+                if (store) {
+                    store.saveUserProfile({ email, name: email.split("@")[0] });
+                    store.setExplorationMode(false);
+                }
+
+                feedback.className = "form-feedback is-success";
+                feedback.textContent = "Connexion réussie ! Redirection en cours...";
+
+                setTimeout(() => {
+                    location.href = "profile.html";
+                }, 700);
+            });
+
+            // Google login
+            googleBtn?.addEventListener("click", () => {
+                if (store) {
+                    store.saveUserProfile({ email: "etudiant.google@eduvault.tg", name: "Étudiant Google" });
+                    store.setExplorationMode(false);
+                }
+                feedback.className = "form-feedback is-success";
+                feedback.textContent = "Connexion Google réussie ! Redirection...";
+                setTimeout(() => {
+                    location.href = "profile.html";
+                }, 600);
+            });
+
+            document.querySelector("#forgot-password-link")?.addEventListener("click", (e) => {
+                e.preventDefault();
+                alert("Pour réinitialiser votre mot de passe, un lien sécurisé sera envoyé à votre adresse e-mail universitaire.");
+            });
+        })();
+    </script>
+</body>
+
+</html>

@@ -72,21 +72,42 @@
                     <input class="field-control" id="upload-title" name="title" minlength="5" maxlength="160" placeholder="Ex. Examen Corrigé Algorithmique S3 — Session 2026" required>
                 </div>
 
-                <!-- ÉTABLISSEMENT & DÉTECTION DOUBLON -->
+                <!-- HIÉRARCHIE ACADÉMIQUE COMPLÈTE -->
                 <div class="upload-grid-fields" style="margin-bottom: 16px;">
                     <div class="field-group">
-                        <label class="field-label" for="upload-institution">Établissement / Université *</label>
+                        <label class="field-label" for="upload-institution">1. Établissement / Université *</label>
                         <select class="field-control" id="upload-institution" name="institution" required>
                             <!-- Chargé dynamiquement -->
                         </select>
                     </div>
                     <div class="field-group">
-                        <label class="field-label" for="upload-category">Type de document *</label>
-                        <select class="field-control" id="upload-category" name="category" required>
-                            <option value="Support de Cours">Support de Cours</option>
-                            <option value="TD/TP">TD & Travaux Pratiques</option>
-                            <option value="Examen/Annales" selected>Examens & Annales Corrigées</option>
-                            <option value="Fiche de révision">Fiche de Révision & Synthèse</option>
+                        <label class="field-label" for="upload-degree">2. Cycle / Type de Diplôme *</label>
+                        <select class="field-control" id="upload-degree" name="degree_type" required>
+                            <option value="Licence Professionnelle" selected>Licence Professionnelle (BAC+3)</option>
+                            <option value="Licence Fondamentale">Licence Fondamentale (LMD)</option>
+                            <option value="Master Professionnel">Master Professionnel (BAC+5)</option>
+                            <option value="Master Recherche">Master Recherche / Doctorat</option>
+                            <option value="Diplôme d'Ingénieur">Diplôme d'Ingénieur (BAC+5)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="upload-grid-fields" style="margin-bottom: 16px;">
+                    <div class="field-group">
+                        <label class="field-label" for="upload-program">3. Filière / Spécialité *</label>
+                        <select class="field-control" id="upload-program" name="program" required>
+                            <!-- Rempli dynamiquement selon l'école et le cycle -->
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="upload-semester">4. Semestre *</label>
+                        <select class="field-control" id="upload-semester" name="semester" required>
+                            <option value="1">Semestre 1 (S1)</option>
+                            <option value="2">Semestre 2 (S2)</option>
+                            <option value="3" selected>Semestre 3 (S3)</option>
+                            <option value="4">Semestre 4 (S4)</option>
+                            <option value="5">Semestre 5 (S5)</option>
+                            <option value="6">Semestre 6 (S6)</option>
                         </select>
                     </div>
                 </div>
@@ -100,15 +121,40 @@
                     </div>
                 </div>
 
-                <!-- MATIÈRE & ANNÉE ACADÉMIQUE -->
-                <div class="upload-grid-fields" style="margin-bottom: 20px;">
+                <!-- MATIÈRE / UE (AVEC CRÉATION DYNAMIQUE SI ABSENTE) & DOSSIER/TYPE -->
+                <div class="upload-grid-fields" style="margin-bottom: 16px;">
                     <div class="field-group">
-                        <label class="field-label" for="upload-course">Matière / UE *</label>
-                        <input class="field-control" id="upload-course" name="course" placeholder="Ex. Algorithmique Avancée" required>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label class="field-label" for="upload-course-select">5. Matière / Cours *</label>
+                            <button type="button" class="text-button" id="btn-toggle-new-course" style="font-size: 12px;">+ Nouvelle matière</button>
+                        </div>
+                        <select class="field-control" id="upload-course-select" name="course_select">
+                            <!-- Chargé selon filière et semestre -->
+                        </select>
+                        <input class="field-control" id="upload-course-custom" name="course_custom" placeholder="Nom de la nouvelle matière (ex: Intelligence Artificielle)" style="display: none; margin-top: 6px;">
                     </div>
+                    <div class="field-group">
+                        <label class="field-label" for="upload-category">6. Dossier / Type de document *</label>
+                        <select class="field-control" id="upload-category" name="category" required>
+                            <option value="Support de Cours">Support de Cours</option>
+                            <option value="TD/TP">TD & Travaux Pratiques</option>
+                            <option value="Examen/Annales" selected>Examens & Annales Corrigées</option>
+                            <option value="Fiche de révision">Fiche de Révision & Synthèse</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="upload-grid-fields" style="margin-bottom: 20px;">
                     <div class="field-group">
                         <label class="field-label" for="upload-year">Année académique *</label>
                         <input class="field-control" id="upload-year" name="academic_year" value="2025-2026" pattern="\d{4}-\d{4}" placeholder="2025-2026" required>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Visibilité</label>
+                        <div style="padding: 10px 14px; background: var(--surface-raised); border: 1.5px solid var(--line); border-radius: var(--radius-xs); font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
+                            <span class="badge badge-accent">Public</span>
+                            <span>Accessible à toute la communauté</span>
+                        </div>
                     </div>
                 </div>
 

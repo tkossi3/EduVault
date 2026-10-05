@@ -13,21 +13,69 @@
         { id: "inst-5", name: "IAEC Université", city: "Lomé", country: "Togo", description: "Institut Africain d'Études Commerciales" }
     ];
 
+    // Types de diplômes & cycles universitaires
+    const initialDegreeTypes = [
+        "Licence Professionnelle",
+        "Licence Fondamentale",
+        "Master Professionnel",
+        "Master Recherche",
+        "Diplôme d'Ingénieur"
+    ];
+
     const initialPrograms = [
-        { id: "prog-1", institution_id: "inst-1", name: "Génie Logiciel & Systèmes d'Information", degree: "Licence & Master Professionnel" },
-        { id: "prog-2", institution_id: "inst-1", name: "Génie Électrique & Télécommunications", degree: "Diplôme d'Ingénieur" },
-        { id: "prog-3", institution_id: "inst-2", name: "Mathématiques & Informatique Fondamentale", degree: "Licence Fondamentale" },
-        { id: "prog-4", institution_id: "inst-2", name: "Sciences Économiques & Gestion (FASEG)", degree: "Licence d'Économie" },
-        { id: "prog-5", institution_id: "inst-4", name: "Audit & Contrôle de Gestion", degree: "Master" }
+        // ENP Campus Lomé
+        { id: "prog-1", institution_id: "inst-1", name: "Génie Logiciel & Systèmes d'Information", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
+        { id: "prog-2", institution_id: "inst-1", name: "Génie Électrique & Télécommunications", degree_type: "Diplôme d'Ingénieur", degree: "Diplôme d'Ingénieur (BAC+5)" },
+        { id: "prog-3", institution_id: "inst-1", name: "Systèmes, Réseaux & Sécurité Informatique", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
+        { id: "prog-4", institution_id: "inst-1", name: "Intelligence Artificielle & Big Data", degree_type: "Master Professionnel", degree: "Master Professionnel (BAC+5)" },
+
+        // Université de Lomé
+        { id: "prog-5", institution_id: "inst-2", name: "Mathématiques & Informatique Fondamentale", degree_type: "Licence Fondamentale", degree: "Licence Fondamentale (LMD)" },
+        { id: "prog-6", institution_id: "inst-2", name: "Sciences Économiques & Gestion (FASEG)", degree_type: "Licence Fondamentale", degree: "Licence Fondamentale (LMD)" },
+        { id: "prog-7", institution_id: "inst-2", name: "Droit Privé & Sciences Politiques (FDD)", degree_type: "Licence Fondamentale", degree: "Licence Fondamentale (LMD)" },
+        { id: "prog-8", institution_id: "inst-2", name: "Sciences de la Santé & Médecine (FSS)", degree_type: "Master Recherche", degree: "Doctorat & Spécialité" },
+
+        // Université de Kara
+        { id: "prog-9", institution_id: "inst-3", name: "Sciences Économiques & Développement", degree_type: "Licence Fondamentale", degree: "Licence Fondamentale" },
+        { id: "prog-10", institution_id: "inst-3", name: "Lettres Modernes & Communication", degree_type: "Licence Fondamentale", degree: "Licence Fondamentale" },
+
+        // École Supérieure des Affaires (ESA)
+        { id: "prog-11", institution_id: "inst-4", name: "Audit, Contrôle de Gestion & Finance", degree_type: "Master Professionnel", degree: "Master Professionnel" },
+        { id: "prog-12", institution_id: "inst-4", name: "Marketing Digital & Stratégie Commerciale", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle" },
+
+        // IAEC Université
+        { id: "prog-13", institution_id: "inst-5", name: "Banque, Assurance & Finance de Marché", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle" },
+        { id: "prog-14", institution_id: "inst-5", name: "Commerce International & Douanes", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle" }
     ];
 
     const initialCourses = [
-        { id: "course-1", program_id: "prog-1", name: "Algorithmique Avancée & Structures de Données", code: "INF201", semester: 3 },
-        { id: "course-2", program_id: "prog-1", name: "Bases de Données Relationnelles & SQL", code: "INF202", semester: 3 },
-        { id: "course-3", program_id: "prog-1", name: "Architecture des Ordinateurs & Systèmes", code: "INF101", semester: 1 },
-        { id: "course-4", program_id: "prog-2", name: "Électronique Numérique & Microprocesseurs", code: "ELC301", semester: 4 },
-        { id: "course-5", program_id: "prog-3", name: "Analyse Mathématique II & Équations Différentielles", code: "MAT201", semester: 2 },
-        { id: "course-6", program_id: "prog-4", name: "Microéconomie Appliquée & Marchés", code: "ECO102", semester: 2 }
+        // Génie Logiciel (prog-1)
+        { id: "course-1", program_id: "prog-1", name: "Architecture des Ordinateurs & Systèmes", code: "INF101", semester: 1 },
+        { id: "course-2", program_id: "prog-1", name: "Algorithmique & Programmation C/C++", code: "INF102", semester: 1 },
+        { id: "course-3", program_id: "prog-1", name: "Mathématiques pour l'Informatique (Algèbre & Analyse)", code: "MAT101", semester: 1 },
+        { id: "course-4", program_id: "prog-1", name: "Programmation Orientée Objet (Java / Python)", code: "INF201", semester: 2 },
+        { id: "course-5", program_id: "prog-1", name: "Structures de Données Avancées & Graphes", code: "INF202", semester: 2 },
+        { id: "course-6", program_id: "prog-1", name: "Bases de Données Relationnelles & SQL", code: "INF301", semester: 3 },
+        { id: "course-7", program_id: "prog-1", name: "Génie Logiciel & Modélisation UML", code: "INF302", semester: 3 },
+        { id: "course-8", program_id: "prog-1", name: "Développement Web Full-Stack (JS/Node)", code: "INF401", semester: 4 },
+        { id: "course-9", program_id: "prog-1", name: "Systèmes d'Exploitation & Linux Avancé", code: "INF402", semester: 4 },
+        { id: "course-10", program_id: "prog-1", name: "Architectures Cloud & Microservices", code: "INF501", semester: 5 },
+        { id: "course-11", program_id: "prog-1", name: "Cybersécurité & Tests Logiciels", code: "INF502", semester: 5 },
+        { id: "course-12", program_id: "prog-1", name: "Projet de Fin d'Études & Stage Professionnel", code: "INF601", semester: 6 },
+
+        // Math-Info UL (prog-5)
+        { id: "course-13", program_id: "prog-5", name: "Analyse Mathématique I (Suites & Séries)", code: "MAT101", semester: 1 },
+        { id: "course-14", program_id: "prog-5", name: "Analyse Mathématique II & Équations Différentielles", code: "MAT201", semester: 2 },
+        { id: "course-15", program_id: "prog-5", name: "Probabilités & Statistiques Inférentielles", code: "MAT301", semester: 3 },
+
+        // FASEG UL (prog-6)
+        { id: "course-16", program_id: "prog-6", name: "Microéconomie Appliquée & Marchés", code: "ECO102", semester: 2 },
+        { id: "course-17", program_id: "prog-6", name: "Macroéconomie & Politiques Monétaires", code: "ECO201", semester: 3 },
+        { id: "course-18", program_id: "prog-6", name: "Comptabilité Générale & Analytique", code: "GES101", semester: 1 },
+
+        // Génie Électrique (prog-2)
+        { id: "course-19", program_id: "prog-2", name: "Électronique Numérique & Microprocesseurs", code: "ELC301", semester: 4 },
+        { id: "course-20", program_id: "prog-2", name: "Traitement du Signal & Télécoms", code: "TEL401", semester: 5 }
     ];
 
     const initialDocuments = [
@@ -350,6 +398,120 @@
         return newInst;
     };
 
+    // ==================== GESTION DE LA HIÉRARCHIE ACADÉMIQUE ====================
+    // Établissement -> Diplôme/Cycle -> Filière -> Semestre -> Matière/Cours -> Documents
+
+    const getDegreeTypes = () => initialDegreeTypes;
+
+    const getDegreesByInstitution = (institutionIdentifier) => {
+        const state = loadState();
+        if (!institutionIdentifier) return initialDegreeTypes;
+        const inst = state.institutions.find((i) => i.id === institutionIdentifier || i.name.toLowerCase() === institutionIdentifier.toLowerCase());
+        const progs = inst ? state.programs.filter((p) => p.institution_id === inst.id) : state.programs;
+        const availableDegrees = Array.from(new Set(progs.map(p => p.degree_type || "Licence Professionnelle")));
+        return availableDegrees.length > 0 ? availableDegrees : initialDegreeTypes;
+    };
+
+    const getProgramsByInstitutionAndDegree = (institutionIdentifier, degreeType) => {
+        const state = loadState();
+        let progs = state.programs;
+        if (institutionIdentifier) {
+            const inst = state.institutions.find((i) => i.id === institutionIdentifier || i.name.toLowerCase() === institutionIdentifier.toLowerCase());
+            if (inst) {
+                progs = progs.filter((p) => p.institution_id === inst.id);
+            }
+        }
+        if (degreeType) {
+            progs = progs.filter((p) => (p.degree_type || "").toLowerCase() === degreeType.toLowerCase() || (p.degree || "").toLowerCase().includes(degreeType.toLowerCase()));
+        }
+        return progs;
+    };
+
+    const getProgramsByInstitution = (institutionIdentifier) => {
+        const state = loadState();
+        if (!institutionIdentifier) return state.programs;
+        const inst = state.institutions.find((i) => i.id === institutionIdentifier || i.name.toLowerCase() === institutionIdentifier.toLowerCase());
+        if (!inst) {
+            return state.programs.filter((p) => {
+                const parentInst = state.institutions.find(i => i.id === p.institution_id);
+                return parentInst && parentInst.name.toLowerCase().includes(institutionIdentifier.toLowerCase());
+            });
+        }
+        return state.programs.filter((p) => p.institution_id === inst.id);
+    };
+
+    const getSemestersForProgram = (programIdentifier) => {
+        const state = loadState();
+        const prog = state.programs.find((p) => p.id === programIdentifier || p.name.toLowerCase() === programIdentifier?.toLowerCase());
+        if (prog?.degree_type?.includes("Master")) {
+            return [1, 2, 3, 4];
+        }
+        if (prog?.degree_type?.includes("Ingénieur")) {
+            return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        }
+        return [1, 2, 3, 4, 5, 6]; // Licence standard L1 à L3 (S1 à S6)
+    };
+
+    const getCoursesByProgramAndSemester = (programIdentifier, semesterNumber) => {
+        const state = loadState();
+        let courses = state.courses;
+        if (programIdentifier) {
+            const prog = state.programs.find((p) => p.id === programIdentifier || p.name.toLowerCase() === programIdentifier.toLowerCase());
+            if (prog) {
+                courses = courses.filter((c) => c.program_id === prog.id);
+            }
+        }
+        if (semesterNumber) {
+            const semNum = parseInt(semesterNumber, 10);
+            courses = courses.filter((c) => c.semester === semNum);
+        }
+        return courses;
+    };
+
+    const getCoursesByProgram = (programIdentifier) => {
+        return getCoursesByProgramAndSemester(programIdentifier, null);
+    };
+
+    // Création dynamique d'une nouvelle matière / cours
+    const addCourse = ({ name, program_id, semester = 1, code = null }) => {
+        const state = loadState();
+        const trimmedName = name.trim();
+        const existing = state.courses.find(c => c.name.toLowerCase() === trimmedName.toLowerCase() && (!program_id || c.program_id === program_id));
+        if (existing) return existing;
+
+        const generatedCode = code || `${trimmedName.slice(0, 3).toUpperCase()}${semester}0${(state.courses.length % 9) + 1}`;
+        const newCourse = {
+            id: `course-${Date.now()}`,
+            program_id: program_id || "prog-1",
+            name: trimmedName,
+            code: generatedCode,
+            semester: parseInt(semester, 10) || 1
+        };
+        state.courses.push(newCourse);
+        saveState(state);
+        return newCourse;
+    };
+
+    const addProgram = (name, institutionId, degreeType = "Licence Professionnelle", degree = "Licence Professionnelle (BAC+3)") => {
+        const state = loadState();
+        const newProg = {
+            id: `prog-${Date.now()}`,
+            institution_id: institutionId,
+            name: name.trim(),
+            degree_type: degreeType,
+            degree: degree.trim()
+        };
+        state.programs.push(newProg);
+        saveState(state);
+        return newProg;
+    };
+
+    // Récupérer un document par son identifiant
+    const getDocumentById = (docId) => {
+        const state = loadState();
+        return state.documents.find((d) => d.id === docId) || null;
+    };
+
     // Ajout d'un document
     const addDocument = (docData) => {
         const state = loadState();
@@ -357,17 +519,21 @@
         const newDoc = {
             id: `doc-${Date.now()}`,
             title: docData.title.trim(),
-            category: docData.category,
+            category: docData.category || "Support de Cours",
             academic_year: docData.academic_year || "2025-2026",
             course_id: docData.course_id || "course-1",
             course: docData.course || "Ressource Académique",
-            program: docData.program || user.program || "Filière universitaire",
+            semester: docData.semester || 1,
+            degree_type: docData.degree_type || "Licence Professionnelle",
+            program: docData.program || user.program || "Génie Logiciel & Systèmes d'Information",
             institution: docData.institution || user.institution || "ENP Campus Lomé",
             uploaded_by: user.id,
             uploader_name: user.name,
             file_size: docData.file_size || 2048576,
             file_name: docData.file_name || "document.pdf",
-            status: "approved", // auto-approuvé pour l'expérience fluide
+            file_data: docData.file_data || null, // data URL du fichier réel
+            file_url: docData.file_url || null,
+            status: "approved",
             is_public: true,
             downloads_count: 0,
             views_count: 1,
@@ -380,7 +546,7 @@
         const notifications = getNotifications();
         notifications.unshift({
             id: `notif-${Date.now()}`,
-            title: `Votre document « ${newDoc.title} » a été publié avec succès dans le coffre académique !`,
+            title: `Votre document « ${newDoc.title} » (${newDoc.course}) a été publié avec succès dans la filière ${newDoc.program} !`,
             type: "upload_success",
             document_id: newDoc.id,
             created_at: new Date().toISOString(),
@@ -416,6 +582,16 @@
         updateBadgeUI,
         checkInstitutionExists,
         addInstitution,
+        getDegreeTypes,
+        getDegreesByInstitution,
+        getProgramsByInstitutionAndDegree,
+        getProgramsByInstitution,
+        getSemestersForProgram,
+        getCoursesByProgramAndSemester,
+        getCoursesByProgram,
+        addCourse,
+        addProgram,
+        getDocumentById,
         addDocument,
         deleteDocument
     };

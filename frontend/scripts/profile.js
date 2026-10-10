@@ -219,7 +219,7 @@
     };
 
     // Soumission du formulaire de mise à jour du profil
-    document.querySelector("#profile-form")?.addEventListener("submit", (event) => {
+    document.querySelector("#profile-edit-form, #profile-form")?.addEventListener("submit", (event) => {
         event.preventDefault();
         const feedback = document.querySelector("#profile-feedback");
         const name = document.querySelector("#edit-name")?.value.trim() || "";
@@ -242,11 +242,14 @@
     });
 
     // Bouton de déconnexion depuis la page profil
-    document.querySelector("#profile-logout-btn")?.addEventListener("click", () => {
-        if (confirm("Voulez-vous vous déconnecter de votre compte EduVault ?")) {
+    document.querySelector("#profile-logout-btn, #sign-out")?.addEventListener("click", () => {
+        if (confirm("Voulez-vous vraiment vous déconnecter de votre compte EduVault ?")) {
             store.logoutUser();
-            auth.showToast("Vous avez été déconnecté.", "info");
-            updateProfileUI();
+            auth.showToast("Vous avez été déconnecté avec succès.", "info");
+            document.dispatchEvent(new CustomEvent("eduvault:auth_state_changed", { detail: { isLoggedIn: false } }));
+            setTimeout(() => {
+                window.location.href = "login.html";
+            }, 500);
         }
     });
 

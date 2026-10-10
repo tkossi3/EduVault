@@ -10,6 +10,8 @@
     const degreeSelect = document.querySelector("#upload-degree");
     const progSelect = document.querySelector("#upload-program");
     const semSelect = document.querySelector("#upload-semester");
+    const courseInput = document.querySelector("#upload-course-input");
+    const courseDatalist = document.querySelector("#course-suggestions");
     const courseSelect = document.querySelector("#upload-course-select");
     const customCourseInput = document.querySelector("#upload-course-custom");
     const toggleNewCourseBtn = document.querySelector("#btn-toggle-new-course");
@@ -29,32 +31,30 @@
         });
     };
 
-    // 1. Charger les matières du semestre et de la filière
+    // 1. Charger les suggestions de matières du semestre et de la filière
     const populateCourses = () => {
-        if (!courseSelect || !store) return;
+        if (!store) return;
         const selectedProg = progSelect?.value;
         const selectedSemester = semSelect?.value || 1;
 
         const courses = store.getCoursesByProgramAndSemester(selectedProg, selectedSemester);
 
-        if (!courses || courses.length === 0) {
-            courseSelect.innerHTML = `
-                <option value="__NEW__">+ Créer une nouvelle matière pour le Semestre ${selectedSemester}...</option>
-            `;
-            if (customCourseInput) {
-                customCourseInput.style.display = "block";
-                customCourseInput.required = true;
-            }
-            return;
+        // Alimentation du datalist pour la saisie intuitive
+        if (courseDatalist) {
+            courseDatalist.innerHTML = (courses || []).map((c) => `
+                <option value="${c.name}">${c.code ? `[${c.code}] ` : ''}${c.name}</option>
+            `).join("");
         }
 
-        courseSelect.innerHTML = courses.map((c) => `
-            <option value="${c.name}" data-id="${c.id}">${c.code ? `[${c.code}] ` : ''}${c.name}</option>
-        `).join("") + `<option value="__NEW__">+ Créer une nouvelle matière...</option>`;
-
-        if (customCourseInput) {
-            customCourseInput.style.display = "none";
-            customCourseInput.required = false;
+        // Support rétrocompatible pour ancien select s'il existe
+        if (courseSelect) {
+            if (!courses || courses.length === 0) {
+                courseSelect.innerHTML = `<option value="__NEW__">+ Créer une nouvelle matière...</option>`;
+            } else {
+                courseSelect.innerHTML = courses.map((c) => `
+                    <option value="${c.name}" data-id="${c.id}">${c.code ? `[${c.code}] ` : ''}${c.name}</option>
+                `).join("") + `<option value="__NEW__">+ Créer une nouvelle matière...</option>`;
+            }
         }
     };
 
@@ -322,24 +322,23 @@
         const category = formData.get("category") || "Support de Cours";
         const academicYear = formData.get("academic_year") || "2025-2026";
 
-        // Récupération de la matière
-        let courseName = "";
-        const customName = customCourseInput?.value?.trim();
-        const selectedCourseVal = courseSelect?.value;
+        // Récupération et enregistrement de la matière
+        let courseName = formData.get("course")?.trim() || courseInput?.value?.trim() || customCourseInput?.value?.trim() || courseSelect?.value || "";
 
-        if (selectedCourseVal === "__NEW__" || (customCourseInput && customCourseInput.style.display !== "none" && customName)) {
-            if (!customName) {
-                feedback.className = "form-feedback";
-                feedback.textContent = "Veuillez renseigner le nom de la nouvelle matière.";
-                return;
-            }
-            courseName = customName;
-            const selectedProgOption = progSelect.selectedOptions[0];
-            const progId = selectedProgOption?.dataset.id || "prog-1";
-            store.addCourse({ name: courseName, program_id: progId, semester });
-        } else {
-            courseName = selectedCourseVal || "Matière Académique";
+        if (courseName === "__NEW__") {
+            courseName = customCourseInput?.value?.trim() || "";
         }
+
+        if (!courseName) {
+            feedback.className = "form-feedback";
+            feedback.textContent = "Veuillez renseigner le nom de la matière ou unité d'enseignement.";
+            return;
+        }
+
+        // Enregistrer la matière dans le catalogue de cette filière et semestre
+        const selectedProgOption = progSelect?.selectedOptions ? progSelect.selectedOptions[0] : null;
+        const progId = selectedProgOption?.dataset?.id || "prog-1";
+        store.addCourse({ name: courseName, program_id: progId, semester });
 
         feedback.className = "form-feedback is-success";
         feedback.textContent = "Traitement et enregistrement du document PDF dans le coffre…";

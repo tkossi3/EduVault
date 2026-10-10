@@ -149,13 +149,35 @@ img {
     gap: 12px;
 }
 
-/* HERO SECTION */
+/* HERO SECTION AVEC GRILLE TECH ("CARRÉS CARRÉS") & AMBIANCE SPATIALE */
 .hero-section {
     display: grid;
     grid-template-columns: 1.15fr 0.85fr;
     align-items: center;
     gap: 48px;
-    padding: 64px 0 52px;
+    padding: 64px 36px 56px;
+    position: relative;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line);
+    margin-top: 18px;
+    background-color: var(--surface);
+    background-image: 
+        radial-gradient(ellipse at 75% 25%, color-mix(in srgb, var(--primary) 12%, transparent) 0%, transparent 60%),
+        radial-gradient(ellipse at 20% 85%, color-mix(in srgb, var(--accent) 9%, transparent) 0%, transparent 50%),
+        linear-gradient(to right, color-mix(in srgb, var(--primary) 5%, transparent) 1px, transparent 1px),
+        linear-gradient(to bottom, color-mix(in srgb, var(--primary) 5%, transparent) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+}
+
+:root[data-theme="dark"] .hero-section {
+    background-image: 
+        radial-gradient(ellipse at 75% 25%, rgba(59, 130, 246, 0.18) 0%, transparent 60%),
+        radial-gradient(ellipse at 20% 85%, rgba(16, 185, 129, 0.12) 0%, transparent 50%),
+        linear-gradient(to right, rgba(96, 165, 250, 0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(96, 165, 250, 0.08) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
 }
 
 .eyebrow {

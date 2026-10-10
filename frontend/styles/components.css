@@ -891,3 +891,99 @@ textarea.field-control {
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
+
+/* ==================== STYLES D'ARRIÈRE-PLAN NOUVELLE GÉNÉRATION : CARRÉS CARRÉS & ESPACE ==================== */
+
+/* Motif de grille à carrés géométriques ("carrés carrés") avec fondu radial */
+.bg-grid-squares,
+.bg-tech-grid {
+    position: relative;
+    background-color: var(--surface);
+    background-image: 
+        linear-gradient(to right, color-mix(in srgb, var(--primary) 7%, transparent) 1px, transparent 1px),
+        linear-gradient(to bottom, color-mix(in srgb, var(--primary) 7%, transparent) 1px, transparent 1px);
+    background-size: 34px 34px;
+}
+
+:root[data-theme="dark"] .bg-grid-squares,
+:root[data-theme="dark"] .bg-tech-grid {
+    background-image: 
+        linear-gradient(to right, rgba(96, 165, 250, 0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(96, 165, 250, 0.08) 1px, transparent 1px);
+    background-size: 34px 34px;
+}
+
+/* Grille subtile sur fond de page ou conteneurs de lecture */
+.hero-band-modern,
+.reader-viewer-container {
+    background-image: 
+        radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--primary) 6%, transparent) 0%, transparent 70%),
+        linear-gradient(to right, color-mix(in srgb, var(--primary) 4%, transparent) 1px, transparent 1px),
+        linear-gradient(to bottom, color-mix(in srgb, var(--primary) 4%, transparent) 1px, transparent 1px);
+    background-size: 100% 100%, 36px 36px, 36px 36px;
+}
+
+:root[data-theme="dark"] .hero-band-modern,
+:root[data-theme="dark"] .reader-viewer-container {
+    background-image: 
+        radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.12) 0%, transparent 70%),
+        linear-gradient(to right, rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+    background-size: 100% 100%, 36px 36px, 36px 36px;
+}
+
+/* Ambiance cosmique moderne & "espaces dans l'espace" (profondeur spatiale, nébuleuse et orbes luminescents) */
+.bg-deep-space {
+    position: relative;
+    overflow: hidden;
+    background: radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--primary) 12%, transparent) 0%, transparent 45%),
+                radial-gradient(circle at 85% 80%, color-mix(in srgb, var(--accent) 10%, transparent) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--primary-hover) 6%, transparent) 0%, transparent 55%),
+                var(--surface);
+}
+
+:root[data-theme="dark"] .bg-deep-space {
+    background: radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.16) 0%, transparent 50%),
+                radial-gradient(circle at 85% 75%, rgba(16, 185, 129, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.14) 0%, transparent 60%),
+                #0b1120;
+}
+
+/* Lueur d'orbe cosmique en fond */
+.cosmic-orb-glow {
+    position: absolute;
+    width: 380px;
+    height: 380px;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.cosmic-orb-primary {
+    top: -80px;
+    right: 5%;
+    background: radial-gradient(circle, var(--primary-hover), transparent);
+}
+
+.cosmic-orb-accent {
+    bottom: -60px;
+    left: 8%;
+    background: radial-gradient(circle, var(--accent), transparent);
+}
+
+/* Puces & Badges géométriques carrés modernes */
+.tech-square-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: monospace;
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    color: var(--text-secondary);
+}

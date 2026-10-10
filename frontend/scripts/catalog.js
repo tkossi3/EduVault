@@ -1,10 +1,16 @@
-/* Construit l’arborescence établissement > filière > semestre > cours > documents */
+/* Construit l’arborescence établissement > filière > semestre > cours > documents
+   Supporte la recherche instantanée et les filtres Publics / Privés — EduVault 2026 */
 (() => {
     const root = document.querySelector("#catalog-tree");
     if (!root) return;
 
     const store = window.EduVaultStore;
     const icons = window.EduVaultIcons;
+    const searchInput = document.querySelector("#catalog-search");
+    const sectorFilterBtns = document.querySelectorAll("#catalog-sector-filters button");
+
+    let currentSector = "all";
+    let currentSearch = "";
 
     const escapeHtml = (value = "") => String(value).replace(/[&<>"']/g, (char) => ({ 
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" 
@@ -60,32 +66,70 @@
     };
 
     const render = (data) => {
-        if (!data.institutions.length) {
+        let institutions = data.institutions || [];
+
+        // Filtrer par secteur (public / privé)
+        if (currentSector !== "all") {
+            institutions = institutions.filter((inst) => inst.sector === currentSector);
+        }
+
+        // Filtrer par recherche textuelle (école ou filière)
+        if (currentSearch.trim()) {
+            const query = currentSearch.trim().toLowerCase();
+            institutions = institutions.filter((inst) => {
+                const matchInst = inst.name.toLowerCase().includes(query) || (inst.description && inst.description.toLowerCase().includes(query));
+                const instPrograms = data.programs.filter((p) => p.institution_id === inst.id);
+                const matchProg = instPrograms.some((p) => p.name.toLowerCase().includes(query));
+                return matchInst || matchProg;
+            });
+        }
+
+        if (!institutions.length) {
             root.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-state-icon">${icons?.building || ''}</div>
-                    <h3>Le catalogue académique est en cours de synchronisation</h3>
-                    <p>Les établissements et filières apparaîtront ici.</p>
+                    <h3>Aucun établissement trouvé</h3>
+                    <p>Essayez un autre mot-clé ou modifiez les filtres de recherche.</p>
                 </div>`;
             return;
         }
 
-        root.innerHTML = data.institutions.map((institution) => {
-            const programs = data.programs.filter((program) => program.institution_id === institution.id);
+        root.innerHTML = institutions.map((institution) => {
+            let programs = data.programs.filter((program) => program.institution_id === institution.id);
+
+            if (currentSearch.trim()) {
+                const query = currentSearch.trim().toLowerCase();
+                const filteredProgs = programs.filter((p) => p.name.toLowerCase().includes(query));
+                if (filteredProgs.length > 0) {
+                    programs = filteredProgs;
+                }
+            }
+
+            const isPublic = institution.sector === "public";
+            const badgeClass = isPublic ? "badge-primary" : "badge-accent";
+            const badgeLabel = isPublic ? "Public / Université" : "Privé Agréé";
+            const autoOpen = Boolean(currentSearch.trim());
+
             return `
-            <details class="institution-accordion">
+            <details class="institution-accordion" ${autoOpen ? "open" : ""}>
                 <summary>
-                    <div class="institution-icon" style="width: 36px; height: 36px; border-radius: 8px; font-size: 14px;">
+                    <div class="institution-icon" style="width: 38px; height: 38px; border-radius: 8px; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; background: ${isPublic ? 'var(--primary-light)' : 'var(--accent-soft)'}; color: ${isPublic ? 'var(--primary)' : 'var(--accent)'}; border: 1px solid ${isPublic ? 'var(--primary-border)' : 'var(--accent-border)'};">
                         ${institution.name.slice(0, 1)}
                     </div>
-                    <div>
-                        <strong>${escapeHtml(institution.name)}</strong>
-                        <small>${escapeHtml(institution.city || "Lomé")} · ${escapeHtml(institution.description || "Campus Universitaire")}</small>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 2px;">
+                            <strong style="font-size: 15px;">${escapeHtml(institution.name)}</strong>
+                            <span class="badge ${badgeClass}" style="font-size: 10px; padding: 2px 7px;">${badgeLabel}</span>
+                        </div>
+                        <small style="color: var(--muted);">${escapeHtml(institution.city || "Lomé")} · ${escapeHtml(institution.description || "Formation en informatique & technologies")}</small>
                     </div>
                     <span class="accordion-chevron" style="margin-left: auto; color: var(--muted); font-size: 16px;">▾</span>
                 </summary>
                 
                 <div class="program-list">
+                    <div style="padding: 10px 16px; background: var(--surface-raised); border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 600; color: var(--text-secondary);">
+                        Filières et parcours accrédités (${programs.length})
+                    </div>
                     ${programs.length ? programs.map((program) => {
                         const courses = data.courses.filter((course) => course.program_id === program.id);
                         const semesters = (store && typeof store.getSemestersForProgram === "function")
@@ -93,7 +137,7 @@
                             : Array.from({ length: 6 }, (_, index) => index + 1);
                         
                         return `
-                        <details class="program-accordion">
+                        <details class="program-accordion" ${autoOpen ? "open" : ""}>
                             <summary>
                                 <div>
                                     <strong>${escapeHtml(program.name)}</strong>
@@ -119,7 +163,12 @@
                                                 </button>
                                                 <div class="course-documents" id="course-${course.id}" hidden></div>
                                             </div>
-                                        `).join("") : '<p style="font-size: 12px; color: var(--muted); margin: 4px 0;">Matières à venir</p>'}
+                                        `).join("") : `
+                                            <div style="padding: 8px 4px;">
+                                                <p style="font-size: 12px; color: var(--muted); margin: 0 0 6px;">Matières ouvertes au dépôt</p>
+                                                <a class="text-button" href="upload.html" style="font-size: 11px; font-weight: 700; color: var(--primary);">+ Déposer pour ce semestre</a>
+                                            </div>
+                                        `}
                                     </section>`;
                                 }).join("")}
                             </div>
@@ -150,6 +199,21 @@
     // Chargement initial
     const state = store.loadState();
     render(state);
+
+    // Événements de recherche et filtres
+    searchInput?.addEventListener("input", (e) => {
+        currentSearch = e.target.value;
+        render(store.loadState());
+    });
+
+    sectorFilterBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+            sectorFilterBtns.forEach((b) => b.classList.remove("is-active"));
+            btn.classList.add("is-active");
+            currentSector = btn.dataset.sector || "all";
+            render(store.loadState());
+        });
+    });
 
     // Si un établissement spécifique est ciblé dans l'URL
     const targetInstId = new URLSearchParams(location.search).get("inst");

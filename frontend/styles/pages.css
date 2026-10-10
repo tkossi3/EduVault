@@ -153,9 +153,24 @@
     padding: 28px;
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
-    background: var(--surface);
+    background-color: var(--surface);
+    background-image: 
+        radial-gradient(ellipse at 50% 20%, color-mix(in srgb, var(--primary) 6%, transparent) 0%, transparent 60%),
+        linear-gradient(to right, color-mix(in srgb, var(--primary) 4%, transparent) 1px, transparent 1px),
+        linear-gradient(to bottom, color-mix(in srgb, var(--primary) 4%, transparent) 1px, transparent 1px);
+    background-size: 100% 100%, 30px 30px, 30px 30px;
     box-shadow: var(--shadow-card);
     text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+:root[data-theme="dark"] .profile-card {
+    background-image: 
+        radial-gradient(ellipse at 50% 20%, rgba(59, 130, 246, 0.12) 0%, transparent 60%),
+        linear-gradient(to right, rgba(96, 165, 250, 0.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(96, 165, 250, 0.06) 1px, transparent 1px);
+    background-size: 100% 100%, 30px 30px, 30px 30px;
 }
 
 .profile-avatar-large {
@@ -284,8 +299,23 @@
     padding: 32px;
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
-    background: var(--surface);
+    background-color: var(--surface);
+    background-image: 
+        radial-gradient(ellipse at 80% 20%, color-mix(in srgb, var(--primary) 6%, transparent) 0%, transparent 60%),
+        linear-gradient(to right, color-mix(in srgb, var(--primary) 4%, transparent) 1px, transparent 1px),
+        linear-gradient(to bottom, color-mix(in srgb, var(--primary) 4%, transparent) 1px, transparent 1px);
+    background-size: 100% 100%, 32px 32px, 32px 32px;
     box-shadow: var(--shadow-card);
+    position: relative;
+    overflow: hidden;
+}
+
+:root[data-theme="dark"] .upload-box-wrapper {
+    background-image: 
+        radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.12) 0%, transparent 60%),
+        linear-gradient(to right, rgba(96, 165, 250, 0.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(96, 165, 250, 0.06) 1px, transparent 1px);
+    background-size: 100% 100%, 32px 32px, 32px 32px;
 }
 
 .dropzone {
@@ -439,20 +469,106 @@
     color: var(--text);
 }
 
+/* PLEINE LARGEUR & PLEIN ÉCRAN DU LECTEUR */
+.reader-main.is-full-width {
+    width: min(98vw, 1600px) !important;
+    max-width: 98vw !important;
+    margin-inline: auto !important;
+}
+
+.reader-viewer-container:fullscreen,
+.reader-viewer-container.is-fullscreen {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 999999 !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background: var(--surface) !important;
+    box-shadow: none !important;
+}
+
+.reader-viewer-container:fullscreen .reader-viewport,
+.reader-viewer-container.is-fullscreen .reader-viewport {
+    flex: 1 1 auto;
+    height: calc(100vh - 58px) !important;
+    max-height: calc(100vh - 58px) !important;
+    min-height: calc(100vh - 58px) !important;
+    overflow-y: auto !important;
+    padding: 24px 0 !important;
+}
+
 .reader-viewport {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    min-height: 560px;
-    padding: 24px;
-    background: color-mix(in srgb, var(--page) 80%, var(--surface));
+    justify-content: flex-start;
+    min-height: 720px;
+    max-height: 88vh;
+    padding: 24px 16px;
+    background: color-mix(in srgb, var(--page) 85%, var(--surface));
+    overflow-y: auto;
     overflow-x: auto;
+    position: relative;
+    width: 100%;
+}
+
+/* VUE DÉFILEMENT CONTINU (NAVIGATEUR) */
+.pdf-continuous-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    width: 100%;
+    padding: 12px 0 32px;
+}
+
+.pdf-page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    width: auto;
+    max-width: 100%;
+}
+
+.pdf-page-number-tag {
+    position: absolute;
+    top: -24px;
+    right: 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    background: var(--surface);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-sm);
+}
+
+.pdf-canvas-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    overflow: auto;
+    padding: 12px 0;
+}
+
+#pdf-canvas,
+.pdf-page-canvas {
+    background: #ffffff;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.14);
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .pdf-mockup-page {
     width: 100%;
-    max-width: 780px;
+    max-width: 860px;
     min-height: 600px;
     padding: 48px;
     border: 1px solid var(--line);

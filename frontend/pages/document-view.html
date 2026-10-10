@@ -70,9 +70,17 @@
             </div>
             
             <div class="reader-top-actions">
-                <button class="button button-outline" id="toggle-view-mode" type="button" title="Basculer le mode d'affichage">
+                <button class="button button-outline" id="toggle-view-mode" type="button" title="Basculer entre Mode Page par Page et Vue Navigateur (Défilement Continu)">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-                    <span id="toggle-view-text">Vue Navigateur</span>
+                    <span id="toggle-view-text">Vue Navigateur (Défilement continu)</span>
+                </button>
+                <button class="button button-outline" id="btn-fullscreen" type="button" title="Plein écran (Agrandir au maximum)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                    <span id="fullscreen-text">Plein écran</span>
+                </button>
+                <button class="button button-outline" id="btn-expand-width" type="button" title="Agrandir la largeur du lecteur">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                    <span id="expand-width-text">Pleine largeur</span>
                 </button>
                 <button class="button button-outline" id="print-document" type="button" title="Imprimer le document">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
@@ -85,15 +93,15 @@
             </div>
         </div>
 
-        <section class="reader-viewer-container" aria-label="Lecteur de document">
+        <section class="reader-viewer-container" id="reader-container" aria-label="Lecteur de document">
             <!-- BARRE D'OUTILS DU LECTEUR -->
             <div class="reader-toolbar">
-                <div class="reader-toolbar-group">
+                <div class="reader-toolbar-group" id="page-nav-group">
                     <button class="icon-button" id="previous-page" type="button" aria-label="Page précédente" title="Page précédente (Flèche Gauche)">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
                     </button>
                     
-                    <div class="page-jump-wrapper">
+                    <div class="page-jump-wrapper" id="page-jump-wrapper">
                         <span>Page</span>
                         <input type="number" id="page-input" min="1" value="1" aria-label="Numéro de page">
                         <span id="page-indicator">/ 1</span>
@@ -102,6 +110,10 @@
                     <button class="icon-button" id="next-page" type="button" aria-label="Page suivante" title="Page suivante (Flèche Droite)">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </button>
+                </div>
+
+                <div class="reader-toolbar-group" id="continuous-info-group" style="display: none;">
+                    <span class="badge badge-primary" id="continuous-page-count" style="font-size: 12px; font-weight: 700;">Vue Défilement Continu · Document complet</span>
                 </div>
 
                 <div class="reader-toolbar-group">
@@ -114,13 +126,13 @@
                     <button class="icon-button" id="zoom-in" type="button" aria-label="Agrandir le zoom" title="Zoom +">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
                     </button>
-                    <button class="icon-button" id="zoom-fit" type="button" aria-label="Ajuster à la largeur" title="Ajuster à la largeur de l'écran">
+                    <button class="icon-button" id="zoom-fit" type="button" aria-label="Ajuster à la largeur" title="Ajuster à 100% de la largeur">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
                     </button>
                 </div>
 
                 <div class="reader-toolbar-group">
-                    <span class="badge badge-accent" id="reader-mode-tag">Fichier Original Certifié</span>
+                    <span class="badge badge-accent" id="reader-mode-tag">Document Original Intégral</span>
                 </div>
             </div>
 
@@ -130,9 +142,13 @@
                     <div class="spinner"></div>
                     <p>Chargement haute fidélité du document PDF...</p>
                 </div>
+                <!-- 1. VUE PAGE PAR PAGE -->
                 <div id="pdf-canvas-wrapper" class="pdf-canvas-wrapper">
                     <canvas id="pdf-canvas"></canvas>
                 </div>
+                <!-- 2. VUE DÉFILEMENT CONTINU (NAVIGATEUR) -->
+                <div id="pdf-continuous-wrapper" class="pdf-continuous-wrapper" style="display: none;"></div>
+                <!-- 3. VUE NATIVE IFRAME -->
                 <div id="pdf-native-wrapper" class="pdf-native-wrapper" style="display: none;"></div>
             </div>
         </section>

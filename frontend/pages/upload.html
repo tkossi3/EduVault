@@ -122,17 +122,15 @@
                     </div>
                 </div>
 
-                <!-- MATIÈRE / UE (AVEC CRÉATION DYNAMIQUE SI ABSENTE) & DOSSIER/TYPE -->
+                <!-- MATIÈRE / UE (SAISIE DIRECTE AVEC AUTO-SUGGESTIONS) & DOSSIER/TYPE -->
                 <div class="upload-grid-fields" style="margin-bottom: 16px;">
                     <div class="field-group">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <label class="field-label" for="upload-course-select">5. Matière / Cours *</label>
-                            <button type="button" class="text-button" id="btn-toggle-new-course" style="font-size: 12px;">+ Nouvelle matière</button>
-                        </div>
-                        <select class="field-control" id="upload-course-select" name="course_select">
-                            <!-- Chargé selon filière et semestre -->
-                        </select>
-                        <input class="field-control" id="upload-course-custom" name="course_custom" placeholder="Nom de la nouvelle matière (ex: Intelligence Artificielle)" style="display: none; margin-top: 6px;">
+                        <label class="field-label" for="upload-course-input">5. Matière / Cours (UE) *</label>
+                        <input class="field-control" id="upload-course-input" name="course" list="course-suggestions" placeholder="Saisissez le nom de la matière (ex: Algorithmique, Sécurité Réseau...)" required autocomplete="off">
+                        <datalist id="course-suggestions">
+                            <!-- Chargé dynamiquement selon la filière et le semestre -->
+                        </datalist>
+                        <small style="display: block; margin-top: 4px; font-size: 11px; color: var(--muted);">L'école et la filière sont pré-enregistrées : vous n'avez qu'à saisir votre matière.</small>
                     </div>
                     <div class="field-group">
                         <label class="field-label" for="upload-category">6. Dossier / Type de document *</label>

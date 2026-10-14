@@ -58,6 +58,14 @@
             <form id="upload-form">
                 <!-- ZONE GLISSER-DÉPOSER FICHIER -->
                 <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Zone de glisser-déposer de fichier PDF">
+                    <!-- Documents animés en fond -->
+                    <div class="dropzone-flying-docs" aria-hidden="true">
+                        <span class="flying-doc"></span>
+                        <span class="flying-doc"></span>
+                        <span class="flying-doc"></span>
+                        <span class="flying-doc"></span>
+                        <span class="flying-doc"></span>
+                    </div>
                     <div class="dropzone-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                     </div>
@@ -168,12 +176,35 @@
     </main>
 
     <footer class="site-footer page-width">
-        <a class="brand" href="../index.html">
-            <img src="../assets/eduvault.svg" alt="" width="28" height="28">
-            <span>Edu<span class="brand-accent">Vault</span></span>
-        </a>
-        <span>Le coffre-fort académique universitaire 2026.</span>
-        <span>© 2026 EduVault</span>
+        <div class="footer-brand">
+            <a class="brand" href="../index.html">
+                <img src="../assets/eduvault.svg" alt="Logo EduVault" width="28" height="28">
+                <span>Edu<span class="brand-accent">Vault</span></span>
+            </a>
+            <p class="footer-brand-desc">La plateforme académique togolaise. Gratuit, ouvert, pour tous.</p>
+        </div>
+
+        <div class="footer-nav">
+            <p class="footer-nav-title">Explorer</p>
+            <div class="footer-nav-links">
+                <a href="../index.html">Bibliothèque & Documents</a>
+                <a href="parcours.html">Parcours & Filières</a>
+                <a href="profile.html">Mon Profil</a>
+            </div>
+        </div>
+
+        <div class="footer-nav">
+            <p class="footer-nav-title">Contribuer</p>
+            <div class="footer-nav-links">
+                <a href="upload.html">Déposer un document</a>
+                <a href="notifications.html">Mes Notifications</a>
+                <a href="register.html">Créer un compte</a>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <span>© 2026 EduVault — Le coffre-fort académique universitaire. Tous droits réservés.</span>
+        </div>
     </footer>
 
     <div class="cursor-dot" aria-hidden="true"></div>

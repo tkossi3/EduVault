@@ -358,15 +358,15 @@
     left: auto;
     bottom: auto;
     width: min(380px, calc(100% - 32px));
-    max-height: min(85vh, 640px);
-    overflow-y: auto;
+    max-height: none;
+    overflow: visible;
     padding: 22px;
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
     background: var(--surface);
     color: var(--text);
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--line);
-    z-index: 1000;
+    z-index: 9000;
     transform-origin: top right;
 }
 

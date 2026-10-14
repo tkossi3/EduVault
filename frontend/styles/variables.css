@@ -103,11 +103,12 @@
     .cursor-dot,
     .cursor-ring {
         position: fixed;
-        z-index: 9999999 !important;
+        z-index: 2147483647 !important;
         top: 0;
         left: 0;
         pointer-events: none !important;
         opacity: 0;
+        will-change: transform;
     }
 
     .cursor-dot {

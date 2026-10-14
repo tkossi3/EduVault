@@ -323,60 +323,180 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 36px 20px;
+    padding: 52px 20px 40px;
     border: 2px dashed var(--primary-border);
-    border-radius: var(--radius-md);
-    background: var(--hero-wash);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(160deg, var(--hero-wash) 0%, color-mix(in srgb, var(--hero-green) 40%, var(--hero-wash)) 100%);
     text-align: center;
     cursor: pointer;
     transition: all var(--transition-fast);
     margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+    min-height: 200px;
+}
+
+/* Documents flottants en arrière-plan */
+.dropzone::before,
+.dropzone::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    border-radius: 4px;
+    opacity: 0.18;
+    background: var(--primary);
+}
+
+.dropzone::before {
+    width: 36px;
+    height: 46px;
+    top: 18%;
+    left: 8%;
+    transform: rotate(-18deg);
+    animation: doc-float-1 5s ease-in-out infinite;
+}
+
+.dropzone::after {
+    width: 28px;
+    height: 36px;
+    top: 25%;
+    right: 10%;
+    transform: rotate(14deg);
+    animation: doc-float-2 6s ease-in-out infinite 1s;
+}
+
+/* Icônes de documents volants générées via box-shadow */
+.dropzone-flying-docs {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.flying-doc {
+    position: absolute;
+    width: 30px;
+    height: 38px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--primary) 80%, white);
+    opacity: 0;
+    animation: fly-doc 6s ease-in-out infinite;
+}
+
+.flying-doc::before {
+    content: "";
+    position: absolute;
+    top: 6px;
+    left: 5px;
+    right: 5px;
+    height: 2px;
+    background: white;
+    border-radius: 2px;
+    opacity: 0.6;
+    box-shadow: 0 5px 0 white, 0 10px 0 white;
+}
+
+.flying-doc::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    border-left: 10px solid color-mix(in srgb, var(--primary) 60%, white);
+    border-top: 10px solid transparent;
+    border-top-right-radius: 4px;
+}
+
+.flying-doc:nth-child(1) { left: 5%; top: 60%; width: 24px; height: 30px; animation-duration: 7s; animation-delay: 0s; }
+.flying-doc:nth-child(2) { left: 85%; top: 70%; width: 20px; height: 26px; animation-duration: 5.5s; animation-delay: 1.5s; }
+.flying-doc:nth-child(3) { left: 15%; top: 80%; width: 28px; height: 34px; animation-duration: 6.5s; animation-delay: 0.8s; }
+.flying-doc:nth-child(4) { left: 70%; top: 55%; width: 22px; height: 28px; animation-duration: 8s; animation-delay: 2s; }
+.flying-doc:nth-child(5) { left: 45%; top: 75%; width: 18px; height: 22px; animation-duration: 5s; animation-delay: 3s; }
+
+@keyframes fly-doc {
+    0%   { opacity: 0; transform: translateY(0) rotate(-10deg) scale(0.8); }
+    15%  { opacity: 0.25; }
+    50%  { opacity: 0.2; transform: translateY(-80px) rotate(5deg) scale(1); }
+    85%  { opacity: 0.1; }
+    100% { opacity: 0; transform: translateY(-150px) rotate(15deg) scale(0.7); }
+}
+
+@keyframes doc-float-1 {
+    0%, 100% { transform: rotate(-18deg) translateY(0); opacity: 0.18; }
+    50% { transform: rotate(-12deg) translateY(-12px); opacity: 0.28; }
+}
+
+@keyframes doc-float-2 {
+    0%, 100% { transform: rotate(14deg) translateY(0); opacity: 0.18; }
+    50% { transform: rotate(20deg) translateY(-10px); opacity: 0.28; }
 }
 
 .dropzone:hover,
 .dropzone.dragover {
     border-color: var(--primary);
-    background: color-mix(in srgb, var(--primary-light) 70%, #ffffff);
-    transform: scale(1.005);
+    background: linear-gradient(160deg, color-mix(in srgb, var(--primary-light) 80%, var(--hero-wash)) 0%, color-mix(in srgb, var(--accent-soft) 50%, var(--primary-light)) 100%);
+    transform: scale(1.008);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 10%, transparent);
+}
+
+.dropzone.dragover .flying-doc {
+    animation-play-state: paused;
+    opacity: 0.4;
 }
 
 .dropzone-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 56px;
-    height: 56px;
-    margin-bottom: 12px;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 14px;
     border-radius: 50%;
     background: #ffffff;
     color: var(--primary);
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 4px 16px rgba(30, 58, 138, 0.15);
+    position: relative;
+    z-index: 1;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.dropzone:hover .dropzone-icon {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 8px 24px rgba(30, 58, 138, 0.25);
 }
 
 .dropzone h4 {
-    margin: 0 0 4px;
-    font-size: 16px;
+    margin: 0 0 6px;
+    font-size: 17px;
     font-weight: 700;
     color: var(--text);
+    position: relative;
+    z-index: 1;
 }
 
 .dropzone p {
     margin: 0 0 10px;
     font-size: 13px;
     color: var(--muted);
+    position: relative;
+    z-index: 1;
 }
 
 .dropzone-selected-file {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 14px;
+    padding: 8px 16px;
     border-radius: var(--radius-full);
     background: var(--accent-soft);
     color: var(--accent);
     font-size: 12px;
     font-weight: 700;
     margin-top: 8px;
+    position: relative;
+    z-index: 1;
+    border: 1px solid var(--accent-border);
 }
 
 .upload-grid-fields {

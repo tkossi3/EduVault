@@ -78,7 +78,6 @@
     const canvasWrapper = document.querySelector("#pdf-canvas-wrapper");
     const singleCanvas = document.querySelector("#pdf-canvas");
     const continuousWrapper = document.querySelector("#pdf-continuous-wrapper");
-    const nativeWrapper = document.querySelector("#pdf-native-wrapper");
 
     // Contrôles UI
     const pageNavGroup = document.querySelector("#page-nav-group");
@@ -102,7 +101,6 @@
     let viewMode = "single"; // "single" (Page par Page) ou "continuous" (Vue Navigateur / Défilement continu)
     let rawPdfBlobUrl = null;
     let rawPdfBytes = null;
-    let isMockMode = false;
 
     // Helper: conversion Base64 DataURL -> Uint8Array
     const dataUrlToUint8Array = (dataUrl) => {
@@ -124,11 +122,6 @@
 
     // ==================== RENDU HD PAGE UNIQUE (MODE CLIC PAGE PAR PAGE) ====================
     const renderSinglePage = async (num) => {
-        if (isMockMode) {
-            renderMockSinglePage(num);
-            return;
-        }
-
         if (!pdfDoc || !singleCanvas) return;
 
         try {
@@ -160,11 +153,6 @@
     const renderContinuousView = async () => {
         if (!continuousWrapper) return;
         continuousWrapper.innerHTML = "";
-
-        if (isMockMode) {
-            renderMockContinuousView();
-            return;
-        }
 
         if (!pdfDoc) return;
 
@@ -357,17 +345,14 @@
         }
     };
 
+    let signedPdfUrl = null;
+
     // ==================== CHARGEMENT DU DOCUMENT ====================
     const loadPdfDocument = async () => {
         if (loadingIndicator) loadingIndicator.style.display = "flex";
 
         try {
-            // Recherche de fichier PDF réel
             let fileRawData = sessionStorage.getItem(`eduvault_file_${currentDoc.id}`);
-            if (!fileRawData && currentDoc.id) {
-                const activePdf = sessionStorage.getItem("eduvault_active_pdf");
-                if (activePdf) fileRawData = activePdf;
-            }
             if (!fileRawData && store) {
                 fileRawData = await store.getPdfFile(currentDoc.id);
             }
@@ -400,47 +385,68 @@
                 }
             }
 
-            if (!pdfSource) {
-                throw new Error("Fichier PDF binaire absent - Mode document académique certifié");
+            if (!pdfSource && currentDoc.id && window.pdfjsLib) {
+                const config = window.EDUVAULT_CONFIG || {};
+                const session = await window.EduVaultAuth?.getSession();
+                const endpoint = session?.access_token
+                    ? `${config.API_BASE_URL}/documents/${encodeURIComponent(currentDoc.id)}/owner-view-url`
+                    : `${config.API_BASE_URL}/documents/${encodeURIComponent(currentDoc.id)}/view-url`;
+                const response = await fetch(endpoint, {
+                    headers: session?.access_token
+                        ? { "Authorization": `Bearer ${session.access_token}` }
+                        : {}
+                });
+                if (!response.ok) {
+                    const result = await response.json().catch(() => ({}));
+                    throw new Error(result.detail || `Lecture impossible (${response.status}).`);
+                }
+                const result = await response.json();
+                signedPdfUrl = result.signed_url;
+                pdfSource = signedPdfUrl;
             }
+
+            if (!pdfSource) {
+                throw new Error("Le fichier PDF original est introuvable.");
+            }
+            if (!window.pdfjsLib) throw new Error("Le lecteur PDF n’a pas pu être chargé.");
 
             const loadingTask = pdfjsLib.getDocument(pdfSource);
             pdfDoc = await loadingTask.promise;
-            totalPages = pdfDoc.numPages || 1;
-            isMockMode = false;
+            totalPages = pdfDoc.numPages;
 
             if (loadingIndicator) loadingIndicator.style.display = "none";
-            renderCurrentMode();
+            await adjustFitWidth();
 
         } catch (err) {
-            console.info("Activation du rendu académique enrichi :", err.message);
-            isMockMode = true;
-            totalPages = mockPagesContent.length;
-
-            if (loadingIndicator) loadingIndicator.style.display = "none";
-            renderCurrentMode();
+            console.error("Chargement du PDF original impossible :", err);
+            if (loadingIndicator) {
+                loadingIndicator.style.display = "flex";
+                loadingIndicator.innerHTML = `<p role="alert">${escapeHtml(err.message || "Le document ne peut pas être affiché.")}</p>`;
+            }
+            if (singleCanvas) singleCanvas.hidden = true;
+            if (toggleViewBtn) toggleViewBtn.disabled = true;
         }
     };
 
     const renderCurrentMode = () => {
         if (viewMode === "continuous") {
             if (canvasWrapper) canvasWrapper.style.display = "none";
-            if (nativeWrapper) nativeWrapper.style.display = "none";
             if (continuousWrapper) continuousWrapper.style.display = "flex";
             renderContinuousView();
         } else {
             if (continuousWrapper) continuousWrapper.style.display = "none";
-            if (nativeWrapper) nativeWrapper.style.display = "none";
             if (canvasWrapper) canvasWrapper.style.display = "flex";
             renderSinglePage(pageNum);
         }
     };
 
     // ==================== AJUSTEMENT INTELLIGENT DE LA LARGEUR (FIT) ====================
-    const adjustFitWidth = () => {
-        const availableWidth = readerViewport ? readerViewport.clientWidth - 56 : 900;
-        const baseWidth = isMockMode ? 780 : 600;
-        scale = Math.min(2.5, Math.max(0.75, availableWidth / baseWidth));
+    const adjustFitWidth = async () => {
+        if (!pdfDoc || !readerViewport) return;
+        const page = await pdfDoc.getPage(pageNum);
+        const pageWidth = page.getViewport({ scale: 1 }).width;
+        const availableWidth = readerViewport.clientWidth - 32;
+        scale = Math.min(2.5, Math.max(0.25, availableWidth / pageWidth));
         renderCurrentMode();
     };
 
@@ -537,19 +543,22 @@
     document.querySelector("#zoom-fit")?.addEventListener("click", adjustFitWidth);
 
     // Télécharger le document
-    document.querySelector("#download-document")?.addEventListener("click", () => {
+    document.querySelector("#download-document")?.addEventListener("click", async () => {
         const fileName = currentDoc.file_name || `${title.replace(/[^a-zA-Z0-9_-]/g, "_")}.pdf`;
-        const urlToDownload = rawPdfBlobUrl || currentDoc.file_data;
-
-        if (urlToDownload) {
+        try {
+            const data = rawPdfBytes || (pdfDoc ? await pdfDoc.getData() : null);
+            if (!data) throw new Error("Le PDF original n’est pas disponible au téléchargement.");
+            const downloadUrl = URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
             const a = document.createElement("a");
-            a.href = urlToDownload;
+            a.href = downloadUrl;
             a.download = fileName;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-        } else {
-            window.print();
+            setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+        } catch (error) {
+            console.error("Téléchargement du PDF original impossible :", error);
+            window.EduVaultAuth?.showToast(error.message || "Le PDF ne peut pas être téléchargé.", "error");
         }
     });
 

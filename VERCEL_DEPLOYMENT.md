@@ -1,6 +1,6 @@
 # 🚀 Guide de Déploiement sur Vercel (EduVault 2026)
 
-Ce guide vous explique comment déployer le site web **EduVault** gratuitement et en quelques clics sur **Vercel**.
+Ce guide déploie le frontend statique **EduVault** sur **Vercel**. Le backend FastAPI et la base Supabase sont des services séparés : le dépôt ne configure ni ne déploie automatiquement l'API.
 
 ---
 
@@ -23,10 +23,16 @@ Ce guide vous explique comment déployer le site web **EduVault** gratuitement e
 2. **Root Directory** : Laissez `./` (la racine du projet contient déjà le fichier `vercel.json`).
 3. Dans la section **Build and Output Settings** :
    - *Build Command* : Laissez vide.
-   - *Output Directory* : `frontend` (ou laissez par défaut selon `vercel.json`).
+   - *Output Directory* : Laissez vide. `vercel.json` sert les fichiers du dossier `frontend`.
 
-### Étape 3 : Variables d'Environnement (Optionnel si API séparée)
-Si vous connectez le frontend à votre instance Supabase, vous pouvez renseigner vos variables dans [`frontend/scripts/config.js`](file:///c:/Users/tkossi3/Documents/EduVault/frontend/scripts/config.js).
+### Étape 3 : Configurer Supabase et l'API
+
+1. Exécutez d'abord les étapes du [guide Supabase](./SUPABASE_SETUP.md).
+2. Renseignez l'URL Supabase et la clé `anon` publique dans `frontend/scripts/config.js`.
+3. Déployez le backend FastAPI sur un hébergeur compatible séparément. Puis configurez `API_BASE_URL` dans ce même fichier avec son URL publique suivie de `/api` et autorisez le domaine Vercel dans `CORS_ORIGINS`.
+4. Ne placez jamais la clé Supabase `service_role` dans le frontend ou dans une variable exposée au navigateur; elle appartient uniquement au backend.
+
+Sans backend public configuré, les appels API distants ne sont pas disponibles. Le frontend peut alors utiliser ses données locales de démonstration; celles-ci ne constituent pas une base partagée entre les visiteurs.
 
 ### Étape 4 : Déployer
 1. Cliquez sur **"Deploy"**.
@@ -51,9 +57,9 @@ vercel --prod
 
 ---
 
-## 🔄 Configuration de Redirection & Routage
+## 🔄 Configuration de routage
 
-Le fichier [`vercel.json`](file:///c:/Users/tkossi3/Documents/EduVault/vercel.json) à la racine du projet assure le routage correct des pages, styles et scripts :
+Le fichier [`vercel.json`](./vercel.json) à la racine du projet assure le routage des pages, styles, scripts et ressources statiques. Il ne redirige volontairement pas `/api` vers `localhost` : une telle adresse désignerait l'ordinateur de chaque visiteur, pas votre backend.
 
 ```json
 {

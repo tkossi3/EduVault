@@ -3,7 +3,9 @@
     const store = window.EduVaultStore;
     const auth = window.EduVaultAuth;
     const icons = window.EduVaultIcons;
+    const config = window.EDUVAULT_CONFIG || {};
     if (!store) return;
+    let usingRemoteDocuments = false;
 
     const escapeHtml = (value = "") => String(value).replace(/[&<>"']/g, (char) => ({ 
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" 
@@ -126,22 +128,43 @@
         }
     };
 
-    const renderUserDocuments = () => {
+    const renderUserDocuments = async () => {
         const state = store.loadState();
         const profile = store.getCurrentUserProfile();
         const docsContainer = document.querySelector("#user-documents-list");
         if (!docsContainer) return;
 
-        // Filtrer les documents appartenant à l'utilisateur
-        const userDocs = state.documents.filter((d) => 
-            d.uploaded_by === profile.id || 
-            d.institution === profile.institution
-        );
+        let userDocs;
+        const session = await auth?.getSession();
+        if (session?.access_token) {
+            usingRemoteDocuments = true;
+            try {
+                const response = await fetch(`${config.API_BASE_URL}/auth/my-documents`, {
+                    headers: { "Authorization": `Bearer ${session.access_token}` }
+                });
+                if (!response.ok) throw new Error(`Réponse API ${response.status}`);
+                userDocs = await response.json();
+            } catch (error) {
+                console.error("Chargement des documents du profil impossible :", error);
+                docsContainer.innerHTML = `
+                    <div class="empty-state" style="padding: 36px 16px;">
+                        <h3>Documents indisponibles</h3>
+                        <p>Le service n'a pas pu charger vos dépôts. Vérifiez votre connexion et réessayez.</p>
+                        <button class="button button-outline" id="retry-profile-documents" type="button" style="margin-top: 14px;">Réessayer</button>
+                    </div>`;
+                docsContainer.querySelector("#retry-profile-documents")?.addEventListener("click", renderUserDocuments);
+                auth?.showToast("Impossible de charger vos documents depuis le serveur.", "error");
+                return;
+            }
+        } else {
+            usingRemoteDocuments = false;
+            userDocs = state.documents.filter((doc) => doc.uploaded_by === profile.id);
+        }
 
         // Mise à jour des stats
         const totalDocs = userDocs.length;
-        const totalViews = userDocs.reduce((acc, d) => acc + (d.views_count || 45), 0);
-        const totalDownloads = userDocs.reduce((acc, d) => acc + (d.downloads_count || 12), 0);
+        const totalViews = userDocs.reduce((acc, d) => acc + (d.views_count || 0), 0);
+        const totalDownloads = userDocs.reduce((acc, d) => acc + (d.downloads_count || 0), 0);
 
         const statDoc = document.querySelector("#stats-doc-count");
         const statViews = document.querySelector("#stats-views-count");
@@ -183,6 +206,9 @@
                     <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 6px;">
                         <span class="badge badge-primary" style="font-size: 10px;">${escapeHtml(doc.category)}</span>
                         <span class="badge badge-accent" style="font-size: 10px; font-weight: 700;">Semestre ${doc.semester || 1} (S${doc.semester || 1})</span>
+                        <span class="badge ${doc.status === "approved" ? "badge-primary" : doc.status === "rejected" ? "badge-danger" : "badge-warning"}" style="font-size: 10px;">
+                            ${doc.status === "approved" ? "Publié" : doc.status === "rejected" ? "Refusé" : "En attente"}
+                        </span>
                         <span class="badge badge-outline" style="font-size: 10px; border: 1px solid var(--line);">${escapeHtml(doc.program || "Filière")}</span>
                     </div>
                     <h4 style="margin: 0 0 4px; font-size: 14px; font-weight: 700; line-height: 1.3;">
@@ -195,10 +221,10 @@
                     </p>
                 </div>
                 <div class="profile-doc-actions">
-                    <a class="button button-outline button-sm" href="document-view.html?${params}">
+                    <a class="button button-outline button-sm" href="document-view.html?${params}" aria-label="Lire ${escapeHtml(doc.title)}">
                         <span>Lire</span>
                     </a>
-                    <button class="button button-danger button-sm btn-delete-doc" data-doc-id="${doc.id}" type="button" title="Supprimer ce document">
+                    <button class="button button-danger button-sm btn-delete-doc" data-doc-id="${escapeHtml(doc.id)}" type="button" title="Supprimer ce document" aria-label="Supprimer ${escapeHtml(doc.title)}">
                         ${icons?.trash || '✕'}
                     </button>
                 </div>
@@ -207,12 +233,36 @@
 
         // Supprimer document
         docsContainer.querySelectorAll(".btn-delete-doc").forEach((btn) => {
-            btn.addEventListener("click", () => {
+            btn.addEventListener("click", async () => {
                 const docId = btn.dataset.docId;
                 if (confirm("Êtes-vous sûr de vouloir supprimer ce document ?")) {
-                    store.deleteDocument(docId);
-                    auth.showToast("Document retiré avec succès.", "info");
-                    renderUserDocuments();
+                    if (usingRemoteDocuments) {
+                        const activeSession = await auth?.getSession();
+                        if (!activeSession?.access_token) {
+                            auth?.showToast("Votre session a expiré. Reconnectez-vous pour supprimer ce document.", "error");
+                            return;
+                        }
+                        try {
+                            const response = await fetch(`${config.API_BASE_URL}/documents/${encodeURIComponent(docId)}`, {
+                                method: "DELETE",
+                                headers: { "Authorization": `Bearer ${activeSession.access_token}` }
+                            });
+                            if (!response.ok) {
+                                const result = await response.json();
+                                throw new Error(result.detail || "La suppression du document a échoué.");
+                            }
+                            auth.showToast("Document supprimé de vos dépôts.", "success");
+                            await renderUserDocuments();
+                        } catch (error) {
+                            console.error("Suppression du document impossible :", error);
+                            auth?.showToast(error.message || "La suppression du document a échoué.", "error");
+                        }
+                    } else if (store.deleteDocument(docId)) {
+                        auth.showToast("Document retiré avec succès.", "success");
+                        await renderUserDocuments();
+                    } else {
+                        auth.showToast("Ce document n'a pas pu être supprimé de votre espace.", "error");
+                    }
                 }
             });
         });

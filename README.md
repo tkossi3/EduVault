@@ -80,7 +80,7 @@ EduVault/
 ## 🚀 Démarrage Rapide en Local
 
 ### 1. Ouvrir le site directement dans le navigateur
-Ouvrez simplement le fichier [`frontend/index.html`](file:///c:/Users/tkossi3/Documents/EduVault/frontend/index.html) dans votre navigateur (ou via l'extension *Live Server* de votre éditeur). Toutes les fonctionnalités (recherche, lecteur de document, profil, upload, notifications) fonctionnent immédiatement grâce au store réactif embarqué.
+Ouvrez [`frontend/index.html`](./frontend/index.html) via un serveur statique local (par exemple l'extension *Live Server* de votre éditeur). Sans Supabase et backend configurés, le site utilise les données locales de démonstration; les modifications ne sont pas partagées entre les visiteurs.
 
 ### 2. Démarrer le backend FastAPI (Optionnel)
 ```powershell
@@ -95,8 +95,8 @@ uvicorn main:app --reload --port 8000
 
 ## 📚 Guides Dédiés
 
-- 🗄️ [Guide de configuration Supabase](file:///c:/Users/tkossi3/Documents/EduVault/SUPABASE_SETUP.md)
-- 🚀 [Guide de déploiement sur Vercel](file:///c:/Users/tkossi3/Documents/EduVault/VERCEL_DEPLOYMENT.md)
+- 🗄️ [Guide de configuration Supabase](./SUPABASE_SETUP.md)
+- 🚀 [Guide de déploiement sur Vercel](./VERCEL_DEPLOYMENT.md)
 
 ---
 

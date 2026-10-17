@@ -466,10 +466,49 @@
             btn.addEventListener("click", () => {
                 const nav = document.querySelector("#main-nav, .main-nav");
                 if (nav) {
-                    nav.classList.toggle("is-open-mobile");
+                    const isOpen = nav.classList.toggle("is-open-mobile");
+                    btn.setAttribute("aria-expanded", String(isOpen));
                 }
             });
         });
+
+        const nav = document.querySelector("#main-nav, .main-nav");
+        if (nav) {
+            const isInPages = window.location.pathname.includes("/pages/");
+            const homeHref = isInPages ? "../index.html" : "index.html";
+            const libraryHref = isInPages ? "library.html" : "pages/library.html";
+            const catalogHref = isInPages ? "parcours.html" : "pages/parcours.html";
+            const uploadHref = isInPages ? "upload.html" : "pages/upload.html";
+            const profileHref = isInPages ? "profile.html" : "pages/profile.html";
+
+            if (!nav.querySelector('a[href*="library.html"]')) {
+                const libraryLink = document.createElement("a");
+                libraryLink.className = "nav-link";
+                libraryLink.href = libraryHref;
+                libraryLink.textContent = "Bibliothèque";
+                nav.insertBefore(libraryLink, nav.children[1] || null);
+            }
+
+            const currentPath = window.location.pathname;
+            const mobileLinks = [
+                { href: homeHref, label: "Explorer", icon: "M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z", active: /\/index\.html$|\/$/.test(currentPath) },
+                { href: libraryHref, label: "Bibliothèque", icon: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z", active: /library\.html$/.test(currentPath) },
+                { href: uploadHref, label: "Ajouter", icon: "M12 5v14M5 12h14", active: /upload\.html$/.test(currentPath), primary: true },
+                { href: catalogHref, label: "Universités", icon: "M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 9h.01M15 9h.01", active: /parcours\.html$/.test(currentPath) },
+                { href: profileHref, label: "Profil", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z", active: /profile\.html$/.test(currentPath) }
+            ];
+            const mobileNav = document.createElement("nav");
+            mobileNav.className = "mobile-bottom-nav";
+            mobileNav.setAttribute("aria-label", "Navigation mobile");
+            mobileNav.innerHTML = mobileLinks.map((item) => `
+                <a class="mobile-nav-link${item.active ? " is-active" : ""}${item.primary ? " mobile-nav-add" : ""}" href="${item.href}"${item.active ? ' aria-current="page"' : ""} aria-label="${item.label}">
+                    <span class="mobile-nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${item.icon}"></path></svg></span>
+                    <span>${item.label}</span>
+                </a>
+            `).join("");
+            document.body.appendChild(mobileNav);
+            document.body.classList.add("has-mobile-bottom-nav");
+        }
 
         // Écouteurs d'événements
         document.addEventListener("eduvault:auth_state_changed", () => updateAccountUI());

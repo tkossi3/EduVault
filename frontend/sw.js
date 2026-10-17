@@ -1,5 +1,5 @@
 /* Cache exclusivement l’interface publique, jamais les API ni les documents. */
-const CACHE_NAME = "eduvault-shell-v1";
+const CACHE_NAME = "eduvault-shell-v2";
 const APP_SHELL = ["/", "/index.html", "/manifest.json", "/pages/parcours.html", "/pages/document-view.html", "/pages/upload.html", "/pages/profile.html", "/pages/notifications.html", "/styles/variables.css", "/styles/main.css", "/styles/pages.css", "/styles/animations.css", "/styles/components.css", "/scripts/config.js", "/scripts/theme.js", "/scripts/auth.js", "/scripts/cursor.js", "/scripts/notifications.js", "/scripts/app.js", "/scripts/catalog.js", "/scripts/upload.js", "/scripts/profile.js", "/scripts/notifications-page.js", "/scripts/pdf-viewer.js", "/scripts/service-worker.js", "/assets/eduvault.svg"];
 
 self.addEventListener("install", (event) => {

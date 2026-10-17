@@ -6,11 +6,14 @@
 
     const store = window.EduVaultStore;
     const icons = window.EduVaultIcons;
+    const config = window.EDUVAULT_CONFIG || {};
     const searchInput = document.querySelector("#catalog-search");
     const sectorFilterBtns = document.querySelectorAll("#catalog-sector-filters button");
 
     let currentSector = "all";
     let currentSearch = "";
+    let currentData = store.loadState();
+    let usingRemoteCatalog = false;
 
     const escapeHtml = (value = "") => String(value).replace(/[&<>"']/g, (char) => ({ 
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" 
@@ -18,9 +21,22 @@
 
     const formatSize = (bytes) => bytes ? `${(bytes / (1024 * 1024)).toFixed(1)} Mo` : "PDF";
 
-    const loadCourseDocuments = (course, target, instName) => {
-        const state = store ? store.loadState() : null;
-        const docs = state?.documents.filter((d) => d.course_id === course.id || d.course === course.name) || [];
+    const loadCourseDocuments = async (course, target, instName) => {
+        let docs = [];
+        if (usingRemoteCatalog) {
+            target.innerHTML = '<p class="catalog-loading">Chargement des documents…</p>';
+            try {
+                const response = await fetch(`${config.API_BASE_URL}/catalog/courses/${encodeURIComponent(course.id)}/documents`);
+                if (!response.ok) throw new Error(`Réponse API ${response.status}`);
+                docs = await response.json();
+            } catch (error) {
+                console.error("Chargement des documents du cours impossible :", error);
+                target.innerHTML = '<p class="catalog-load-error">Les documents de cette matière sont temporairement indisponibles.</p>';
+                return;
+            }
+        } else {
+            docs = currentData.documents.filter((doc) => doc.course_id === course.id || doc.course === course.name);
+        }
 
         if (!docs.length) {
             target.innerHTML = `
@@ -66,6 +82,7 @@
     };
 
     const render = (data) => {
+        currentData = data;
         let institutions = data.institutions || [];
 
         // Filtrer par secteur (public / privé)
@@ -111,10 +128,10 @@
             const autoOpen = Boolean(currentSearch.trim());
 
             return `
-            <details class="institution-accordion" ${autoOpen ? "open" : ""}>
+            <details class="institution-accordion" data-institution-id="${escapeHtml(institution.id)}" ${autoOpen ? "open" : ""}>
                 <summary>
                     <div class="institution-icon" style="width: 38px; height: 38px; border-radius: 8px; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; background: ${isPublic ? 'var(--primary-light)' : 'var(--accent-soft)'}; color: ${isPublic ? 'var(--primary)' : 'var(--accent)'}; border: 1px solid ${isPublic ? 'var(--primary-border)' : 'var(--accent-border)'};">
-                        ${institution.name.slice(0, 1)}
+                        ${escapeHtml(institution.name.slice(0, 1))}
                     </div>
                     <div style="flex: 1; min-width: 0;">
                         <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 2px;">
@@ -127,8 +144,9 @@
                 </summary>
                 
                 <div class="program-list">
-                    <div style="padding: 10px 16px; background: var(--surface-raised); border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 600; color: var(--text-secondary);">
+                    <div class="program-list-heading">
                         Filières et parcours accrédités (${programs.length})
+                        <button class="button button-outline button-sm program-add" type="button" data-institution-id="${escapeHtml(institution.id)}">Proposer une filière</button>
                     </div>
                     ${programs.length ? programs.map((program) => {
                         const courses = data.courses.filter((course) => course.program_id === program.id);
@@ -146,6 +164,10 @@
                                 <span class="badge badge-outline" style="margin-left: auto; font-size: 11px;">
                                     ${courses.length} matières
                                 </span>
+                                <button class="button button-outline button-sm program-edit" type="button" data-program-id="${escapeHtml(program.id)}" aria-label="Proposer un renommage pour ${escapeHtml(program.name)}">
+                                    ${icons?.edit || "Modifier"}
+                                    <span>Proposer un renommage</span>
+                                </button>
                                 <span class="accordion-chevron" style="margin-left: 10px; color: var(--muted);">▾</span>
                             </summary>
                             
@@ -178,6 +200,37 @@
             </details>`;
         }).join("");
 
+        root.querySelectorAll(".program-add").forEach((button) => {
+            button.addEventListener("click", async (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                const name = window.prompt("Nom du nouveau parcours ou de la nouvelle filière :");
+                if (name === null) return;
+                await submitProgramChange({
+                    institution_id: button.dataset.institutionId,
+                    request_type: "add",
+                    name
+                });
+            });
+        });
+
+        root.querySelectorAll(".program-edit").forEach((button) => {
+            button.addEventListener("click", async (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                const program = data.programs.find((item) => item.id === button.dataset.programId);
+                if (!program) return;
+                const name = window.prompt("Modifier le nom de cette filière :", program.name);
+                if (name === null || name.trim() === program.name) return;
+                await submitProgramChange({
+                    institution_id: program.institution_id,
+                    program_id: program.id,
+                    request_type: "rename",
+                    name
+                });
+            });
+        });
+
         // Toggle des documents par matière
         root.querySelectorAll(".course-toggle").forEach((button) => {
             button.addEventListener("click", () => {
@@ -187,7 +240,7 @@
                 panel.hidden = !open;
                 button.setAttribute("aria-expanded", String(open));
                 if (open) {
-                    const course = data.courses.find((item) => item.id === button.dataset.courseId);
+                    const course = currentData.courses.find((item) => item.id === button.dataset.courseId);
                     if (course) {
                         loadCourseDocuments(course, panel, button.dataset.instName);
                     }
@@ -196,14 +249,149 @@
         });
     };
 
+    const submitProgramChange = async (payload) => {
+        const auth = window.EduVaultAuth;
+        const session = await auth?.getSession();
+        if (!session?.access_token) {
+            auth?.open("login", "Connectez-vous avec votre compte pour soumettre une filière à validation.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${config.API_BASE_URL}/catalog/program-requests`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${session.access_token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                const result = await response.json();
+                throw new Error(result.detail || "La demande n'a pas pu être envoyée.");
+            }
+            auth.showToast("Votre proposition a été envoyée aux modérateurs.", "success");
+            loadProgramChangeRequests();
+        } catch (error) {
+            console.error("Envoi de la demande de filière impossible :", error);
+            auth?.showToast(error.message || "Le service de proposition est indisponible.", "error");
+        }
+    };
+
+    const renderProgramChangeRequests = (result) => {
+        const section = document.querySelector("#program-review");
+        const list = document.querySelector("#program-review-list");
+        if (!section || !list) return;
+        list.innerHTML = "";
+        if (!result.requests.length) {
+            section.hidden = !result.can_review;
+            return;
+        }
+
+        section.hidden = false;
+        const institutionNames = new Map(currentData.institutions.map((institution) => [institution.id, institution.name]));
+        list.innerHTML = result.requests.map((request) => `
+            <article class="program-review-item">
+                <div>
+                    <strong>${escapeHtml(request.request_type === "add" ? "Nouvelle filière" : "Renommage proposé")}</strong>
+                    <p>${escapeHtml(request.requested_name)} · ${escapeHtml(institutionNames.get(request.institution_id) || "Établissement")}</p>
+                    <small>${request.status === "pending" ? "En attente de validation" : `Demande ${request.status === "approved" ? "approuvée" : "refusée"}`}</small>
+                </div>
+                ${result.can_review && request.status === "pending" ? `
+                <div class="program-review-actions">
+                    <button class="button button-primary button-sm" type="button" data-review-id="${escapeHtml(request.id)}" data-review-action="approve">Valider</button>
+                    <button class="button button-outline button-sm" type="button" data-review-id="${escapeHtml(request.id)}" data-review-action="reject">Refuser</button>
+                </div>` : ""}
+            </article>
+        `).join("");
+
+        list.querySelectorAll("[data-review-id]").forEach((button) => {
+            button.addEventListener("click", async () => {
+                button.disabled = true;
+                await reviewProgramChange(button.dataset.reviewId, button.dataset.reviewAction);
+                button.disabled = false;
+            });
+        });
+    };
+
+    const loadProgramChangeRequests = async () => {
+        const auth = window.EduVaultAuth;
+        const session = await auth?.getSession();
+        if (!session?.access_token) return;
+        try {
+            const response = await fetch(`${config.API_BASE_URL}/catalog/program-requests`, {
+                headers: { "Authorization": `Bearer ${session.access_token}` }
+            });
+            if (!response.ok) throw new Error(`Réponse API ${response.status}`);
+            renderProgramChangeRequests(await response.json());
+        } catch (error) {
+            console.error("Chargement des demandes de filière impossible :", error);
+            auth?.showToast("Impossible de charger les propositions de filière.", "error");
+        }
+    };
+
+    const reviewProgramChange = async (requestId, action) => {
+        const auth = window.EduVaultAuth;
+        const session = await auth?.getSession();
+        if (!session?.access_token) return;
+        try {
+            const response = await fetch(`${config.API_BASE_URL}/catalog/program-requests/${encodeURIComponent(requestId)}/review`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${session.access_token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ action })
+            });
+            if (!response.ok) {
+                const result = await response.json();
+                throw new Error(result.detail || "La décision n'a pas pu être enregistrée.");
+            }
+            auth.showToast(action === "approve" ? "La filière est publiée." : "La proposition a été refusée.", "success");
+            await loadCatalog();
+            await loadProgramChangeRequests();
+        } catch (error) {
+            console.error("Modération de la demande de filière impossible :", error);
+            auth?.showToast(error.message || "La modération a échoué.", "error");
+        }
+    };
+
+    const targetInstId = new URLSearchParams(location.search).get("inst");
+    const openTargetInstitution = () => {
+        if (!targetInstId) return;
+        root.querySelector(`details.institution-accordion[data-institution-id="${CSS.escape(targetInstId)}"]`)?.setAttribute("open", "");
+    };
+
+    const loadCatalog = async () => {
+        try {
+            const response = await fetch(`${config.API_BASE_URL}/catalog`);
+            if (!response.ok) throw new Error(`Réponse API ${response.status}`);
+            const remoteData = await response.json();
+            const localData = store.loadState();
+            const knownInstitutions = new Map(localData.institutions.map((institution) => [institution.name.toLowerCase(), institution]));
+            remoteData.institutions = (remoteData.institutions || []).map((institution) => ({
+                ...(knownInstitutions.get(institution.name.toLowerCase()) || {}),
+                ...institution
+            }));
+            remoteData.documents = [];
+            usingRemoteCatalog = true;
+            render(remoteData);
+        } catch (error) {
+            console.warn("Catalogue distant indisponible, utilisation du catalogue local :", error);
+            usingRemoteCatalog = false;
+            render(store.loadState());
+        }
+        openTargetInstitution();
+    };
+
     // Chargement initial
-    const state = store.loadState();
-    render(state);
+    render(currentData);
+    loadCatalog().then(loadProgramChangeRequests);
 
     // Événements de recherche et filtres
     searchInput?.addEventListener("input", (e) => {
         currentSearch = e.target.value;
-        render(store.loadState());
+        render(currentData);
     });
 
     sectorFilterBtns.forEach((btn) => {
@@ -211,16 +399,7 @@
             sectorFilterBtns.forEach((b) => b.classList.remove("is-active"));
             btn.classList.add("is-active");
             currentSector = btn.dataset.sector || "all";
-            render(store.loadState());
+            render(currentData);
         });
     });
-
-    // Si un établissement spécifique est ciblé dans l'URL
-    const targetInstId = new URLSearchParams(location.search).get("inst");
-    if (targetInstId) {
-        const accordions = root.querySelectorAll(".institution-accordion");
-        if (accordions.length > 0) {
-            accordions[0].open = true;
-        }
-    }
 })();

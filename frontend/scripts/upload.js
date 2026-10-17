@@ -18,9 +18,15 @@
 
     const store = window.EduVaultStore;
     const icons = window.EduVaultIcons;
+    const config = window.EDUVAULT_CONFIG || {};
 
     let selectedFile = null;
     let fileDataUrl = null;
+    let remoteCatalog = null;
+
+    const escapeHtml = (value = "") => String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[char]);
 
     const readFileAsDataUrl = (file) => {
         return new Promise((resolve, reject) => {
@@ -37,7 +43,9 @@
         const selectedProg = progSelect?.value;
         const selectedSemester = semSelect?.value || 1;
 
-        const courses = store.getCoursesByProgramAndSemester(selectedProg, selectedSemester);
+        const courses = remoteCatalog
+            ? remoteCatalog.courses.filter((course) => course.program_id === selectedProg && course.semester === parseInt(selectedSemester, 10))
+            : store.getCoursesByProgramAndSemester(selectedProg, selectedSemester);
 
         // Alimentation du datalist pour la saisie intuitive
         if (courseDatalist) {
@@ -62,14 +70,17 @@
     const populateSemesters = () => {
         if (!semSelect || !store) return;
         const selectedProg = progSelect?.value;
-        const semesters = store.getSemestersForProgram(selectedProg);
+        const semesters = remoteCatalog
+            ? Array.from(new Set(remoteCatalog.courses.filter((course) => course.program_id === selectedProg).map((course) => course.semester))).sort((a, b) => a - b)
+            : store.getSemestersForProgram(selectedProg);
+        const semesterOptions = semesters.length ? semesters : remoteCatalog ? [1, 2, 3, 4, 5, 6] : [1, 2, 3, 4, 5, 6];
 
         const currentVal = semSelect.value || "1";
-        semSelect.innerHTML = semesters.map((s) => `
+        semSelect.innerHTML = semesterOptions.map((s) => `
             <option value="${s}">Semestre ${s} (S${s})</option>
         `).join("");
 
-        if (semesters.includes(parseInt(currentVal, 10))) {
+        if (semesterOptions.includes(parseInt(currentVal, 10))) {
             semSelect.value = currentVal;
         } else {
             semSelect.value = "1";
@@ -86,18 +97,24 @@
         const instName = instSelect.value;
         const degreeType = degreeSelect?.value || "";
 
-        let programs = store.getProgramsByInstitutionAndDegree(instId || instName, degreeType);
+        let programs = remoteCatalog
+            ? remoteCatalog.programs.filter((program) =>
+                program.institution_id === instId && (!program.degree || program.degree === degreeType || program.degree === "Licence / Master")
+            )
+            : store.getProgramsByInstitutionAndDegree(instId || instName, degreeType);
 
-        if (!programs || !programs.length) {
+        if (!remoteCatalog && (!programs || !programs.length)) {
             programs = store.getProgramsByInstitution(instId || instName);
         }
 
         if (!programs || !programs.length) {
-            progSelect.innerHTML = `<option value="Génie Logiciel & Systèmes d'Information">Génie Logiciel & Systèmes d'Information</option><option value="__NEW__">+ Ajouter une nouvelle filière...</option>`;
+            progSelect.innerHTML = remoteCatalog
+                ? `<option value="" disabled selected>Aucune filière enregistrée</option>`
+                : `<option value="Génie Logiciel & Systèmes d'Information">Génie Logiciel & Systèmes d'Information</option><option value="__NEW__">+ Ajouter une nouvelle filière...</option>`;
         } else {
             progSelect.innerHTML = programs.map((p) => `
-                <option value="${p.name}" data-id="${p.id}">${p.name}</option>
-            `).join("") + `<option value="__NEW__">+ Ajouter une nouvelle filière...</option>`;
+                <option value="${remoteCatalog ? p.id : p.name}" data-id="${p.id}">${escapeHtml(p.name)}</option>
+            `).join("") + (remoteCatalog ? "" : `<option value="__NEW__">+ Ajouter une nouvelle filière...</option>`);
         }
 
         populateSemesters();
@@ -106,20 +123,20 @@
     // 4. Charger les établissements
     const populateInstitutions = () => {
         if (!instSelect || !store) return;
-        const state = store.loadState();
         const userProfile = store.getCurrentUserProfile();
+        const institutions = remoteCatalog ? remoteCatalog.institutions : store.loadState().institutions;
 
-        instSelect.innerHTML = state.institutions.map((inst) => `
+        instSelect.innerHTML = institutions.map((inst) => `
             <option value="${inst.name}" data-id="${inst.id}" ${inst.name === userProfile.institution ? 'selected' : ''}>
                 ${inst.name} (${inst.city || "Lomé"})
             </option>
-        `).join("") + `<option value="__NEW__">+ Ajouter un nouvel établissement...</option>`;
+        `).join("") + (remoteCatalog ? "" : `<option value="__NEW__">+ Ajouter un nouvel établissement...</option>`);
 
         populatePrograms();
 
         if (userProfile.program && progSelect) {
             const options = Array.from(progSelect.options);
-            const match = options.find((o) => o.value === userProfile.program || o.value.includes(userProfile.program));
+            const match = options.find((o) => o.value === userProfile.program || o.textContent.trim() === userProfile.program);
             if (match) {
                 progSelect.value = match.value;
                 populateSemesters();
@@ -177,6 +194,11 @@
                 const instId = selectedInstOption?.dataset.id || "inst-1";
                 const deg = degreeSelect?.value || "Licence Professionnelle";
                 const createdProg = store.addProgram(newProgName.trim(), instId, deg);
+                if (!createdProg) {
+                    window.EduVaultAuth?.showToast("Une filière porte déjà ce nom dans cet établissement.", "error");
+                    populatePrograms();
+                    return;
+                }
                 populatePrograms();
                 progSelect.value = createdProg.name;
                 populateSemesters();
@@ -260,6 +282,8 @@
 
     const handleFile = async (file) => {
         if (!file) return;
+        selectedFile = null;
+        fileDataUrl = null;
         if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
             if (feedback) {
                 feedback.className = "form-feedback";
@@ -268,10 +292,10 @@
             return;
         }
 
-        if (file.size > 30 * 1024 * 1024) {
+        if (file.size > 20 * 1024 * 1024) {
             if (feedback) {
                 feedback.className = "form-feedback";
-                feedback.textContent = "Le fichier dépasse la taille maximale autorisée de 30 Mo.";
+                feedback.textContent = "Le fichier dépasse la taille maximale autorisée de 20 Mo.";
             }
             return;
         }
@@ -279,16 +303,24 @@
         selectedFile = file;
         const sizeFormatted = (file.size / (1024 * 1024)).toFixed(2) + " Mo";
 
-        try {
-            fileDataUrl = await readFileAsDataUrl(file);
-        } catch (e) {
-            console.warn("Read file error:", e);
+        if (!remoteCatalog) {
+            try {
+                fileDataUrl = await readFileAsDataUrl(file);
+            } catch (e) {
+                console.error("Lecture du fichier impossible :", e);
+                selectedFile = null;
+                if (feedback) {
+                    feedback.className = "form-feedback";
+                    feedback.textContent = "Le fichier sélectionné ne peut pas être lu.";
+                }
+                return;
+            }
         }
 
         if (fileInfo) {
             fileInfo.innerHTML = `
                 ${icons?.checkCircle || '✓'}
-                <span>${file.name} (${sizeFormatted})</span>
+                <span>${escapeHtml(file.name)} (${sizeFormatted})</span>
             `;
             fileInfo.style.display = "inline-flex";
         }
@@ -310,6 +342,14 @@
         if (!fileToUpload) {
             feedback.className = "form-feedback";
             feedback.textContent = "Veuillez sélectionner un fichier PDF à déposer.";
+            return;
+        }
+        if ((fileToUpload.type !== "application/pdf" && !fileToUpload.name.toLowerCase().endsWith(".pdf")) ||
+            fileToUpload.size > 20 * 1024 * 1024) {
+            feedback.className = "form-feedback";
+            feedback.textContent = fileToUpload.size > 20 * 1024 * 1024
+                ? "Le fichier dépasse la taille maximale autorisée de 20 Mo."
+                : "Seuls les fichiers PDF sont acceptés pour la bibliothèque académique.";
             return;
         }
 
@@ -335,11 +375,65 @@
             return;
         }
 
-        // Enregistrer la matière dans le catalogue de cette filière et semestre
         const selectedProgOption = progSelect?.selectedOptions ? progSelect.selectedOptions[0] : null;
-        const progId = selectedProgOption?.dataset?.id || "prog-1";
-        store.addCourse({ name: courseName, program_id: progId, semester });
+        const progId = selectedProgOption?.dataset?.id || selectedProgOption?.value || "prog-1";
 
+        if (remoteCatalog) {
+            const course = remoteCatalog.courses.find((item) =>
+                item.program_id === progId &&
+                item.semester === semester &&
+                item.name.trim().toLowerCase() === courseName.toLowerCase()
+            );
+            if (!course) {
+                feedback.className = "form-feedback";
+                feedback.textContent = "Choisissez une matière déjà enregistrée pour cette filière et ce semestre.";
+                return;
+            }
+
+            const session = await window.EduVaultAuth?.getSession();
+            if (!session?.access_token) {
+                feedback.className = "form-feedback";
+                feedback.textContent = "Connectez-vous avec Supabase pour déposer un document.";
+                window.EduVaultAuth?.open("login", "Connectez-vous pour déposer votre document dans la bibliothèque.");
+                return;
+            }
+
+            feedback.className = "form-feedback";
+            feedback.textContent = "Envoi du PDF en cours…";
+            const uploadData = new FormData();
+            uploadData.append("title", title);
+            uploadData.append("category", category);
+            uploadData.append("academic_year", academicYear);
+            uploadData.append("course_id", course.id);
+            uploadData.append("file", fileToUpload, fileToUpload.name);
+
+            try {
+                const response = await fetch(`${config.API_BASE_URL}/documents/upload`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${session.access_token}` },
+                    body: uploadData
+                });
+                if (!response.ok) {
+                    const result = await response.json();
+                    throw new Error(result.detail || "Le dépôt n'a pas pu être enregistré.");
+                }
+                const created = await response.json();
+                feedback.className = "form-feedback is-success";
+                feedback.textContent = `Document envoyé. Il sera visible après validation par un modérateur. Référence : ${created.id}`;
+                selectedFile = null;
+                fileDataUrl = null;
+                if (fileInput) fileInput.value = "";
+                if (fileInfo) fileInfo.style.display = "none";
+                return;
+            } catch (error) {
+                console.error("Dépôt du document impossible :", error);
+                feedback.className = "form-feedback";
+                feedback.textContent = error.message || "Le service de dépôt est momentanément indisponible.";
+                return;
+            }
+        }
+
+        const course = store.addCourse({ name: courseName, program_id: progId, semester });
         feedback.className = "form-feedback is-success";
         feedback.textContent = "Traitement et enregistrement du document PDF dans le coffre…";
 
@@ -348,7 +442,10 @@
             try {
                 fileDataUrl = await readFileAsDataUrl(fileToUpload);
             } catch (e) {
-                console.warn("Conversion error:", e);
+                console.error("Conversion du fichier impossible :", e);
+                feedback.className = "form-feedback";
+                feedback.textContent = "Le fichier sélectionné ne peut pas être lu.";
+                return;
             }
         }
 
@@ -359,6 +456,7 @@
             program,
             semester,
             course: courseName,
+            course_id: course.id,
             category,
             academic_year: academicYear,
             file_name: fileToUpload.name || "document.pdf",
@@ -383,5 +481,30 @@
         }
     });
 
-    populateInstitutions();
+    const loadUploadCatalog = async () => {
+        const submitButton = form?.querySelector('[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+        try {
+            const response = await fetch(`${config.API_BASE_URL}/catalog`);
+            if (!response.ok) throw new Error(`Réponse API ${response.status}`);
+            const catalog = await response.json();
+            if (!Array.isArray(catalog.institutions) || !Array.isArray(catalog.programs) || !Array.isArray(catalog.courses)) {
+                throw new Error("Le catalogue reçu ne respecte pas le format attendu.");
+            }
+            remoteCatalog = catalog;
+        } catch (error) {
+            console.warn("Catalogue de dépôt distant indisponible :", error);
+            if (location.protocol !== "file:" && !["localhost", "127.0.0.1"].includes(location.hostname)) {
+                if (feedback) {
+                    feedback.className = "form-feedback";
+                    feedback.textContent = "Le service de dépôt n'est pas disponible. Réessayez plus tard.";
+                }
+                return;
+            }
+        }
+        populateInstitutions();
+        if (submitButton) submitButton.disabled = false;
+    };
+
+    loadUploadCatalog();
 })();

@@ -8,6 +8,11 @@
 
     let activeCategory = "";
     let currentDocuments = [];
+    let currentQuery = "";
+    const isExplorerPage = document.body.dataset.page === "explorer";
+    const isLibraryPage = document.body.dataset.page === "library";
+    const documentViewHref = isLibraryPage ? "document-view.html" : "pages/document-view.html";
+    const catalogHref = isLibraryPage ? "parcours.html" : "pages/parcours.html";
 
     const escapeHtml = (value = "") => String(value).replace(/[&<>"']/g, (char) => ({ 
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" 
@@ -19,7 +24,8 @@
     };
 
     const render = () => {
-        const visible = currentDocuments.filter((item) => !activeCategory || item.category === activeCategory);
+        let visible = currentDocuments.filter((item) => !activeCategory || item.category === activeCategory);
+        if (isExplorerPage && !currentQuery) visible = visible.slice(0, 4);
         const emptyState = document.querySelector("#empty-state");
         if (emptyState) emptyState.hidden = visible.length > 0;
 
@@ -29,7 +35,7 @@
         }
 
         results.innerHTML = visible.map((item) => {
-            const params = new URLSearchParams({ 
+            const params = new URLSearchParams({
                 id: item.id, 
                 title: item.title, 
                 course: item.course || "Ressource académique",
@@ -69,7 +75,7 @@
 
                 <div class="document-card-footer">
                     <span>${escapeHtml(item.academic_year || "2025-2026")} · ${formatSize(item.file_size)}</span>
-                    <a class="action-read" href="pages/document-view.html?${params}">
+                    <a class="action-read" href="${documentViewHref}?${params}">
                         <span>Consulter</span>
                         ${icons?.arrowRight || '→'}
                     </a>
@@ -79,13 +85,16 @@
     };
 
     const search = async (query = "") => {
+        currentQuery = query.trim();
         results.innerHTML = '<div class="loading-state" style="grid-column: 1/-1; text-align: center; padding: 40px;"><p>Recherche des documents en cours…</p></div>';
         const emptyState = document.querySelector("#empty-state");
         if (emptyState) emptyState.hidden = true;
         
         const titleEl = document.querySelector("#results-title");
         if (titleEl) {
-            titleEl.textContent = query ? `Résultats pour « ${query} »` : "Documents récents & populaires";
+            titleEl.textContent = query
+                ? `Résultats pour « ${query} »`
+                : isLibraryPage ? "Bibliothèque complète" : "Documents phares";
         }
 
         const normalizedQuery = query.toLowerCase().trim();
@@ -131,10 +140,11 @@
             institutions = store?.loadState().institutions || [];
         }
 
-        container.innerHTML = institutions.map((inst) => `
-            <a href="pages/parcours.html?inst=${encodeURIComponent(inst.id)}" class="institution-card">
+        const visibleInstitutions = document.body.dataset.page === "explorer" ? institutions.slice(0, 4) : institutions;
+        container.innerHTML = visibleInstitutions.map((inst) => `
+            <a href="${catalogHref}?inst=${encodeURIComponent(inst.id)}" class="institution-card">
                 <div class="institution-icon">
-                    ${inst.name.slice(0, 1)}
+                    ${escapeHtml(inst.name.slice(0, 1))}
                 </div>
                 <div style="flex: 1; min-width: 0;">
                     <strong>${escapeHtml(inst.name)}</strong>
@@ -145,6 +155,9 @@
                 </span>
             </a>
         `).join("");
+
+        const moreLink = document.querySelector("#institutions-more");
+        if (moreLink) moreLink.hidden = institutions.length <= visibleInstitutions.length;
     };
 
     // Écouteurs de formulaires et filtres

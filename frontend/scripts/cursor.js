@@ -14,18 +14,24 @@
         }
     };
 
-    // Observer les mutations du DOM pour re-placer le curseur si besoin
+    const updateDialogState = () => {
+        document.documentElement.classList.toggle("has-open-dialog", Boolean(document.querySelector("dialog[open]")));
+    };
+
+    // Observer les mutations pour maintenir le curseur au-dessus des contenus, mais pas des fenêtres modales natives.
     try {
         const observer = new MutationObserver(() => {
             if (document.body.lastElementChild !== ring) {
                 document.body.appendChild(dot);
                 document.body.appendChild(ring);
             }
+            updateDialogState();
         });
-        observer.observe(document.body, { childList: true });
+        observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["open"] });
     } catch (e) {
         console.warn("Cursor observer:", e);
     }
+    updateDialogState();
 
     let pointerX = -100;
     let pointerY = -100;
@@ -35,6 +41,7 @@
     window.addEventListener("pointermove", (event) => {
         pointerX = event.clientX;
         pointerY = event.clientY;
+        if (document.documentElement.classList.contains("has-open-dialog")) return;
         dot.classList.add("is-visible");
         ring.classList.add("is-visible");
         dot.style.transform = `translate3d(${pointerX - 3}px, ${pointerY - 3}px, 0)`;

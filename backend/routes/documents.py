@@ -4,7 +4,7 @@ import re
 import uuid
 from pathlib import PurePosixPath
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile
 
 from config import settings
 from models.schemas import Category, SearchResponse, SignedUrlResponse, UploadResponse
@@ -93,6 +93,34 @@ async def view_url(document_id: uuid.UUID) -> dict:
         raise HTTPException(status_code=503, detail="Impossible de préparer la lecture du document.") from exc
 
 
+@router.get("/{document_id}/owner-view-url", response_model=SignedUrlResponse)
+async def owner_view_url(
+    document_id: uuid.UUID,
+    user: dict = Depends(current_user),
+) -> dict:
+    """Signe la lecture d’un document du propriétaire, même en attente de validation."""
+    client = get_supabase()
+    try:
+        result = (
+            client.table("documents").select("storage_path,uploaded_by,is_public,status")
+            .eq("id", str(document_id)).maybe_single().execute()
+        )
+        document = result.data
+        if not document:
+            raise HTTPException(status_code=404, detail="Document introuvable.")
+        is_public = document["is_public"] and document["status"] == "approved"
+        if document["uploaded_by"] != user["id"] and not is_public:
+            raise HTTPException(status_code=404, detail="Document introuvable ou non publié.")
+        signed = client.storage.from_(BUCKET).create_signed_url(
+            document["storage_path"], settings.signed_url_ttl_seconds
+        )
+        return {"signed_url": signed["signedURL"], "expires_in": settings.signed_url_ttl_seconds}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Impossible de préparer la lecture du document.") from exc
+
+
 @router.get("/{document_id}/download-url", response_model=SignedUrlResponse)
 async def download_url(document_id: uuid.UUID, user: dict = Depends(current_user)) -> dict:
     """Signe un téléchargement uniquement après vérification de la session."""
@@ -172,3 +200,38 @@ async def upload_document(
             pass
         raise HTTPException(status_code=502, detail="Le dépôt n’a pas pu être enregistré.") from exc
     return {"id": row["id"], "title": title, "status": row["status"]}
+
+
+@router.delete("/{document_id}", status_code=204)
+async def delete_document(
+    document_id: uuid.UUID,
+    user: dict = Depends(current_user),
+) -> Response:
+    """Supprime un document uniquement si le compte courant en est propriétaire."""
+    client = get_supabase()
+    try:
+        result = (
+            client.table("documents").select("id,storage_path,uploaded_by")
+            .eq("id", str(document_id)).maybe_single().execute()
+        )
+        document = result.data
+        if not document or document["uploaded_by"] != user["id"]:
+            raise HTTPException(status_code=404, detail="Document introuvable dans vos dépôts.")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Impossible de vérifier la propriété du document.") from exc
+
+    try:
+        client.storage.from_(BUCKET).remove([document["storage_path"]])
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Le fichier n'a pas pu être supprimé du stockage.") from exc
+
+    try:
+        client.table("documents").delete().eq("id", str(document_id)).eq("uploaded_by", user["id"]).execute()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="Le fichier a été retiré du stockage, mais ses informations n'ont pas pu être supprimées.",
+        ) from exc
+    return Response(status_code=204)

@@ -53,6 +53,12 @@
         <p class="eyebrow"><span class="eyebrow-mark"></span> ARBORESCENCE ACADÉMIQUE · 2026</p>
         <h1>Explorer les Écoles Informatiques & Filières</h1>
         <p class="page-intro">Découvrez l'ensemble des établissements d'enseignement supérieur en informatique (écoles publiques et privées agréées), leurs filières et supports de cours.</p>
+        <p class="catalog-edit-notice">Les nouvelles filières et les renommages sont proposés par les membres connectés, puis publiés après validation par un modérateur. Cette fonction nécessite une API Supabase configurée.</p>
+
+        <section class="program-review-card" id="program-review" aria-labelledby="program-review-title" hidden>
+            <h2 id="program-review-title">Propositions de filières</h2>
+            <div class="program-review-list" id="program-review-list" aria-live="polite"></div>
+        </section>
 
         <!-- BARRE DE RECHERCHE ET FILTRES DES ÉCOLES -->
         <div class="catalog-controls" style="margin-bottom: 24px;">

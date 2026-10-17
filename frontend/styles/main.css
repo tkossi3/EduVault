@@ -85,6 +85,10 @@ img {
     margin-inline: auto;
 }
 
+.mobile-bottom-nav {
+    display: none;
+}
+
 /* TOPBAR */
 .topbar {
     position: sticky;
@@ -526,7 +530,7 @@ img {
 /* GRILLE DE DOCUMENTS */
 .document-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
     gap: 20px;
     margin-bottom: 56px;
 }
@@ -652,7 +656,7 @@ img {
 
 .institution-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
     gap: 16px;
     margin-top: 28px;
 }
@@ -692,12 +696,14 @@ img {
     font-size: 14px;
     font-weight: 700;
     color: var(--text);
+    overflow-wrap: anywhere;
 }
 
 .institution-card small {
     display: block;
     color: var(--muted);
     font-size: 11px;
+    overflow-wrap: anywhere;
 }
 
 /* BANDEAU DE PARTAGE / CTA */
@@ -731,7 +737,7 @@ img {
 /* FOOTER */
 .site-footer {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: 1fr auto;
     align-items: start;
     gap: 28px 48px;
     padding: 48px 0 32px;
@@ -805,10 +811,25 @@ img {
     gap: 12px;
 }
 
+.site-footer .footer-nav {
+    display: none;
+}
+
 @media (max-width: 768px) {
-    .site-footer {
-        grid-template-columns: 1fr;
-        gap: 24px;
+    .document-grid,
+    .institution-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .institution-card {
+        min-width: 0;
+        gap: 8px;
+        padding: 12px 10px;
+    }
+
+    .institution-card .institution-icon {
+        width: 32px;
+        height: 32px;
     }
 }
 
@@ -833,7 +854,7 @@ img {
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .topbar {
         padding: 0 16px;
         gap: 12px;
@@ -841,35 +862,8 @@ img {
     .main-nav {
         display: none;
     }
-    .main-nav.is-open-mobile {
-        display: flex !important;
-        position: absolute;
-        top: 72px;
-        left: 0;
-        right: 0;
-        background: var(--surface);
-        flex-direction: column;
-        align-items: stretch;
-        gap: 4px;
-        padding: 16px;
-        box-shadow: var(--shadow-soft);
-        border-bottom: 1px solid var(--line);
-        z-index: 100;
-        animation: rise-in 180ms ease-out both;
-    }
-    .main-nav.is-open-mobile .nav-link {
-        padding: 12px 16px;
-        border-radius: var(--radius-xs);
-    }
-    .main-nav.is-open-mobile .nav-link:hover {
-        background: var(--surface-raised);
-    }
-    .main-nav.is-open-mobile .nav-link.is-active {
-        background: var(--primary-light);
-        color: var(--primary);
-    }
     .menu-toggle {
-        display: inline-flex !important;
+        display: none !important;
     }
     .page-width {
         width: calc(100% - 24px);
@@ -877,6 +871,80 @@ img {
     .topbar-actions {
         gap: 8px;
     }
+
+    body.has-mobile-bottom-nav {
+        padding-bottom: calc(76px + env(safe-area-inset-bottom));
+    }
+
+    .mobile-bottom-nav {
+        position: fixed;
+        z-index: 200;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        align-items: end;
+        min-height: 68px;
+        padding: 8px max(8px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+        border-top: 1px solid var(--line);
+        background: color-mix(in srgb, var(--surface) 94%, transparent);
+        box-shadow: 0 -8px 28px rgb(15 23 42 / 0.10);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+    }
+
+    .mobile-nav-link {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1.15;
+        text-align: center;
+    }
+
+    .mobile-nav-icon {
+        display: grid;
+        width: 28px;
+        height: 25px;
+        place-items: center;
+    }
+
+    .mobile-nav-icon svg {
+        width: 21px;
+        height: 21px;
+    }
+
+    .mobile-nav-link.is-active {
+        color: var(--primary);
+    }
+
+    .mobile-nav-link.mobile-nav-add {
+        gap: 2px;
+    }
+
+    .mobile-nav-add .mobile-nav-icon {
+        width: 46px;
+        height: 46px;
+        margin-top: -24px;
+        border: 4px solid var(--surface);
+        border-radius: 50%;
+        background: var(--primary);
+        color: #fff;
+        box-shadow: 0 4px 12px rgb(30 58 138 / 0.28);
+    }
+
+    .mobile-nav-add .mobile-nav-icon svg {
+        width: 23px;
+        height: 23px;
+    }
+
+    .site-footer { display: none; }
 }
 
 @media (max-width: 480px) {
@@ -886,6 +954,18 @@ img {
     .brand img {
         width: 30px;
         height: 30px;
+    }
+    .header-auth-btn span {
+        display: none;
+    }
+    .header-auth-btn {
+        width: 36px;
+        min-width: 36px;
+        justify-content: center;
+        padding-inline: 0;
+    }
+    .float-chip {
+        display: none;
     }
     .hero-search {
         flex-direction: column;
@@ -908,11 +988,44 @@ img {
     .filter-chip {
         white-space: nowrap;
     }
-    .document-grid {
-        grid-template-columns: 1fr;
-    }
     .stats-strip {
         grid-template-columns: 1fr;
         gap: 12px;
+    }
+
+    .document-card {
+        min-width: 0;
+        padding: 14px;
+    }
+
+    .document-card-top {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    .document-card-top .badge {
+        min-width: 0;
+        max-width: 100%;
+        line-height: 1.2;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .document-card h3 {
+        overflow-wrap: anywhere;
+    }
+
+    .doc-chip {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+
+    .document-card-footer {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .mobile-bottom-nav {
+        min-height: 64px;
     }
 }

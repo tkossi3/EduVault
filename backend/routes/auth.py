@@ -43,9 +43,31 @@ async def me(user: dict = Depends(current_user)) -> dict[str, str | None]:
 async def my_documents(user: dict = Depends(current_user)) -> list[dict]:
     """Retourne l’historique des dépôts du compte courant."""
     try:
-        return (get_supabase().table("documents")
-                .select("id,title,category,academic_year,status,created_at")
-                .eq("uploaded_by", user["id"])
-                .order("created_at", desc=True).limit(50).execute().data or [])
+        documents = (get_supabase().table("documents")
+                     .select("id,title,category,academic_year,status,created_at,file_size,views_count,downloads_count,courses(name,semester,programs(name,institutions(name)))")
+                     .eq("uploaded_by", user["id"])
+                     .order("created_at", desc=True).limit(100).execute().data or [])
+        result = []
+        for document in documents:
+            course = document.get("courses")
+            if isinstance(course, list):
+                course = course[0] if course else {}
+            course = course if isinstance(course, dict) else {}
+            program = course.get("programs")
+            if isinstance(program, list):
+                program = program[0] if program else {}
+            program = program if isinstance(program, dict) else {}
+            institution = program.get("institutions")
+            if isinstance(institution, list):
+                institution = institution[0] if institution else {}
+            institution = institution if isinstance(institution, dict) else {}
+            result.append({
+                **document,
+                "course": course.get("name", ""),
+                "semester": course.get("semester", 1),
+                "program": program.get("name", ""),
+                "institution": institution.get("name", ""),
+            })
+        return result
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Historique indisponible.") from exc

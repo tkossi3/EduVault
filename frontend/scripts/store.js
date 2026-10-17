@@ -813,10 +813,15 @@
 
     const addProgram = (name, institutionId, degreeType = "Licence Professionnelle", degree = "Licence Professionnelle (BAC+3)") => {
         const state = loadState();
+        const trimmedName = name.trim();
+        const duplicate = state.programs.find((program) =>
+            program.institution_id === institutionId && program.name.toLowerCase() === trimmedName.toLowerCase()
+        );
+        if (!trimmedName || duplicate) return null;
         const newProg = {
             id: `prog-${Date.now()}`,
             institution_id: institutionId,
-            name: name.trim(),
+            name: trimmedName,
             degree_type: degreeType,
             degree: degree.trim()
         };
@@ -885,8 +890,11 @@
     // Suppression d'un document de l'utilisateur
     const deleteDocument = (docId) => {
         const state = loadState();
+        const user = getCurrentUserProfile();
+        const document = state.documents.find((item) => item.id === docId);
+        if (!document || document.uploaded_by !== user.id) return false;
         const initialLength = state.documents.length;
-        state.documents = state.documents.filter((d) => d.id !== docId);
+        state.documents = state.documents.filter((item) => item.id !== docId);
         saveState(state);
         return state.documents.length < initialLength;
     };

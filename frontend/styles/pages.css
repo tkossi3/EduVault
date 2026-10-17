@@ -141,6 +141,25 @@
     flex-shrink: 0;
 }
 
+@media (max-width: 768px) {
+    .notification-card {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 14px;
+    }
+
+    .notification-body {
+        flex: 1 1 180px;
+    }
+
+    .notification-actions {
+        width: 100%;
+        flex: 1 1 100%;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+}
+
 /* ==================== PAGE PROFIL ==================== */
 .profile-layout {
     display: grid;
@@ -292,6 +311,25 @@
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
+}
+
+.profile-doc-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+}
+
+.profile-doc-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
 }
 
 /* ==================== PAGE UPLOAD ==================== */
@@ -766,6 +804,73 @@
     margin-top: 32px;
 }
 
+.catalog-edit-notice {
+    padding: 12px 16px;
+    border: 1px solid var(--warning);
+    border-radius: var(--radius-sm);
+    background: var(--warning-soft);
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.program-review-card {
+    padding: 20px;
+    margin-block: 24px;
+    border: 1px solid var(--primary-border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+}
+
+.program-review-card h2 {
+    margin: 0 0 14px;
+    font-family: var(--font-display);
+    font-size: 18px;
+}
+
+.program-review-list {
+    display: grid;
+    gap: 10px;
+}
+
+.program-review-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface-raised);
+}
+
+.program-review-item p {
+    margin: 3px 0;
+    font-size: 13px;
+}
+
+.program-review-item small {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.program-review-actions {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 8px;
+}
+
+.catalog-loading,
+.catalog-load-error {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.catalog-load-error {
+    color: var(--danger);
+}
+
 .institution-accordion,
 .program-accordion {
     overflow: hidden;
@@ -818,6 +923,31 @@
     padding: 0 20px 20px 20px;
     background: var(--surface-raised);
     border-top: 1px solid var(--line);
+}
+
+.program-list-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-raised);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.program-edit {
+    flex: 0 0 auto;
+    gap: 5px;
+    padding: 5px 8px;
+    font-size: 11px;
+}
+
+.program-edit svg {
+    width: 14px;
+    height: 14px;
 }
 
 .semester-grid {
@@ -1031,7 +1161,12 @@
         gap: 12px;
     }
 
-    .user-doc-actions {
+    .profile-doc-card {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .profile-doc-actions {
         width: 100%;
         justify-content: flex-end;
     }
@@ -1045,11 +1180,50 @@
     .reader-header > div:last-child {
         width: 100%;
         justify-content: flex-start;
+        flex-wrap: wrap;
     }
 
     .pdf-mockup-page {
         padding: 24px;
         min-height: auto;
+    }
+
+    .institution-accordion > summary,
+    .program-accordion > summary {
+        gap: 10px;
+        padding: 14px;
+    }
+
+    .program-list {
+        padding-inline: 10px;
+    }
+
+    .program-list-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .course-document {
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .course-document > .action-read {
+        flex: 0 0 auto;
+    }
+
+    .program-review-item {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .program-review-actions {
+        width: 100%;
+    }
+
+    .program-review-actions .button {
+        flex: 1;
+        justify-content: center;
     }
 }
 

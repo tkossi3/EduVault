@@ -6,10 +6,6 @@
   "trailingSlash": false,
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "http://localhost:8000/api/$1"
-    },
-    {
       "src": "/pages/(.*)",
       "dest": "/frontend/pages/$1"
     },

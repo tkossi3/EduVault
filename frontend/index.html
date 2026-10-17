@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="styles/components.css">
 </head>
 
-<body>
+<body data-page="explorer">
     <a class="skip-link" href="#contenu">Aller au contenu</a>
     
     <header class="topbar">
@@ -35,6 +35,7 @@
         
         <nav class="main-nav" id="main-nav" aria-label="Navigation principale">
             <a class="nav-link is-active" href="index.html">Explorer</a>
+            <a class="nav-link" href="pages/library.html">Bibliothèque</a>
             <a class="nav-link" href="pages/parcours.html">Parcours & Filières</a>
             <a class="nav-link" href="pages/upload.html">Déposer un document</a>
             <a class="nav-link" href="pages/profile.html">Mon Profil</a>
@@ -154,11 +155,11 @@
         <section class="page-width" id="results-section">
             <div class="section-heading">
                 <div>
-                    <p class="eyebrow">BIBLIOTHÈQUE ACADÉMIQUE</p>
-                    <h2 id="results-title">Documents récents & populaires</h2>
+                    <p class="eyebrow">SÉLECTION DE LA COMMUNAUTÉ</p>
+                    <h2 id="results-title">Documents phares</h2>
                 </div>
-                <a class="text-link" href="pages/parcours.html">
-                    <span>Explorer par filière</span>
+                <a class="text-link" href="pages/library.html">
+                <span>Voir toute la bibliothèque</span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                 </a>
             </div>
@@ -192,6 +193,10 @@
                         <p class="eyebrow">CAMPUS PARTENAIRES</p>
                         <h2>Vos universités & grandes écoles</h2>
                     </div>
+                    <a class="text-link" id="institutions-more" href="pages/parcours.html" hidden>
+                        <span>Voir toutes les universités</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
                 </div>
                 
                 <div class="institution-grid" id="institution-list">
@@ -229,7 +234,7 @@
         <div class="footer-nav">
             <p class="footer-nav-title">Explorer</p>
             <div class="footer-nav-links">
-                <a href="index.html">Bibliothèque & Documents</a>
+                <a href="pages/library.html">Bibliothèque & Documents</a>
                 <a href="pages/parcours.html">Parcours & Filières</a>
                 <a href="pages/profile.html">Mon Profil</a>
             </div>

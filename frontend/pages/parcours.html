@@ -50,10 +50,11 @@
     </header>
 
     <main class="page-width inner-page">
-        <p class="eyebrow"><span class="eyebrow-mark"></span> ARBORESCENCE ACADÉMIQUE · 2026</p>
+        <p class="eyebrow"><span class="eyebrow-mark"></span> CATALOGUE ACADÉMIQUE DU TOGO</p>
         <h1>Explorer les Écoles Informatiques & Filières</h1>
-        <p class="page-intro">Découvrez l'ensemble des établissements d'enseignement supérieur en informatique (écoles publiques et privées agréées), leurs filières et supports de cours.</p>
-        <p class="catalog-edit-notice">Les nouvelles filières et les renommages sont proposés par les membres connectés, puis publiés après validation par un modérateur. Cette fonction nécessite une API Supabase configurée.</p>
+        <p class="page-intro">Parcourez les établissements et les formations informatiques recensés au Togo. Les acronymes sont présentés avec un nom canonique pour éviter les doublons.</p>
+        <p class="catalog-edit-notice">Les offres de formation changent selon l’année. Les intitulés issus de sources secondaires ou anciennes sont marqués « À confirmer » : vérifiez-les auprès de l’établissement avant toute décision. Les propositions de modification sont publiées après validation par un modérateur.</p>
+        <p id="catalog-breadcrumb" class="catalog-breadcrumb" hidden></p>
 
         <section class="program-review-card" id="program-review" aria-labelledby="program-review-title" hidden>
             <h2 id="program-review-title">Propositions de filières</h2>
@@ -69,8 +70,8 @@
             
             <div class="filter-pills" id="catalog-sector-filters" style="display: flex; flex-wrap: wrap; gap: 8px;">
                 <button type="button" class="pill is-active" data-sector="all">Toutes les écoles</button>
-                <button type="button" class="pill" data-sector="public">Écoles Publiques & Universités</button>
-                <button type="button" class="pill" data-sector="private">Écoles Privées Agréées</button>
+                <button type="button" class="pill" data-sector="public">Établissements publics et inter-États</button>
+                <button type="button" class="pill" data-sector="private">Établissements privés</button>
             </div>
         </div>
 
@@ -107,7 +108,7 @@
         </div>
 
         <div class="footer-bottom">
-            <span>© 2026 EduVault — Le coffre-fort académique universitaire. Tous droits réservés.</span>
+            <span>© EduVault — Tous droits réservés.</span>
         </div>
     </footer>
 

@@ -123,6 +123,10 @@
     // ==================== RENDU HD PAGE UNIQUE (MODE CLIC PAGE PAR PAGE) ====================
     const renderSinglePage = async (num) => {
         if (!pdfDoc || !singleCanvas) return;
+        if (readerViewport) {
+            readerViewport.scrollTop = 0;
+            readerViewport.scrollLeft = 0;
+        }
 
         try {
             const page = await pdfDoc.getPage(num);
@@ -152,6 +156,10 @@
     // ==================== RENDU VUE NAVIGATEUR (DÉFILEMENT CONTINU PLEIN ÉCRAN) ====================
     const renderContinuousView = async () => {
         if (!continuousWrapper) return;
+        if (readerViewport) {
+            readerViewport.scrollTop = 0;
+            readerViewport.scrollLeft = 0;
+        }
         continuousWrapper.innerHTML = "";
 
         if (!pdfDoc) return;

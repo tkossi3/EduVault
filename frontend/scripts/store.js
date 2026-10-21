@@ -104,116 +104,35 @@
         return null;
     };
 
-    // Données initiales enrichies (Année 2026)
-    // Données initiales enrichies (Année 2026) — Écoles Publiques & Privées en Informatique
+    // Un seul nom canonique par établissement; les acronymes sont conservés comme alias lisibles.
     const initialInstitutions = [
-        // ==================== ÉTABLISSEMENTS PUBLICS & INTER-ÉTATS ====================
-        { 
-            id: "inst-1", 
-            name: "ENP Campus Lomé (EPL)", 
-            city: "Lomé", 
-            country: "Togo", 
-            sector: "public",
-            description: "École Polytechnique de Lomé (Université de Lomé) — Formations d'ingénieurs & licences pro" 
-        },
-        { 
-            id: "inst-2", 
-            name: "Université de Lomé (FDS - Informatique)", 
-            city: "Lomé", 
-            country: "Togo", 
-            sector: "public",
-            description: "Faculté des Sciences — Département de Mathématiques & Informatique Fondamentale" 
-        },
-        { 
-            id: "inst-3", 
-            name: "Université de Kara (FST)", 
-            city: "Kara", 
-            country: "Togo", 
-            sector: "public",
-            description: "Campus Universitaire de Kara — Faculté des Sciences et Techniques Informatiques" 
-        },
-        { 
-            id: "inst-iai", 
-            name: "IAI-Togo (Institut Africain d'Informatique)", 
-            city: "Lomé", 
-            country: "Togo", 
-            sector: "public",
-            description: "Institution inter-États de référence africaine en ingénierie logicielle et systèmes" 
-        },
-
-        // ==================== ÉTABLISSEMENTS PRIVÉS AGRÉÉS EN INFORMATIQUE ====================
-        { 
-            id: "inst-esgis", 
-            name: "ESGIS (École Supérieure de Gestion, d'Informatique et des Sciences)", 
-            city: "Lomé", 
-            country: "Togo", 
-            sector: "private",
-            description: "Grande école privée agréée CAMES — Génie Logiciel, Réseaux & IA" 
-        },
-        { 
-            id: "inst-ipnet", 
-            name: "IPNET Institute of Technology", 
-            city: "Lomé", 
-            country: "Togo", 
-            sector: "private",
-            description: "Institut technologique privé certifié Cisco, Huawei, AWS — Réseaux, DevOps & Cybersécurité" 
-        },
-        { 
-            id: "inst-defitech", 
-            name: "DEFITECH (Institut Polytechnique DEFITECH)", 
-            city: "Lomé", 
-            country: "Togo", 
-            sector: "private",
-            description: "Institut polytechnique privé agréé — Génie Logiciel, Télécoms & Data" 
-        },
-        { 
-            id: "inst-ucao", 
-            name: "UCAO-UUT (École Supérieure d'Ingénieurs - ESI)", 
-            city: "Lomé", 
-            country: "Togo", 
-            sector: "private",
-            description: "Université Catholique — Génie Informatique, Cybersécurité & Données" 
-        },
-        { 
-            id: "inst-esig", 
-            name: "ESIG Global Success", 
-            city: "Lomé", 
-            country: "Togo", 
-            sector: "private",
-            description: "École supérieure privée agréée — Développement Web/Mobile, Systèmes & BD" 
-        },
-        { 
-            id: "inst-5", 
-            name: "IAEC Université (Pôle Technologies & Informatique)", 
-            city: "Lomé", 
-            country: "Togo", 
-            sector: "private",
-            description: "Institut Africain d'Études Commerciales & Technologies Numériques" 
-        },
-        { 
-            id: "inst-formatec", 
-            name: "FORMATEC (Institut Supérieur Technologique)", 
-            city: "Lomé", 
-            country: "Togo", 
-            sector: "private",
-            description: "Institut supérieur privé de formation aux métiers technologiques et réseaux" 
-        },
-        { 
-            id: "inst-cib", 
-            name: "CIB-INTA", 
-            city: "Lomé", 
-            country: "Togo", 
-            sector: "private",
-            description: "Institut privé d'informatique appliquée, réseaux et développement logiciel" 
-        },
-        { 
-            id: "inst-4", 
-            name: "École Supérieure des Affaires (ESA)", 
-            city: "Lomé", 
-            country: "Togo", 
-            sector: "private",
-            description: "Management technologique, finance & systèmes d'information" 
-        }
+        { id: "inst-1", name: "École Nationale Polytechnique (ENP) — Lomé", city: "Lomé", country: "Togo", sector: "public", aliases: ["EPL", "École Polytechnique de Lomé"], description: "École de l'Université de Lomé. « EPL » est l'ancienne appellation, pas un établissement distinct.", verification: "À confirmer auprès de l'école" },
+        { id: "inst-2", name: "Université de Lomé (UL)", city: "Lomé", country: "Togo", sector: "public", description: "Université publique. Les filières informatiques hors ENP doivent être confirmées par faculté.", verification: "Établissement confirmé; offre informatique à vérifier" },
+        { id: "inst-3", name: "Université de Kara (UK)", city: "Kara", country: "Togo", sector: "public", description: "Université publique. Les intitulés et l'ouverture actuelle des filières informatiques sont à vérifier.", verification: "Établissement confirmé; offre informatique à vérifier" },
+        { id: "inst-enp-kara", name: "École Nationale Polytechnique (ENP) — Kara", city: "Kara", country: "Togo", sector: "public", aliases: ["ENP Kara"], description: "Site de formation signalé à Kara; vérifier les parcours et l'organisation du campus avant publication.", verification: "À confirmer auprès de l'école" },
+        { id: "inst-iai", name: "Institut Africain d'Informatique — Représentation du Togo (IAI-Togo)", city: "Lomé", country: "Togo", sector: "interstate", aliases: ["IAI-Togo", "IAI Togo"], description: "Établissement inter-États spécialisé en informatique; les intitulés et options de diplôme doivent être vérifiés pour l'année en cours.", verification: "Établissement confirmé sur le site officiel; parcours à confirmer" },
+        { id: "inst-esgis", name: "École Supérieure de Gestion, d'Informatique et des Sciences (ESGIS)", city: "Lomé", country: "Togo", sector: "private", aliases: ["ESGIS"], description: "Établissement privé; vérifier les intitulés et niveaux proposés actuellement.", verification: "À confirmer auprès de l'école" },
+        { id: "inst-ipnet", name: "IPNET Institute of Technology", city: "Lomé", country: "Togo", sector: "private", description: "Établissement privé; vérifier les intitulés et niveaux proposés actuellement.", verification: "À confirmer auprès de l'école" },
+        { id: "inst-defitech", name: "Institut Polytechnique DEFITECH", city: "Lomé", country: "Togo", sector: "private", aliases: ["DEFITECH"], description: "Établissement privé; le catalogue officiel des parcours informatiques reste à confirmer.", verification: "À confirmer auprès de l'école" },
+        { id: "inst-ucao", name: "Université Catholique de l'Afrique de l'Ouest — Unité Universitaire du Togo (UCAO-UUT)", city: "Lomé", country: "Togo", sector: "private", aliases: ["UCAO-UUT"], description: "Unité universitaire au Togo; niveaux et intitulés des formations informatiques à confirmer.", verification: "À confirmer auprès de l'école" },
+        { id: "inst-esig", name: "École Supérieure d'Informatique et de Gestion (ESIG Global Success)", city: "Lomé", country: "Togo", sector: "private", aliases: ["ESIG Global Success"], description: "Établissement privé; vérifier les intitulés et niveaux proposés actuellement.", verification: "À confirmer auprès de l'école" },
+        { id: "inst-5", name: "Institut Africain d'Administration et d'Études Commerciales (IAEC)", city: "Lomé", country: "Togo", sector: "private", aliases: ["IAEC"], description: "Établissement cité dans des annuaires; présence d'un parcours informatique à confirmer.", verification: "Piste à vérifier; aucun parcours informatique confirmé" },
+        { id: "inst-formatec", name: "FORMATEC — Institut Supérieur Technologique", city: "Lomé", country: "Togo", sector: "private", description: "Établissement cité dans des annuaires; présence d'un parcours informatique à confirmer.", verification: "Piste à vérifier; aucun parcours informatique confirmé" },
+        { id: "inst-cib", name: "Centre Informatique et Bureautique (CIB-INTA)", city: "Lomé", country: "Togo", sector: "private", aliases: ["CIB-INTA"], description: "Établissement cité dans des annuaires; statut et parcours actuels à confirmer.", verification: "Piste à vérifier; aucun parcours informatique confirmé" },
+        { id: "inst-4", name: "École Supérieure des Affaires (ESA)", city: "Lomé", country: "Togo", sector: "private", aliases: ["ESA"], description: "Établissement cité dans des annuaires; présence d'un parcours informatique à confirmer.", verification: "Piste à vérifier; aucun parcours informatique confirmé" },
+        { id: "inst-lbs", name: "Lomé Business School (LBS)", city: "Lomé", country: "Togo", sector: "private", aliases: ["LBS"], description: "Parcours en génie logiciel rapporté par une source secondaire; offre actuelle à confirmer.", verification: "À confirmer auprès de l'école" },
+        { id: "inst-cifop", name: "Centre Informatique de Formation et d'Orientation Professionnelles (CIFOP)", city: "Lomé", country: "Togo", sector: "private", aliases: ["CIFOP"], description: "Formations informatiques rapportées par des sources secondaires; offre actuelle à confirmer.", verification: "À confirmer auprès de l'école" },
+        { id: "inst-maitrise", name: "Institut Technique Supérieur La Maîtrise", city: "Lomé", country: "Togo", sector: "private", aliases: ["La Maîtrise"], description: "Formation informatique rapportée par une source secondaire; offre actuelle à confirmer.", verification: "À confirmer auprès de l'école" },
+        { id: "inst-istm", name: "Institut Supérieur des Technologies et de Management (ISTM)", city: "Lomé", country: "Togo", sector: "private", aliases: ["ISTM"], description: "Formation en maintenance informatique rapportée par une source secondaire; offre actuelle à confirmer.", verification: "À confirmer auprès de l'école" },
+        { id: "inst-ista-kara", name: "Institut des Sciences, Technologies et Arts de Kara (ISTA-Kara)", city: "Kara", country: "Togo", sector: "private", aliases: ["ISTA-Kara"], description: "Formations en maintenance informatique et réseaux rapportées par une source secondaire; offre actuelle à confirmer.", verification: "À confirmer auprès de l'école" },
+        { id: "inst-isg-kara", name: "Institut Supérieur de Gestion Monseigneur Bakpessi", city: "Kara", country: "Togo", sector: "private", aliases: ["ISG Mgr Bakpessi"], description: "Formation en maintenance informatique rapportée par une source secondaire; offre actuelle à confirmer.", verification: "À confirmer auprès de l'école" },
+        { id: "inst-ifnti", name: "Institut de Formation aux Normes et Technologies de l'Informatique (IFNTI)", city: "Sokodé", country: "Togo", sector: "private", aliases: ["IFNTI"], description: "Formation informatique rapportée par une source secondaire; offre actuelle à confirmer.", verification: "À confirmer auprès de l'école" },
+        { id: "inst-esat", name: "ESAT-Togo", city: "Lomé", country: "Togo", sector: "private", description: "Piste de recherche citée dans un annuaire; existence d'un parcours informatique supérieur à confirmer.", verification: "Piste à vérifier; aucun parcours informatique confirmé" },
+        { id: "inst-aic", name: "AIC-Togo", city: "Lomé", country: "Togo", sector: "private", description: "Piste de recherche citée dans un annuaire; existence d'un parcours informatique supérieur à confirmer.", verification: "Piste à vérifier; aucun parcours informatique confirmé" },
+        { id: "inst-ipm", name: "IPM-Togo", city: "Lomé", country: "Togo", sector: "private", description: "Piste de recherche citée dans un annuaire; existence d'un parcours informatique supérieur à confirmer.", verification: "Piste à vérifier; aucun parcours informatique confirmé" },
+        { id: "inst-ifts", name: "IFTS", city: "Lomé", country: "Togo", sector: "private", description: "Piste de recherche citée dans un annuaire; existence d'un parcours informatique supérieur à confirmer.", verification: "Piste à vérifier; aucun parcours informatique confirmé" },
+        { id: "inst-ism-adonai", name: "ISM Adonaï", city: "Lomé", country: "Togo", sector: "private", description: "Piste de recherche citée dans un annuaire; existence d'un parcours informatique supérieur à confirmer.", verification: "Piste à vérifier; aucun parcours informatique confirmé" },
+        { id: "inst-esiba", name: "ESIBA", city: "Lomé", country: "Togo", sector: "private", description: "Piste de recherche citée dans un annuaire; existence d'un parcours informatique supérieur à confirmer.", verification: "Piste à vérifier; aucun parcours informatique confirmé" }
     ];
 
     // Types de diplômes & cycles universitaires
@@ -226,76 +145,41 @@
     ];
 
     const initialPrograms = [
-        // ENP Campus Lomé (EPL)
-        { id: "prog-1", institution_id: "inst-1", name: "Génie Logiciel & Systèmes d'Information (GL)", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-        { id: "prog-2", institution_id: "inst-1", name: "Génie Électrique & Télécommunications", degree_type: "Diplôme d'Ingénieur", degree: "Diplôme d'Ingénieur (BAC+5)" },
-        { id: "prog-3", institution_id: "inst-1", name: "Systèmes, Réseaux & Sécurité Informatique (SRI)", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-        { id: "prog-4", institution_id: "inst-1", name: "Intelligence Artificielle & Big Data", degree_type: "Master Professionnel", degree: "Master Professionnel (BAC+5)" },
-        { id: "prog-epl-is", institution_id: "inst-1", name: "Informatique et Systèmes (IS)", degree_type: "Licence Fondamentale", degree: "Licence Fondamentale (LMD)" },
-        { id: "prog-epl-cyber", institution_id: "inst-1", name: "Cybersécurité & Sécurité des Systèmes d'Information", degree_type: "Master Professionnel", degree: "Master Professionnel (BAC+5)" },
-
-        // Université de Lomé (FDS)
-        { id: "prog-5", institution_id: "inst-2", name: "Mathématiques & Informatique Fondamentale (MIF)", degree_type: "Licence Fondamentale", degree: "Licence Fondamentale (LMD)" },
-        { id: "prog-fds-ifa", institution_id: "inst-2", name: "Informatique Fondamentale et Appliquée (IFA)", degree_type: "Licence Fondamentale", degree: "Licence Fondamentale (LMD)" },
-        { id: "prog-fds-ds", institution_id: "inst-2", name: "Science des Données & Modélisation Mathématique", degree_type: "Master Recherche", degree: "Master Recherche (BAC+5)" },
-        { id: "prog-6", institution_id: "inst-2", name: "Sciences Économiques & Gestion (FASEG)", degree_type: "Licence Fondamentale", degree: "Licence Fondamentale (LMD)" },
-
-        // Université de Kara (FST)
-        { id: "prog-uk-mi", institution_id: "inst-3", name: "Mathématiques et Informatique (MI)", degree_type: "Licence Fondamentale", degree: "Licence Fondamentale (LMD)" },
-        { id: "prog-uk-rit", institution_id: "inst-3", name: "Réseaux Informatiques & Télécommunications (RIT)", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-        { id: "prog-uk-dev", institution_id: "inst-3", name: "Génie Logiciel & Technologies Web", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-
-        // IAI-Togo
-        { id: "prog-iai-igl", institution_id: "inst-iai", name: "Ingénierie du Génie Logiciel (IGL)", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-        { id: "prog-iai-asr", institution_id: "inst-iai", name: "Administration Systèmes, Réseaux & Cloud (ASR)", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-        { id: "prog-iai-isi", institution_id: "inst-iai", name: "Ingénierie des Systèmes d'Information (ISI)", degree_type: "Master Professionnel", degree: "Master Professionnel (BAC+5)" },
-        { id: "prog-iai-sec", institution_id: "inst-iai", name: "Cybersécurité & Audit Informatique", degree_type: "Master Professionnel", degree: "Master Professionnel (BAC+5)" },
-
-        // ESGIS
-        { id: "prog-esgis-gl", institution_id: "inst-esgis", name: "Génie Logiciel & Applications Mobiles", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-        { id: "prog-esgis-sri", institution_id: "inst-esgis", name: "Systèmes, Réseaux & Sécurité (LPSRI)", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-        { id: "prog-esgis-ia", institution_id: "inst-esgis", name: "Intelligence Artificielle & Big Data Analytics", degree_type: "Master Professionnel", degree: "Master Professionnel (BAC+5)" },
-        { id: "prog-esgis-miage", institution_id: "inst-esgis", name: "Informatique de Gestion & Systèmes d'Information (MIAGE)", degree_type: "Master Professionnel", degree: "Master Professionnel (BAC+5)" },
-
-        // IPNET Institute of Technology
-        { id: "prog-ipnet-cyber", institution_id: "inst-ipnet", name: "Réseaux, Systèmes & Cybersécurité Internationale", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-        { id: "prog-ipnet-cloud", institution_id: "inst-ipnet", name: "Génie Logiciel, DevOps & Cloud Computing", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-        { id: "prog-ipnet-iot", institution_id: "inst-ipnet", name: "Intelligence Artificielle, IoT & Big Data", degree_type: "Master Professionnel", degree: "Master Professionnel (BAC+5)" },
-        { id: "prog-ipnet-gov", institution_id: "inst-ipnet", name: "Gouvernance IT & Systèmes d'Information", degree_type: "Master Professionnel", degree: "Master Professionnel (BAC+5)" },
-
-        // DEFITECH
-        { id: "prog-defi-gl", institution_id: "inst-defitech", name: "Génie Logiciel & Systèmes d'Information", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-        { id: "prog-defi-mr", institution_id: "inst-defitech", name: "Maintenance Informatique & Réseaux Télécoms", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-        { id: "prog-defi-sec", institution_id: "inst-defitech", name: "Sécurité Réseaux & Systèmes d'Exploitation", degree_type: "Master Professionnel", degree: "Master Professionnel (BAC+5)" },
-        { id: "prog-defi-data", institution_id: "inst-defitech", name: "Administration de Bases de Données & Data Science", degree_type: "Master Professionnel", degree: "Master Professionnel (BAC+5)" },
-
-        // UCAO-UUT
-        { id: "prog-ucao-gi", institution_id: "inst-ucao", name: "Génie Informatique & Télécommunications", degree_type: "Diplôme d'Ingénieur", degree: "Diplôme d'Ingénieur (BAC+5)" },
-        { id: "prog-ucao-cyber", institution_id: "inst-ucao", name: "Cybersécurité & Confiance Numérique", degree_type: "Master Professionnel", degree: "Master Professionnel (BAC+5)" },
-        { id: "prog-ucao-ia", institution_id: "inst-ucao", name: "Intelligence Artificielle & Sciences des Données", degree_type: "Master Professionnel", degree: "Master Professionnel (BAC+5)" },
-        { id: "prog-ucao-dev", institution_id: "inst-ucao", name: "Conception Logicielle & Systèmes Embarqués", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-
-        // ESIG Global Success
-        { id: "prog-esig-gl", institution_id: "inst-esig", name: "Génie Logiciel & Développement Web/Mobile", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-        { id: "prog-esig-sr", institution_id: "inst-esig", name: "Administration Systèmes, Réseaux & Bases de Données", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-        { id: "prog-esig-si", institution_id: "inst-esig", name: "Management des Systèmes d'Information", degree_type: "Master Professionnel", degree: "Master Professionnel (BAC+5)" },
-
-        // IAEC Université
-        { id: "prog-13", institution_id: "inst-5", name: "Génie Logiciel & Multimédia Numérique", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-        { id: "prog-14", institution_id: "inst-5", name: "Informatique de Gestion (IG)", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-        { id: "prog-iaec-rt", institution_id: "inst-5", name: "Réseaux Informatiques & Télécommunications", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-
-        // FORMATEC
-        { id: "prog-forma-gi", institution_id: "inst-formatec", name: "Génie Informatique & Réseaux Industriels", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-        { id: "prog-forma-tel", institution_id: "inst-formatec", name: "Télécommunications & Systèmes Connectés", degree_type: "Diplôme d'Ingénieur", degree: "Diplôme d'Ingénieur (BAC+5)" },
-
-        // CIB-INTA
-        { id: "prog-cib-dev", institution_id: "inst-cib", name: "Développement Web & Génie Logiciel", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-        { id: "prog-cib-res", institution_id: "inst-cib", name: "Maintenance Informatique & Réseaux Locaux", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" },
-
-        // École Supérieure des Affaires (ESA)
-        { id: "prog-11", institution_id: "inst-4", name: "Audit, Contrôle de Gestion & Finance", degree_type: "Master Professionnel", degree: "Master Professionnel (BAC+5)" },
-        { id: "prog-12", institution_id: "inst-4", name: "Marketing Digital & Stratégie Commerciale", degree_type: "Licence Professionnelle", degree: "Licence Professionnelle (BAC+3)" }
+        { id: "prog-1", institution_id: "inst-1", name: "Génie Logiciel (GL)", degree_type: "Licence Professionnelle", degree: "Licence professionnelle — niveau Bac+3 à confirmer", verification: "À confirmer auprès de l'école" },
+        { id: "prog-3", institution_id: "inst-1", name: "Systèmes et Réseaux Informatiques (SR)", degree_type: "Licence Professionnelle", degree: "Licence professionnelle — niveau Bac+3 à confirmer", verification: "À confirmer auprès de l'école" },
+        { id: "prog-4", institution_id: "inst-1", name: "Intelligence Artificielle et Big Data (IA-BD)", degree_type: "Diplôme d'Ingénieur", degree: "Cycle ingénieur — à confirmer", verification: "À confirmer auprès de l'école" },
+        { id: "prog-epl-is", institution_id: "inst-1", name: "Informatique et Systèmes (IS)", degree_type: "Diplôme d'Ingénieur", degree: "Cycle ingénieur — à confirmer", verification: "À confirmer auprès de l'école" },
+        { id: "prog-uk-mi", institution_id: "inst-3", name: "Mathématiques et Informatique Appliquées (LMIA)", degree_type: "Licence Fondamentale", degree: "Licence — intitulé historique à vérifier", verification: "Source ancienne; offre actuelle non confirmée" },
+        { id: "prog-uk-lpaei", institution_id: "inst-3", name: "Physique Appliquée, Électronique et Informatique (LPAEI)", degree_type: "Licence Fondamentale", degree: "Licence — intitulé historique à vérifier", verification: "Source ancienne; offre actuelle non confirmée" },
+        { id: "prog-iai-igl", institution_id: "inst-iai", name: "Ingénieur des Travaux Informatiques (ITI) — Génie Logiciel et Systèmes d'Information (GLSI)", degree_type: "Diplôme d'Ingénieur", degree: "ITI — niveau exact à confirmer", verification: "À confirmer auprès de l'IAI-Togo" },
+        { id: "prog-iai-asr", institution_id: "inst-iai", name: "Ingénieur des Travaux Informatiques (ITI) — Administration des Systèmes et Réseaux (ASR)", degree_type: "Diplôme d'Ingénieur", degree: "ITI — niveau exact à confirmer", verification: "À confirmer auprès de l'IAI-Togo" },
+        { id: "prog-iai-lpi-glsi", institution_id: "inst-iai", name: "Licence Professionnelle en Informatique (LPI) — option GLSI", degree_type: "Licence Professionnelle", degree: "LPI — niveau exact à confirmer", verification: "À confirmer auprès de l'IAI-Togo" },
+        { id: "prog-iai-lpi-asr", institution_id: "inst-iai", name: "Licence Professionnelle en Informatique (LPI) — option ASR", degree_type: "Licence Professionnelle", degree: "LPI — niveau exact à confirmer", verification: "À confirmer auprès de l'IAI-Togo" },
+        { id: "prog-esgis-gl", institution_id: "inst-esgis", name: "Informatique, Réseaux et Télécommunications", degree_type: "", degree: "Niveau à confirmer", verification: "Source secondaire; intitulé et niveau à confirmer" },
+        { id: "prog-esgis-sri", institution_id: "inst-esgis", name: "Systèmes, Réseaux et Sécurité Informatique", degree_type: "", degree: "Niveau à confirmer", verification: "Source secondaire; intitulé et niveau à confirmer" },
+        { id: "prog-esgis-ia", institution_id: "inst-esgis", name: "Intelligence Artificielle et Big Data", degree_type: "", degree: "Niveau à confirmer", verification: "Source secondaire; intitulé et niveau à confirmer" },
+        { id: "prog-ipnet-cyber", institution_id: "inst-ipnet", name: "Réseaux, Systèmes et Sécurité", degree_type: "", degree: "Niveau à confirmer", verification: "Source secondaire; intitulé et niveau à confirmer" },
+        { id: "prog-ipnet-cloud", institution_id: "inst-ipnet", name: "Génie Logiciel", degree_type: "", degree: "Niveau à confirmer", verification: "Source secondaire; intitulé et niveau à confirmer" },
+        { id: "prog-ipnet-iot", institution_id: "inst-ipnet", name: "Cybersécurité", degree_type: "", degree: "Niveau à confirmer", verification: "Source secondaire; intitulé et niveau à confirmer" },
+        { id: "prog-ipnet-gov", institution_id: "inst-ipnet", name: "Développement Web, Bases de Données et Big Data", degree_type: "", degree: "Niveau à confirmer", verification: "Source secondaire; intitulé et niveau à confirmer" },
+        { id: "prog-ipnet-multimedia", institution_id: "inst-ipnet", name: "Webdesign, Infographie et Multimédia", degree_type: "", degree: "Niveau à confirmer", verification: "Source secondaire; intitulé et niveau à confirmer" },
+        { id: "prog-ucao-gi", institution_id: "inst-ucao", name: "Développement d'Applications", degree_type: "", degree: "Niveau à confirmer", verification: "Source secondaire; niveau à confirmer" },
+        { id: "prog-ucao-cyber", institution_id: "inst-ucao", name: "Mathématiques-Informatique", degree_type: "", degree: "Niveau à confirmer", verification: "Source secondaire; niveau à confirmer" },
+        { id: "prog-ucao-ia", institution_id: "inst-ucao", name: "Réseaux Informatiques et Télécommunications", degree_type: "", degree: "Niveau à confirmer", verification: "Source secondaire; niveau à confirmer" },
+        { id: "prog-ucao-dev", institution_id: "inst-ucao", name: "Cybersécurité, Big Data, Intelligence Artificielle et Génie Logiciel", degree_type: "", degree: "Licence professionnelle ou cycle ingénieur — à confirmer", verification: "Source secondaire; niveau à confirmer" },
+        { id: "prog-lbs-gl", institution_id: "inst-lbs", name: "Génie Logiciel — spécialité Systèmes d'Information", degree_type: "", degree: "Niveau à confirmer", verification: "Source secondaire; niveau à confirmer" },
+        { id: "prog-esig-gl", institution_id: "inst-esig", name: "Génie Informatique", degree_type: "", degree: "BTS / Licence / Master professionnel — à confirmer", verification: "Source secondaire; niveaux à confirmer" },
+        { id: "prog-esig-sr", institution_id: "inst-esig", name: "Réseaux et Télécommunications", degree_type: "", degree: "BTS / Licence / Master professionnel — à confirmer", verification: "Source secondaire; niveaux à confirmer" },
+        { id: "prog-defi-gl", institution_id: "inst-defitech", name: "Administration et Sécurité de Réseau d'Entreprise (ASRE)", degree_type: "", degree: "Niveau à confirmer", verification: "Source ancienne/indirecte; à vérifier" },
+        { id: "prog-defi-mr", institution_id: "inst-defitech", name: "Systèmes et Réseaux", degree_type: "", degree: "Niveau à confirmer", verification: "Source ancienne/indirecte; à vérifier" },
+        { id: "prog-cifop-ig", institution_id: "inst-cifop", name: "Informatique de Gestion", degree_type: "", degree: "BTS — à confirmer", verification: "Source secondaire; offre actuelle à vérifier" },
+        { id: "prog-cifop-arle", institution_id: "inst-cifop", name: "Administration des Réseaux Locaux d'Entreprise (ARLE)", degree_type: "", degree: "BTS — à confirmer", verification: "Source ancienne; offre actuelle à vérifier" },
+        { id: "prog-maitrise-ig", institution_id: "inst-maitrise", name: "Informatique de Gestion — Administration Réseau / Développement d'Applications", degree_type: "", degree: "BTS / Licence / Master — à confirmer", verification: "Source secondaire; niveaux à vérifier" },
+        { id: "prog-istm-maint", institution_id: "inst-istm", name: "Maintenance Informatique", degree_type: "", degree: "BTS — à confirmer", verification: "Source secondaire; offre actuelle à vérifier" },
+        { id: "prog-ista-maint", institution_id: "inst-ista-kara", name: "Maintenance Informatique et Réseaux", degree_type: "", degree: "Brevet de Technicien — à confirmer", verification: "Source secondaire; offre actuelle à vérifier" },
+        { id: "prog-ista-res", institution_id: "inst-ista-kara", name: "Maintenance Réseau", degree_type: "", degree: "Licence professionnelle — à confirmer", verification: "Source secondaire; offre actuelle à vérifier" },
+        { id: "prog-isg-maint", institution_id: "inst-isg-kara", name: "Maintenance Informatique", degree_type: "", degree: "BTS — à confirmer", verification: "Source secondaire; offre actuelle à vérifier" },
+        { id: "prog-ifnti", institution_id: "inst-ifnti", name: "Informatique", degree_type: "", degree: "Licence — à confirmer", verification: "Source secondaire; offre actuelle à vérifier" }
     ];
 
     const initialCourses = [
@@ -464,27 +348,35 @@
         if (!Array.isArray(state.courses)) { state.courses = []; modified = true; }
         if (!Array.isArray(state.documents)) { state.documents = []; modified = true; }
 
+        const currentSeedProgramIds = new Set(initialPrograms.map((program) => program.id));
+        const retainedLocalProgram = (program) => /^prog-\d{13}$/.test(program.id);
+        const filteredPrograms = state.programs.filter((program) =>
+            !program.id.startsWith("prog-") || currentSeedProgramIds.has(program.id) || retainedLocalProgram(program)
+        );
+        if (filteredPrograms.length !== state.programs.length) {
+            state.programs = filteredPrograms;
+            modified = true;
+        }
+
         initialInstitutions.forEach((initInst) => {
             const exists = state.institutions.find((i) => i.id === initInst.id || (i.name && i.name.toLowerCase() === initInst.name.toLowerCase()));
             if (!exists) {
-                state.institutions.push(initInst);
+                state.institutions.push({ ...initInst });
                 modified = true;
-            } else {
-                if (initInst.sector && exists.sector !== initInst.sector) {
-                    exists.sector = initInst.sector;
-                    modified = true;
-                }
-                if (initInst.description && !exists.description) {
-                    exists.description = initInst.description;
-                    modified = true;
-                }
+            } else if (Object.keys(initInst).some((key) => JSON.stringify(exists[key]) !== JSON.stringify(initInst[key]))) {
+                Object.assign(exists, initInst);
+                modified = true;
             }
         });
 
         initialPrograms.forEach((initProg) => {
-            const exists = state.programs.find((p) => p.id === initProg.id || (p.institution_id === initProg.institution_id && p.name.toLowerCase() === initProg.name.toLowerCase()));
+            const exists = state.programs.find((p) => p.id === initProg.id)
+                || state.programs.find((p) => p.institution_id === initProg.institution_id && p.name.toLowerCase() === initProg.name.toLowerCase());
             if (!exists) {
-                state.programs.push(initProg);
+                state.programs.push({ ...initProg });
+                modified = true;
+            } else if (Object.keys(initProg).some((key) => JSON.stringify(exists[key]) !== JSON.stringify(initProg[key]))) {
+                Object.assign(exists, initProg);
                 modified = true;
             }
         });
@@ -693,10 +585,12 @@
         const normalized = normalizeName(name);
         const state = loadState();
         return state.institutions.find((inst) => {
-            const instNorm = normalizeName(inst.name);
-            return instNorm === normalized || 
-                   (normalized.length > 5 && instNorm.includes(normalized)) ||
-                   (instNorm.length > 5 && normalized.includes(instNorm));
+            return [inst.name, ...(inst.aliases || [])].some((candidate) => {
+                const instNorm = normalizeName(candidate);
+                return instNorm === normalized ||
+                    (normalized.length > 5 && instNorm.includes(normalized)) ||
+                    (instNorm.length > 5 && normalized.includes(instNorm));
+            });
         }) || null;
     };
 

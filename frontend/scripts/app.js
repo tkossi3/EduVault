@@ -48,13 +48,17 @@
         }
 
         results.innerHTML = visible.map((item) => {
+            const courseName = item.course || pageParams.get("course") || "Ressource académique";
+            const institutionName = item.institution || pageParams.get("institution") || "Établissement universitaire";
+            const programName = item.program || pageParams.get("program") || "Filière à confirmer";
+            const semester = item.semester || pageParams.get("semester") || 1;
             const params = new URLSearchParams({
                 id: item.id, 
                 title: item.title, 
-                course: item.course || "Ressource académique",
-                institution: item.institution || "ENP Campus Lomé",
-                program: item.program || "Filière Académique",
-                semester: item.semester || 1,
+                course: courseName,
+                institution: institutionName,
+                program: programName,
+                semester,
                 category: item.category || "Support de cours"
             });
             
@@ -64,26 +68,24 @@
                 ? "badge-accent" 
                 : "badge-primary";
 
-            const semesterTag = item.semester ? `S${item.semester}` : "S1";
-
             return `
             <article class="document-card">
                 <div class="document-card-top">
                     <span class="badge ${categoryBadgeClass}">${escapeHtml(item.category)}</span>
                     <span class="badge badge-accent" style="font-weight: 700; font-size: 11px;">
-                        Semestre ${item.semester || 1} (${semesterTag})
+                        Semestre ${semester} (S${semester})
                     </span>
                 </div>
                 
                 <h3>${escapeHtml(item.title)}</h3>
 
                 <div class="doc-card-hierarchy-tags">
-                    <span class="doc-chip doc-chip-inst">${escapeHtml(item.institution || "ENP Campus Lomé")}</span>
-                    <span class="doc-chip doc-chip-prog">${escapeHtml(item.program || "Tronc Commun")}</span>
+                    <span class="doc-chip doc-chip-inst">${escapeHtml(institutionName)}</span>
+                    <span class="doc-chip doc-chip-prog">${escapeHtml(programName)}</span>
                 </div>
 
                 <p class="doc-card-course">
-                    <strong>Matière :</strong> ${escapeHtml(item.course || "Cours académique")}
+                    <strong>Matière :</strong> ${escapeHtml(courseName)}
                 </p>
 
                 <div class="document-card-footer">

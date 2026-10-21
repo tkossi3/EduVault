@@ -9,6 +9,12 @@
     const config = window.EDUVAULT_CONFIG || {};
     const searchInput = document.querySelector("#catalog-search");
     const sectorFilterBtns = document.querySelectorAll("#catalog-sector-filters button");
+    const pageParams = new URLSearchParams(location.search);
+    const selectedInstitutionId = pageParams.get("inst");
+    const selectedProgramId = pageParams.get("program");
+    const breadcrumb = document.querySelector("#catalog-breadcrumb");
+    const pageTitle = document.querySelector(".inner-page > h1");
+    const pageIntro = document.querySelector(".inner-page > .page-intro");
 
     let currentSector = "all";
     let currentSearch = "";
@@ -19,82 +25,58 @@
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" 
     })[char]);
 
-    const formatSize = (bytes) => bytes ? `${(bytes / (1024 * 1024)).toFixed(1)} Mo` : "PDF";
+    const catalogNameKey = (value = "") => String(value)
+        .replace(/^\s*[A-Z]{2,6}\s*[-–:]\s*/, "")
+        .replace(/\([^)]*\)/g, " ")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
 
-    const loadCourseDocuments = async (course, target, instName) => {
-        let docs = [];
-        if (usingRemoteCatalog) {
-            target.innerHTML = '<p class="catalog-loading">Chargement des documents…</p>';
-            try {
-                const response = await fetch(`${config.API_BASE_URL}/catalog/courses/${encodeURIComponent(course.id)}/documents`);
-                if (!response.ok) throw new Error(`Réponse API ${response.status}`);
-                docs = await response.json();
-            } catch (error) {
-                console.error("Chargement des documents du cours impossible :", error);
-                target.innerHTML = '<p class="catalog-load-error">Les documents de cette matière sont temporairement indisponibles.</p>';
-                return;
-            }
-        } else {
-            docs = currentData.documents.filter((doc) => doc.course_id === course.id || doc.course === course.name);
-        }
-
-        if (!docs.length) {
-            target.innerHTML = `
-                <div style="padding: 12px; color: var(--muted); font-size: 13px;">
-                    <p style="margin: 0 0 8px;">Aucun document n'a encore été déposé pour cette matière.</p>
-                    <a class="button button-outline button-sm" href="upload.html">
-                        ${icons?.plus || '+'}
-                        <span>Déposer le premier document</span>
-                    </a>
-                </div>`;
-            return;
-        }
-
-        target.innerHTML = docs.map((doc) => {
-            const params = new URLSearchParams({
-                id: doc.id,
-                title: doc.title,
-                course: course.name,
-                institution: instName,
-                program: doc.program || "",
-                semester: doc.semester || course.semester || 1,
-                category: doc.category
-            });
-
-            return `
-            <a class="course-document" href="document-view.html?${params}">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="color: var(--primary);">${icons?.fileText || ''}</span>
-                    <div>
-                        <strong>${escapeHtml(doc.title)}</strong>
-                        <div style="font-size: 11px; color: var(--muted);">
-                            <span class="badge badge-primary" style="padding: 1px 6px; font-size: 9px;">${escapeHtml(doc.category)}</span>
-                            &nbsp;·&nbsp; ${escapeHtml(doc.academic_year || "2025-2026")} &nbsp;·&nbsp; ${formatSize(doc.file_size)}
-                        </div>
-                    </div>
-                </div>
-                <span class="action-read" style="display: inline-flex; align-items: center; gap: 4px; color: var(--primary); font-weight: 700; font-size: 12px;">
-                    <span>Consulter</span>
-                    ${icons?.arrowRight || '→'}
-                </span>
-            </a>`;
-        }).join("");
-    };
+    const uniqueByName = (items) => [...new Map(items.map((item) => [catalogNameKey(item.name), item])).values()];
 
     const render = (data) => {
         currentData = data;
-        let institutions = data.institutions || [];
+        let institutions = uniqueByName(data.institutions || []);
+        const selectedProgram = selectedProgramId && data.programs.find((program) => program.id === selectedProgramId);
+        const parentInstitutionId = selectedProgram?.institution_id || selectedInstitutionId;
+        if (selectedProgram) {
+            const institution = institutions.find((item) => item.id === selectedProgram.institution_id);
+            if (pageTitle) pageTitle.textContent = selectedProgram.name;
+            if (pageIntro) pageIntro.textContent = [institution?.name, selectedProgram.degree || "Niveau à confirmer"].filter(Boolean).join(" · ");
+            if (breadcrumb) {
+                breadcrumb.innerHTML = `<a href="parcours.html?inst=${encodeURIComponent(selectedProgram.institution_id)}">${escapeHtml(institution?.name || "Établissement")}</a><span aria-hidden="true">›</span><span>${escapeHtml(selectedProgram.name)}</span>`;
+                breadcrumb.hidden = false;
+            }
+        } else if (selectedInstitutionId) {
+            const institution = institutions.find((item) => item.id === selectedInstitutionId);
+            if (institution) {
+                if (pageTitle) pageTitle.textContent = institution.name;
+                if (pageIntro) pageIntro.textContent = `${institution.city || "Togo"} · Formations recensées en informatique, à confirmer auprès de l’établissement.`;
+                if (breadcrumb) {
+                    breadcrumb.innerHTML = `<a href="parcours.html">Tous les établissements</a><span aria-hidden="true">›</span><span>${escapeHtml(institution.name)}</span>`;
+                    breadcrumb.hidden = false;
+                }
+            }
+        }
+        if (parentInstitutionId) institutions = institutions.filter((inst) => inst.id === parentInstitutionId);
 
         // Filtrer par secteur (public / privé)
         if (currentSector !== "all") {
-            institutions = institutions.filter((inst) => inst.sector === currentSector);
+            institutions = institutions.filter((inst) => currentSector === "public"
+                ? inst.sector === "public" || inst.sector === "interstate"
+                : inst.sector === "private");
         }
 
         // Filtrer par recherche textuelle (école ou filière)
         if (currentSearch.trim()) {
             const query = currentSearch.trim().toLowerCase();
             institutions = institutions.filter((inst) => {
-                const matchInst = inst.name.toLowerCase().includes(query) || (inst.description && inst.description.toLowerCase().includes(query));
+                const matchInst = inst.name.toLowerCase().includes(query)
+                    || (inst.description && inst.description.toLowerCase().includes(query))
+                    || (inst.aliases || []).some((alias) => alias.toLowerCase().includes(query));
                 const instPrograms = data.programs.filter((p) => p.institution_id === inst.id);
                 const matchProg = instPrograms.some((p) => p.name.toLowerCase().includes(query));
                 return matchInst || matchProg;
@@ -112,7 +94,8 @@
         }
 
         root.innerHTML = institutions.map((institution) => {
-            let programs = data.programs.filter((program) => program.institution_id === institution.id);
+            let programs = uniqueByName(data.programs.filter((program) => program.institution_id === institution.id));
+            if (selectedProgramId) programs = programs.filter((program) => program.id === selectedProgramId);
 
             if (currentSearch.trim()) {
                 const query = currentSearch.trim().toLowerCase();
@@ -122,10 +105,12 @@
                 }
             }
 
-            const isPublic = institution.sector === "public";
+            const isPublic = institution.sector === "public" || institution.sector === "interstate";
             const badgeClass = isPublic ? "badge-primary" : "badge-accent";
-            const badgeLabel = isPublic ? "Public / Université" : "Privé Agréé";
-            const autoOpen = Boolean(currentSearch.trim());
+            const badgeLabel = institution.sector === "interstate"
+                ? "Inter-États"
+                : isPublic ? "Public" : "Privé · statut à vérifier";
+            const autoOpen = Boolean(currentSearch.trim() || selectedInstitutionId || selectedProgramId);
 
             return `
             <details class="institution-accordion" data-institution-id="${escapeHtml(institution.id)}" ${autoOpen ? "open" : ""}>
@@ -138,64 +123,78 @@
                             <strong style="font-size: 15px;">${escapeHtml(institution.name)}</strong>
                             <span class="badge ${badgeClass}" style="font-size: 10px; padding: 2px 7px;">${badgeLabel}</span>
                         </div>
-                        <small style="color: var(--muted);">${escapeHtml(institution.city || "Lomé")} · ${escapeHtml(institution.description || "Formation en informatique & technologies")}</small>
+                        <small style="color: var(--muted);">${escapeHtml(institution.city || "Lomé")} · ${escapeHtml(institution.description || "Informations à confirmer")}</small>
                     </div>
                     <span class="accordion-chevron" style="margin-left: auto; color: var(--muted); font-size: 16px;">▾</span>
                 </summary>
                 
                 <div class="program-list">
                     <div class="program-list-heading">
-                        Filières et parcours accrédités (${programs.length})
-                        <button class="button button-outline button-sm program-add" type="button" data-institution-id="${escapeHtml(institution.id)}">Proposer une filière</button>
+                        <span>Parcours recensés (${programs.length})</span>
+                        <div class="program-list-actions">
+                            <button class="button button-outline button-sm program-add" type="button" data-institution-id="${escapeHtml(institution.id)}">Proposer une filière</button>
+                        </div>
                     </div>
                     ${programs.length ? programs.map((program) => {
                         const courses = data.courses.filter((course) => course.program_id === program.id);
-                        const semesters = (store && typeof store.getSemestersForProgram === "function")
-                            ? store.getSemestersForProgram(program.id)
-                            : Array.from({ length: 6 }, (_, index) => index + 1);
+                        const semesters = Array.from(new Set(courses.map((course) => course.semester)))
+                            .sort((a, b) => a - b);
+                        const programUrl = `parcours.html?inst=${encodeURIComponent(institution.id)}&program=${encodeURIComponent(program.id)}`;
+                        const openProgramLink = `<a class="button button-outline button-sm" href="${programUrl}">Voir les semestres</a>`;
                         
                         return `
-                        <details class="program-accordion" ${autoOpen ? "open" : ""}>
+                        <details class="program-accordion" ${selectedProgramId === program.id ? "open" : ""}>
                             <summary>
                                 <div>
                                     <strong>${escapeHtml(program.name)}</strong>
-                                    <small>${escapeHtml(program.degree || "Licence & Master")}</small>
+                                    <small>${escapeHtml(program.degree || "Niveau à confirmer")} · <span class="catalog-verification">${escapeHtml(program.verification || "À confirmer")}</span></small>
                                 </div>
                                 <span class="badge badge-outline" style="margin-left: auto; font-size: 11px;">
-                                    ${courses.length} matières
+                                    ${courses.length} cours
                                 </span>
+                                <span class="accordion-chevron" style="margin-left: 10px; color: var(--muted);">▾</span>
+                            </summary>
+                            <div class="program-actions">
+                                ${!selectedProgramId ? openProgramLink : ""}
                                 <button class="button button-outline button-sm program-edit" type="button" data-program-id="${escapeHtml(program.id)}" aria-label="Proposer un renommage pour ${escapeHtml(program.name)}">
                                     ${icons?.edit || "Modifier"}
                                     <span>Proposer un renommage</span>
                                 </button>
-                                <span class="accordion-chevron" style="margin-left: 10px; color: var(--muted);">▾</span>
-                            </summary>
+                            </div>
                             
                             <div class="semester-grid">
                                 ${semesters.map((semester) => {
                                     const semesterCourses = courses.filter((course) => course.semester === semester);
+                                    const uploadParams = new URLSearchParams({ institution_id: institution.id, program_id: program.id, semester });
                                     return `
                                     <section class="semester-block">
-                                        <h3>Semestre ${semester} (S${semester})</h3>
+                                        <div class="semester-heading">
+                                            <h3>Semestre ${semester} (S${semester})</h3>
+                                            <a class="text-link" href="upload.html?${uploadParams}">Déposer un document</a>
+                                        </div>
                                         ${semesterCourses.length ? semesterCourses.map((course) => `
                                             <div class="course-row">
-                                                <button class="course-toggle" type="button" aria-expanded="false" data-course-id="${course.id}" data-inst-name="${escapeHtml(institution.name)}">
+                                                <a class="course-toggle" href="library.html?${new URLSearchParams({
+                                                    course_id: course.id,
+                                                    course: course.name,
+                                                    institution: institution.name,
+                                                    program: program.name,
+                                                    semester
+                                                })}">
                                                     <span>${escapeHtml(course.name)}</span>
                                                     <span style="font-size: 11px; color: var(--muted);">${escapeHtml(course.code || "UE")}</span>
-                                                </button>
-                                                <div class="course-documents" id="course-${course.id}" hidden></div>
+                                                </a>
                                             </div>
                                         `).join("") : `
                                             <div style="padding: 8px 4px;">
-                                                <p style="font-size: 12px; color: var(--muted); margin: 0 0 6px;">Matières ouvertes au dépôt</p>
-                                                <a class="text-button" href="upload.html" style="font-size: 11px; font-weight: 700; color: var(--primary);">+ Déposer pour ce semestre</a>
+                                                <p style="font-size: 12px; color: var(--muted); margin: 0;">Aucun cours recensé pour ce semestre.</p>
                                             </div>
                                         `}
                                     </section>`;
                                 }).join("")}
                             </div>
                         </details>`;
-                    }).join("") : '<p style="padding: 16px; color: var(--muted); font-size: 13px;">Aucune filière répertoriée pour cet établissement.</p>'}
+                    }).join("") : '<p style="padding: 16px; color: var(--muted); font-size: 13px;">Aucun parcours informatique confirmé pour cet établissement.</p>'}
                 </div>
             </details>`;
         }).join("");
@@ -231,22 +230,6 @@
             });
         });
 
-        // Toggle des documents par matière
-        root.querySelectorAll(".course-toggle").forEach((button) => {
-            button.addEventListener("click", () => {
-                const panel = root.querySelector(`#course-${CSS.escape(button.dataset.courseId)}`);
-                if (!panel) return;
-                const open = panel.hidden;
-                panel.hidden = !open;
-                button.setAttribute("aria-expanded", String(open));
-                if (open) {
-                    const course = currentData.courses.find((item) => item.id === button.dataset.courseId);
-                    if (course) {
-                        loadCourseDocuments(course, panel, button.dataset.instName);
-                    }
-                }
-            });
-        });
     };
 
     const submitProgramChange = async (payload) => {
@@ -368,11 +351,16 @@
             if (!response.ok) throw new Error(`Réponse API ${response.status}`);
             const remoteData = await response.json();
             const localData = store.loadState();
-            const knownInstitutions = new Map(localData.institutions.map((institution) => [institution.name.toLowerCase(), institution]));
-            remoteData.institutions = (remoteData.institutions || []).map((institution) => ({
-                ...(knownInstitutions.get(institution.name.toLowerCase()) || {}),
-                ...institution
-            }));
+            const knownInstitutions = new Map();
+            localData.institutions.forEach((institution) => {
+                [institution.name, ...(institution.aliases || [])].forEach((name) => {
+                    knownInstitutions.set(catalogNameKey(name), institution);
+                });
+            });
+            remoteData.institutions = (remoteData.institutions || []).map((institution) => {
+                const known = knownInstitutions.get(catalogNameKey(institution.name));
+                return { ...institution, ...(known || {}), id: institution.id };
+            });
             remoteData.documents = [];
             usingRemoteCatalog = true;
             render(remoteData);

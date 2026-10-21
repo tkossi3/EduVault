@@ -660,18 +660,17 @@
 }
 
 .reader-viewport {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    min-height: 720px;
-    max-height: 88vh;
+    display: block;
+    height: min(78vh, 960px);
+    min-height: 420px;
     padding: 24px 16px;
     background: color-mix(in srgb, var(--page) 85%, var(--surface));
     overflow-y: auto;
     overflow-x: auto;
     position: relative;
     width: 100%;
+    overscroll-behavior: contain;
+    scroll-behavior: auto;
 }
 
 /* VUE DÉFILEMENT CONTINU (NAVIGATEUR) */
@@ -710,10 +709,16 @@
 .pdf-canvas-wrapper {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     width: 100%;
-    overflow: auto;
+    min-height: 100%;
+    overflow: visible;
     padding: 12px 0;
+}
+
+#pdf-canvas {
+    display: block;
+    flex: 0 0 auto;
 }
 
 #pdf-canvas,
@@ -938,6 +943,39 @@
     font-weight: 600;
 }
 
+.program-list-actions,
+.program-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.program-actions {
+    justify-content: flex-end;
+    padding: 0 16px 12px;
+}
+
+.catalog-verification {
+    color: var(--warning);
+    font-weight: 700;
+}
+
+.catalog-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: -12px 0 20px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.catalog-breadcrumb a {
+    color: var(--primary);
+    font-weight: 700;
+}
+
 .program-edit {
     flex: 0 0 auto;
     gap: 5px;
@@ -974,6 +1012,24 @@
     letter-spacing: 0.05em;
 }
 
+.semester-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.semester-heading h3 {
+    margin: 0;
+}
+
+.semester-heading .text-link {
+    font-size: 11px;
+    font-weight: 700;
+}
+
 .course-row {
     margin-bottom: 8px;
 }
@@ -993,6 +1049,7 @@
     cursor: pointer;
     text-align: left;
     transition: all var(--transition-fast);
+    text-decoration: none;
 }
 
 .course-toggle:hover {
@@ -1201,6 +1258,18 @@
     .program-list-heading {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .program-list-actions,
+    .program-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .reader-viewport {
+        height: 70vh;
+        min-height: 320px;
+        padding: 16px 10px;
     }
 
     .course-document {

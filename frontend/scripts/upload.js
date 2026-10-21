@@ -15,6 +15,7 @@
     const courseSelect = document.querySelector("#upload-course-select");
     const customCourseInput = document.querySelector("#upload-course-custom");
     const toggleNewCourseBtn = document.querySelector("#btn-toggle-new-course");
+    const yearInput = document.querySelector("#upload-year");
 
     const store = window.EduVaultStore;
     const icons = window.EduVaultIcons;
@@ -23,6 +24,13 @@
     let selectedFile = null;
     let fileDataUrl = null;
     let remoteCatalog = null;
+
+    const currentAcademicYear = () => {
+        const year = new Date().getFullYear();
+        return `${year}-${year + 1}`;
+    };
+
+    if (yearInput) yearInput.value = currentAcademicYear();
 
     const escapeHtml = (value = "") => String(value).replace(/[&<>"']/g, (char) => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -141,6 +149,33 @@
                 progSelect.value = match.value;
                 populateSemesters();
             }
+        }
+    };
+
+    const applyUploadContext = () => {
+        const params = new URLSearchParams(location.search);
+        const institutionId = params.get("institution_id");
+        const programId = params.get("program_id");
+        const semester = params.get("semester");
+        if (institutionId && instSelect) {
+            const institutionOption = Array.from(instSelect.options)
+                .find((option) => option.dataset.id === institutionId);
+            if (institutionOption) {
+                instSelect.value = institutionOption.value;
+                populatePrograms();
+            }
+        }
+        if (programId && progSelect) {
+            const programOption = Array.from(progSelect.options)
+                .find((option) => option.dataset.id === programId || option.value === programId);
+            if (programOption) {
+                progSelect.value = programOption.value;
+                populateSemesters();
+            }
+        }
+        if (semester && semSelect && Array.from(semSelect.options).some((option) => option.value === semester)) {
+            semSelect.value = semester;
+            populateCourses();
         }
     };
 
@@ -360,7 +395,7 @@
         const program = progSelect?.value || "Génie Logiciel & Systèmes d'Information";
         const semester = parseInt(formData.get("semester") || "1", 10);
         const category = formData.get("category") || "Support de Cours";
-        const academicYear = formData.get("academic_year") || "2025-2026";
+        const academicYear = formData.get("academic_year") || currentAcademicYear();
 
         // Récupération et enregistrement de la matière
         let courseName = formData.get("course")?.trim() || courseInput?.value?.trim() || customCourseInput?.value?.trim() || courseSelect?.value || "";
@@ -503,6 +538,7 @@
             }
         }
         populateInstitutions();
+        applyUploadContext();
         if (submitButton) submitButton.disabled = false;
     };
 

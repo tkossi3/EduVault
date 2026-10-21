@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f8fafc">
-    <meta name="description" content="EduVault — Le coffre-fort académique universitaire 2026. Consultez, téléchargez et partagez vos cours, TD et annales d'examens.">
+    <meta name="description" content="EduVault — Consultez et partagez des cours, TD et annales universitaires au Togo.">
     <title>EduVault — Le Coffre-Fort Académique Universitaire</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/eduvault.svg" type="image/svg+xml">
@@ -62,9 +62,9 @@
         <!-- SECTION HERO -->
         <section class="hero-section page-width">
             <div class="hero-copy reveal">
-                <p class="eyebrow"><span class="eyebrow-mark"></span> LE COFFRE ACADÉMIQUE · 2026</p>
+                <p class="eyebrow"><span class="eyebrow-mark"></span> RESSOURCES UNIVERSITAIRES AU TOGO</p>
                 <h1>Tout ton campus.<br><span>Dans un seul coffre.</span></h1>
-                <p class="hero-description">Accédez à des centaines de cours, TD, examens et annales corrigées vérifiés par vos pairs et professeurs. Un savoir universel, libre et sans friction.</p>
+                <p class="hero-description">Retrouvez et partagez des supports de cours, TD et annales. Les documents sont publiés après modération ; leur exactitude reste à vérifier auprès de l’établissement concerné.</p>
                 
                 <form class="hero-search" id="search-form" role="search">
                     <div class="search-icon-wrapper" aria-hidden="true">
@@ -92,28 +92,28 @@
                     <div class="vault-icon-badge">
                         <img src="assets/eduvault.svg" alt="" width="44" height="44">
                     </div>
-                    <h3>Coffre Numérique Certifié</h3>
-                    <p>Banque d'épreuves & ressources académiques vérifiées pour le Togo et l'international.</p>
+                    <h3>Bibliothèque universitaire</h3>
+                    <p>Consultez les documents partagés en ligne ou contribuez aux ressources de votre établissement.</p>
                     <div class="hero-stats-mini">
                         <div>
                             <strong>100% PDF</strong>
-                            <small>Lecture haute définition</small>
+                            <small>Lecture dans le navigateur</small>
                         </div>
                         <div>
-                            <strong>Session 2026</strong>
-                            <small>Mise à jour continue</small>
+                            <strong>Étudiants</strong>
+                            <small>Partage communautaire</small>
                         </div>
                     </div>
                 </div>
                 
                 <div class="float-chip float-chip-top">
-                    <span class="badge badge-accent">Nouveau 2026</span>
-                    <span style="font-size: 13px; font-weight: 700;">Corrigé Algorithmique S3</span>
+                    <span class="badge badge-accent">Parcours</span>
+                    <span id="homepage-program-chip" style="font-size: 13px; font-weight: 700;">Votre filière</span>
                 </div>
                 
                 <div class="float-chip float-chip-bottom">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    <span style="font-size: 13px; font-weight: 600;">ENP Campus Lomé</span>
+                    <span id="homepage-institution-chip" style="font-size: 13px; font-weight: 600;">Votre établissement</span>
                 </div>
             </div>
         </section>
@@ -136,7 +136,7 @@
                 </div>
                 <div>
                     <strong>Établissements</strong>
-                    <span>ENP Lomé, UL, Kara, ESA...</span>
+                    <span>Universités et écoles du Togo</span>
                 </div>
             </div>
             
@@ -145,8 +145,8 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                 </div>
                 <div>
-                    <strong>Modération Rapide</strong>
-                    <span>Documents filtrés et certifiés</span>
+                    <strong>Modération</strong>
+                    <span>Les dépôts attendent une validation</span>
                 </div>
             </div>
         </section>
@@ -172,7 +172,7 @@
                 <button class="filter-chip" type="button" data-category="Fiche de révision">Fiches de Révision</button>
             </div>
 
-            <div class="document-grid" id="document-results" aria-live="polite">
+            <div class="document-grid home-document-carousel" id="document-results" aria-live="polite">
                 <!-- Les cartes de documents sont injectées dynamiquement par store/app.js -->
             </div>
 
@@ -193,7 +193,7 @@
                         <p class="eyebrow">CAMPUS PARTENAIRES</p>
                         <h2>Vos universités & grandes écoles</h2>
                     </div>
-                    <a class="text-link" id="institutions-more" href="pages/parcours.html" hidden>
+                    <a class="text-link" id="institutions-more" href="pages/parcours.html">
                         <span>Voir toutes les universités</span>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                     </a>

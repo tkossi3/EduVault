@@ -9,10 +9,17 @@
     let activeCategory = "";
     let currentDocuments = [];
     let currentQuery = "";
+    let currentInstitutions = [];
     const isExplorerPage = document.body.dataset.page === "explorer";
     const isLibraryPage = document.body.dataset.page === "library";
     const documentViewHref = isLibraryPage ? "document-view.html" : "pages/document-view.html";
     const catalogHref = isLibraryPage ? "parcours.html" : "pages/parcours.html";
+    const pageParams = new URLSearchParams(location.search);
+    const courseId = pageParams.get("course_id");
+    const currentAcademicYear = () => {
+        const year = new Date().getFullYear();
+        return `${year}-${year + 1}`;
+    };
 
     const escapeHtml = (value = "") => String(value).replace(/[&<>"']/g, (char) => ({ 
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" 
@@ -25,7 +32,13 @@
 
     const render = () => {
         let visible = currentDocuments.filter((item) => !activeCategory || item.category === activeCategory);
-        if (isExplorerPage && !currentQuery) visible = visible.slice(0, 4);
+        if (isExplorerPage && !currentQuery) {
+            const mobile = window.matchMedia("(max-width: 768px)").matches;
+            visible = visible.slice(0, mobile ? 4 : 8);
+            results.classList.toggle("is-carousel", !mobile);
+        } else {
+            results.classList.remove("is-carousel");
+        }
         const emptyState = document.querySelector("#empty-state");
         if (emptyState) emptyState.hidden = visible.length > 0;
 
@@ -74,7 +87,7 @@
                 </p>
 
                 <div class="document-card-footer">
-                    <span>${escapeHtml(item.academic_year || "2025-2026")} · ${formatSize(item.file_size)}</span>
+                    <span>${escapeHtml(item.academic_year || currentAcademicYear())} · ${formatSize(item.file_size)}</span>
                     <a class="action-read" href="${documentViewHref}?${params}">
                         <span>Consulter</span>
                         ${icons?.arrowRight || '→'}
@@ -100,17 +113,26 @@
         const normalizedQuery = query.toLowerCase().trim();
 
         try {
-            const response = await fetch(`${config.API_BASE_URL}/documents/search?q=${encodeURIComponent(query)}`);
-            if (!response.ok) throw new Error("API Offline");
-            const data = await response.json();
-            currentDocuments = data.documents || [];
-            if (!currentDocuments.length && !query) {
-                currentDocuments = store?.loadState().documents || [];
+            if (isLibraryPage && courseId) {
+                const response = await fetch(`${config.API_BASE_URL}/catalog/courses/${encodeURIComponent(courseId)}/documents`);
+                if (!response.ok) throw new Error(`Chargement du cours impossible (${response.status}).`);
+                currentDocuments = await response.json();
+            } else {
+                const response = await fetch(`${config.API_BASE_URL}/documents/search?q=${encodeURIComponent(query)}`);
+                if (!response.ok) throw new Error("API Offline");
+                const data = await response.json();
+                currentDocuments = data.documents || [];
+                if (!currentDocuments.length && !query) {
+                    currentDocuments = store?.loadState().documents || [];
+                }
             }
         } catch {
             const state = store?.loadState();
             const allDocs = state?.documents || [];
-            if (!normalizedQuery) {
+            if (isLibraryPage && courseId) {
+                const courseName = pageParams.get("course") || "";
+                currentDocuments = allDocs.filter((doc) => doc.course_id === courseId || doc.course === courseName);
+            } else if (!normalizedQuery) {
                 currentDocuments = allDocs;
             } else {
                 currentDocuments = allDocs.filter((doc) => {
@@ -140,7 +162,18 @@
             institutions = store?.loadState().institutions || [];
         }
 
-        const visibleInstitutions = document.body.dataset.page === "explorer" ? institutions.slice(0, 4) : institutions;
+        currentInstitutions = institutions;
+        renderInstitutions();
+    };
+
+    const renderInstitutions = () => {
+        const container = document.querySelector("#institution-list");
+        if (!container) return;
+        const mobile = window.matchMedia("(max-width: 768px)").matches;
+        const visibleInstitutions = isExplorerPage
+            ? currentInstitutions.slice(0, mobile ? 4 : 8)
+            : currentInstitutions;
+        container.classList.toggle("is-carousel", isExplorerPage && !mobile);
         container.innerHTML = visibleInstitutions.map((inst) => `
             <a href="${catalogHref}?inst=${encodeURIComponent(inst.id)}" class="institution-card">
                 <div class="institution-icon">
@@ -157,8 +190,27 @@
         `).join("");
 
         const moreLink = document.querySelector("#institutions-more");
-        if (moreLink) moreLink.hidden = institutions.length <= visibleInstitutions.length;
+        if (moreLink) moreLink.hidden = currentInstitutions.length <= visibleInstitutions.length;
     };
+
+    if (isLibraryPage && courseId) {
+        const params = pageParams;
+        const courseName = params.get("course") || "Cours";
+        const heading = document.querySelector("#results-title");
+        const eyebrow = document.querySelector("#results-section .eyebrow");
+        if (heading) heading.textContent = courseName;
+        if (eyebrow) eyebrow.textContent = "DOCUMENTS DU COURS";
+        const intro = document.querySelector(".page-intro");
+        if (intro) {
+            intro.textContent = [
+                params.get("institution"),
+                params.get("program"),
+                params.get("semester") ? `Semestre ${params.get("semester")}` : ""
+            ].filter(Boolean).join(" · ");
+        }
+        document.querySelector(".library-search")?.setAttribute("hidden", "");
+        document.querySelector("#results-section .filter-row")?.setAttribute("hidden", "");
+    }
 
     // Écouteurs de formulaires et filtres
     document.querySelector("#search-form")?.addEventListener("submit", (event) => {
@@ -186,6 +238,19 @@
             });
             render();
         });
+    });
+
+    if (isExplorerPage) {
+        const profile = store?.getCurrentUserProfile();
+        const institutionChip = document.querySelector("#homepage-institution-chip");
+        const programChip = document.querySelector("#homepage-program-chip");
+        if (institutionChip) institutionChip.textContent = profile?.institution || "Votre établissement";
+        if (programChip) programChip.textContent = profile?.program || "Votre parcours";
+    }
+
+    window.addEventListener("resize", () => {
+        if (isExplorerPage && !currentQuery) render();
+        renderInstitutions();
     });
 
     // Initialisation

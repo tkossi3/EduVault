@@ -706,6 +706,35 @@ img {
     overflow-wrap: anywhere;
 }
 
+.home-document-carousel.is-carousel,
+.institution-grid.is-carousel {
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+    padding: 2px 2px 12px;
+}
+
+.home-document-carousel.is-carousel > *,
+.institution-grid.is-carousel > * {
+    flex: 0 0 min(280px, 32vw);
+    scroll-snap-align: start;
+}
+
+#results-section .section-heading {
+    justify-content: center;
+    text-align: center;
+}
+
+#results-section .section-heading > div {
+    text-align: center;
+}
+
+#results-section .filter-row {
+    justify-content: center;
+}
+
 /* BANDEAU DE PARTAGE / CTA */
 .share-band {
     display: flex;
@@ -818,13 +847,26 @@ img {
 @media (max-width: 768px) {
     .document-grid,
     .institution-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .home-document-carousel.is-carousel,
+    .institution-grid.is-carousel {
+        display: grid;
+        overflow: visible;
+        padding: 0;
     }
 
     .institution-card {
         min-width: 0;
         gap: 8px;
         padding: 12px 10px;
+    }
+
+    @media (min-width: 769px) {
+        .institution-grid:not(.is-carousel) {
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+        }
     }
 
     .institution-card .institution-icon {

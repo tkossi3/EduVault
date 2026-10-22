@@ -21,7 +21,7 @@
     };
 
     const render = () => {
-        const allNotifs = store ? store.getNotifications() : [];
+        const allNotifs = store ? store.getNotifications().filter((notification) => !notification.is_demo) : [];
         const unreadCount = allNotifs.filter((n) => !n.is_read).length;
 
         // Mise à jour des compteurs d'onglets

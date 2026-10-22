@@ -83,7 +83,7 @@
                     <button type="button" data-query="Algorithmique">Algorithmique</button>
                     <button type="button" data-query="Bases de Données">Bases de Données</button>
                     <button type="button" data-query="Analyse">Analyse Mathématique</button>
-                    <button type="button" data-query="ENP Campus Lomé">ENP Campus Lomé</button>
+                    <button type="button" data-query="EPL">EPL</button>
                 </div>
             </div>
             
@@ -158,10 +158,13 @@
                     <p class="eyebrow">SÉLECTION DE LA COMMUNAUTÉ</p>
                     <h2 id="results-title">Documents phares</h2>
                 </div>
-                <a class="text-link" href="pages/library.html">
-                <span>Voir toute la bibliothèque</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                </a>
+                <div class="section-actions">
+                    <button class="carousel-toggle" type="button" data-carousel-toggle="document-results" aria-controls="document-results" aria-pressed="false" hidden>Pause</button>
+                    <a class="text-link" href="pages/library.html">
+                        <span>Voir toute la bibliothèque</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
             </div>
 
             <div class="filter-row" aria-label="Filtrer par catégorie">
@@ -193,10 +196,13 @@
                         <p class="eyebrow">CAMPUS PARTENAIRES</p>
                         <h2>Vos universités & grandes écoles</h2>
                     </div>
-                    <a class="text-link" id="institutions-more" href="pages/parcours.html">
-                        <span>Voir toutes les universités</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                    </a>
+                    <div class="section-actions">
+                        <button class="carousel-toggle" type="button" data-carousel-toggle="institution-list" aria-controls="institution-list" aria-pressed="false" hidden>Pause</button>
+                        <a class="text-link" id="institutions-more" href="pages/parcours.html">
+                            <span>Voir toutes les universités</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </a>
+                    </div>
                 </div>
                 
                 <div class="institution-grid" id="institution-list">

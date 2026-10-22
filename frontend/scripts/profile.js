@@ -104,7 +104,7 @@
             const avatarEl = document.querySelector("#user-avatar-display");
 
             if (nameEl) nameEl.textContent = profile.name || "Étudiant EduVault";
-            if (instEl) instEl.textContent = profile.institution || "ENP Campus Lomé";
+            if (instEl) instEl.textContent = profile.institution || "École Polytechnique de Lomé (EPL)";
             if (bioEl) bioEl.textContent = profile.bio || "Membre de la communauté académique EduVault.";
             
             const initial = (profile.name || "E").slice(0, 1).toUpperCase();

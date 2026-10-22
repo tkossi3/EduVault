@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from postgrest.exceptions import APIError
 
+from models.schemas import CourseCreate
 from routes.auth import current_user
 from supabase_client import get_supabase
 
@@ -38,9 +39,11 @@ async def catalog() -> dict:
     """Retourne l’arborescence établissement, parcours, cours et semestres."""
     client = get_supabase()
     try:
-        institutions = client.table("institutions").select("id,name,city,description,sector").order("name").execute().data or []
-        programs = client.table("programs").select("id,name,degree,institution_id").order("name").execute().data or []
-        courses = client.table("courses").select("id,name,code,semester,program_id").order("semester").execute().data or []
+        institutions = client.table("institutions").select("id,name,city,description,sector,aliases,verification,website").order("name").execute().data or []
+        programs = (client.table("programs").select("id,name,degree,institution_id,is_listed,verification,source_url")
+                    .eq("is_listed", True).order("name").execute().data or [])
+        courses = (client.table("courses").select("id,name,code,semester,program_id,is_demo")
+                   .eq("is_demo", False).order("semester").execute().data or [])
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Catalogue indisponible.") from exc
     return {"institutions": institutions, "programs": programs, "courses": courses}
@@ -166,10 +169,56 @@ async def list_courses() -> list[dict]:
     """Fournit les cours avec leur filière pour le formulaire de dépôt."""
     try:
         return (get_supabase().table("courses")
-                .select("id,name,code,semester,program_id,programs(name,institutions(name))")
+                .select("id,name,code,semester,program_id,programs!inner(name,is_listed,institutions(name))")
+                .eq("is_demo", False).eq("programs.is_listed", True)
                 .order("name").limit(500).execute().data or [])
     except Exception as exc:
         raise HTTPException(status_code=503, detail="Liste des cours indisponible.") from exc
+
+
+@router.post("/courses", status_code=201)
+async def create_course(
+    payload: CourseCreate,
+    _user: dict = Depends(current_user),
+) -> dict:
+    """Ajoute un cours au catalogue pour le parcours et le semestre choisis."""
+    name = " ".join(payload.name.split())
+    if len(name) < 2:
+        raise HTTPException(status_code=422, detail="Le nom doit contenir au moins 2 caractères.")
+
+    client = get_supabase()
+    program_id = str(payload.program_id)
+    try:
+        program = (
+            client.table("programs").select("id,is_listed")
+            .eq("id", program_id).eq("is_listed", True).maybe_single().execute().data
+        )
+        if not program:
+            raise HTTPException(status_code=404, detail="Parcours introuvable.")
+
+        existing_courses = (
+            client.table("courses").select("id,name")
+            .eq("program_id", program_id).eq("semester", payload.semester)
+            .execute().data or []
+        )
+        if any(course["name"].strip().casefold() == name.casefold() for course in existing_courses):
+            raise HTTPException(status_code=409, detail="Ce cours existe déjà dans ce semestre.")
+
+        result = client.table("courses").insert({
+            "program_id": program_id,
+            "name": name,
+            "code": payload.code.strip() if payload.code and payload.code.strip() else None,
+            "semester": payload.semester,
+        }).execute()
+        return result.data[0]
+    except HTTPException:
+        raise
+    except APIError as exc:
+        if exc.code == "23505":
+            raise HTTPException(status_code=409, detail="Ce cours existe déjà dans ce semestre.") from exc
+        raise HTTPException(status_code=503, detail="Impossible d'ajouter le cours au catalogue.") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Impossible d'ajouter le cours au catalogue.") from exc
 
 
 @router.get("/courses/{course_id}/documents")

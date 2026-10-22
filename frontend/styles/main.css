@@ -722,17 +722,29 @@ img {
     scroll-snap-align: start;
 }
 
-#results-section .section-heading {
-    justify-content: center;
-    text-align: center;
+.section-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
 }
 
-#results-section .section-heading > div {
-    text-align: center;
+.carousel-toggle {
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-xs);
+    background: var(--surface);
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
 }
 
-#results-section .filter-row {
-    justify-content: center;
+.carousel-toggle:hover,
+.carousel-toggle:focus-visible {
+    border-color: var(--primary-border);
+    color: var(--primary);
 }
 
 /* BANDEAU DE PARTAGE / CTA */
@@ -853,20 +865,27 @@ img {
     .home-document-carousel.is-carousel,
     .institution-grid.is-carousel {
         display: grid;
-        overflow: visible;
-        padding: 0;
+        grid-template-columns: minmax(0, 1fr);
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+        scroll-snap-type: y mandatory;
+        scrollbar-width: thin;
+        padding: 2px 2px 12px;
+    }
+
+    .home-document-carousel.is-carousel {
+        max-height: 680px;
+    }
+
+    .institution-grid.is-carousel {
+        max-height: 330px;
     }
 
     .institution-card {
         min-width: 0;
         gap: 8px;
         padding: 12px 10px;
-    }
-
-    @media (min-width: 769px) {
-        .institution-grid:not(.is-carousel) {
-            grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-        }
     }
 
     .institution-card .institution-icon {
@@ -877,12 +896,33 @@ img {
 
 @media (max-width: 900px) {
     .hero-section {
-        grid-template-columns: 1fr;
-        padding: 36px 0;
+        grid-template-columns: minmax(0, 1fr);
+        padding: 36px 16px;
         gap: 32px;
     }
     .hero-art {
-        min-height: 280px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        min-height: 0;
+        gap: 10px;
+        padding: 8px 0;
+    }
+    .vault-card-hero {
+        grid-column: 1 / -1;
+        justify-self: center;
+        width: min(100%, 360px);
+    }
+    .float-chip {
+        position: static;
+        width: 100%;
+        min-width: 0;
+        justify-content: center;
+        padding: 10px 12px;
+        animation: none;
+    }
+    .float-chip-top,
+    .float-chip-bottom {
+        inset: auto;
     }
     .share-band {
         flex-direction: column;
@@ -1006,13 +1046,30 @@ img {
         justify-content: center;
         padding-inline: 0;
     }
-    .float-chip {
-        display: none;
+    .hero-section {
+        padding: 24px 12px;
+        gap: 20px;
+    }
+    .hero-art {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+    }
+    .vault-card-hero {
+        padding: 24px 18px;
+    }
+    .hero-stats-mini {
+        gap: 8px;
     }
     .hero-search {
         flex-direction: column;
         padding: 8px;
         border-radius: var(--radius-md);
+    }
+
+    @media (max-width: 359px) {
+        .hero-stats-mini {
+            grid-template-columns: minmax(0, 1fr);
+        }
     }
     .hero-search input {
         width: 100%;

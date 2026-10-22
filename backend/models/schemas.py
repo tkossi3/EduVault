@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from enum import StrEnum
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -39,6 +40,15 @@ class CourseResult(BaseModel):
     code: str | None = None
     semester: int
     program_id: str
+
+
+class CourseCreate(BaseModel):
+    """Cours proposé par un membre pour un semestre d'un parcours."""
+
+    program_id: UUID
+    name: str = Field(min_length=2, max_length=120)
+    code: str | None = Field(default=None, max_length=24)
+    semester: int = Field(ge=1, le=10)
 
 
 class SearchResponse(BaseModel):

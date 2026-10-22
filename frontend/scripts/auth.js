@@ -67,7 +67,7 @@
                             <div class="field-group" style="margin-top: 10px;">
                                 <label class="field-label" for="auth-institution">Établissement / Université</label>
                                 <select class="field-control" id="auth-institution" name="institution">
-                                    <option value="ENP Campus Lomé">ENP Campus Lomé</option>
+                                    <option value="École Polytechnique de Lomé (EPL)">École Polytechnique de Lomé (EPL)</option>
                                     <option value="Université de Lomé">Université de Lomé (FDS, FASEG)</option>
                                     <option value="Université de Kara">Université de Kara</option>
                                     <option value="École Supérieure des Affaires (ESA)">École Supérieure des Affaires (ESA)</option>
@@ -245,7 +245,7 @@
                         <strong>${profile.name || "Étudiant EduVault"}</strong>
                         <small>${profile.email || "etudiant@eduvault.tg"}</small>
                         <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">
-                            <span class="badge badge-primary" style="font-size: 10px;">${profile.institution || "ENP Campus Lomé"}</span>
+                            <span class="badge badge-primary" style="font-size: 10px;">${profile.institution || "École Polytechnique de Lomé (EPL)"}</span>
                             <span class="badge badge-outline" style="font-size: 10px;">${profile.program || "Génie Logiciel"}</span>
                         </div>
                     </div>
@@ -383,7 +383,7 @@
             const email = emailInput?.value.trim() || "";
             const password = passwordInput?.value || "";
             const name = nameInput?.value.trim() || email.split("@")[0];
-            const institution = instSelect?.value || "ENP Campus Lomé";
+            const institution = instSelect?.value || "École Polytechnique de Lomé (EPL)";
 
             if (feedback) feedback.textContent = "";
 

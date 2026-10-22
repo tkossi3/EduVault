@@ -28,7 +28,7 @@
 
         const renderPopup = () => {
             const list = popup.querySelector(".notification-popover-list");
-            const notifications = store?.getNotifications?.() || [];
+            const notifications = (store?.getNotifications?.() || []).filter((item) => !item.is_demo);
             const recent = notifications.slice(0, 4);
             if (!recent.length) {
                 list.textContent = "Aucune notification pour le moment.";

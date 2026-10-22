@@ -9,7 +9,7 @@ create extension if not exists pgcrypto;
 create table if not exists public.profiles (
     id uuid primary key references auth.users(id) on delete cascade,
     full_name text not null default '',
-    institution text not null default 'ENP Campus Lomé',
+    institution text not null default 'École Polytechnique de Lomé (EPL)',
     program text not null default '',
     level text not null default 'Licence 3',
     bio text not null default '',
@@ -25,12 +25,19 @@ create table if not exists public.institutions (
     city text not null default 'Lomé',
     country text not null default 'Togo',
     description text not null default '',
-    sector text not null default 'private' check (sector in ('public', 'private')),
+    sector text not null default 'private' check (sector in ('public', 'private', 'interstate')),
     created_at timestamptz not null default now()
 );
 alter table public.institutions
-    add column if not exists sector text not null default 'private'
-    check (sector in ('public', 'private'));
+    add column if not exists sector text not null default 'private';
+alter table public.institutions
+    drop constraint if exists institutions_sector_check;
+alter table public.institutions
+    add constraint institutions_sector_check check (sector in ('public', 'private', 'interstate'));
+alter table public.institutions
+    add column if not exists aliases text[] not null default '{}',
+    add column if not exists verification text not null default 'À confirmer auprès de l’établissement',
+    add column if not exists website text;
 
 -- 4. Table des filières et programmes universitaires
 create table if not exists public.programs (
@@ -38,9 +45,16 @@ create table if not exists public.programs (
     institution_id uuid not null references public.institutions(id) on delete cascade,
     name text not null,
     degree text not null default 'Licence / Master',
+    is_listed boolean not null default true,
+    verification text not null default 'À confirmer auprès de l’établissement',
+    source_url text,
     created_at timestamptz not null default now(),
     unique (institution_id, name)
 );
+alter table public.programs
+    add column if not exists is_listed boolean not null default true,
+    add column if not exists verification text not null default 'À confirmer auprès de l’établissement',
+    add column if not exists source_url text;
 
 -- Modifications des filières soumises par les membres et publiées après validation.
 create table if not exists public.program_change_requests (
@@ -63,10 +77,17 @@ create table if not exists public.courses (
     program_id uuid not null references public.programs(id) on delete cascade,
     name text not null,
     code text,
-    semester smallint not null check (semester between 1 and 6),
+    semester smallint not null check (semester between 1 and 10),
+    is_demo boolean not null default false,
     created_at timestamptz not null default now(),
     unique (program_id, semester, name)
 );
+alter table public.courses
+    add column if not exists is_demo boolean not null default false;
+alter table public.courses
+    drop constraint if exists courses_semester_check;
+alter table public.courses
+    add constraint courses_semester_check check (semester between 1 and 10);
 
 -- 6. Table des documents et annales du coffre académique
 create table if not exists public.documents (
@@ -144,7 +165,7 @@ security definer
 as $$
 begin
     insert into public.profiles (id, full_name, institution)
-    values (new.id, coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)), 'ENP Campus Lomé')
+    values (new.id, coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)), 'École Polytechnique de Lomé (EPL)')
     on conflict (id) do nothing;
     return new;
 end;
@@ -220,103 +241,174 @@ revoke all on function public.review_program_change_request(uuid, text, uuid) fr
 grant execute on function public.review_program_change_request(uuid, text, uuid) to service_role;
 
 -- 11. Catalogue initial du Togo (dérivé du catalogue de démonstration existant)
-insert into public.institutions (id, name, city, country, description, sector) values
-    ('a0000000-0000-0000-0000-000000000001', 'ENP Campus Lomé (EPL)', 'Lomé', 'Togo', 'École Polytechnique de Lomé — formations d’ingénieurs et licences professionnelles', 'public'),
-    ('a0000000-0000-0000-0000-000000000002', 'Université de Lomé (FDS - Informatique)', 'Lomé', 'Togo', 'Faculté des Sciences — département de mathématiques et informatique fondamentale', 'public'),
-    ('a0000000-0000-0000-0000-000000000003', 'Université de Kara (FST)', 'Kara', 'Togo', 'Faculté des Sciences et Techniques', 'public'),
-    ('a0000000-0000-0000-0000-000000000004', 'École Supérieure des Affaires (ESA)', 'Lomé', 'Togo', 'Management technologique, finance et systèmes d’information', 'private'),
-    ('a0000000-0000-0000-0000-000000000005', 'IAI-Togo (Institut Africain d''Informatique)', 'Lomé', 'Togo', 'Institution inter-États de formation en informatique', 'public'),
-    ('a0000000-0000-0000-0000-000000000006', 'ESGIS (École Supérieure de Gestion, d''Informatique et des Sciences)', 'Lomé', 'Togo', 'Établissement supérieur de gestion, informatique et sciences', 'private'),
-    ('a0000000-0000-0000-0000-000000000007', 'IPNET Institute of Technology', 'Lomé', 'Togo', 'Institut supérieur de technologie', 'private'),
-    ('a0000000-0000-0000-0000-000000000008', 'DEFITECH (Institut Polytechnique DEFITECH)', 'Lomé', 'Togo', 'Institut polytechnique', 'private'),
-    ('a0000000-0000-0000-0000-000000000009', 'UCAO-UUT (École Supérieure d''Ingénieurs - ESI)', 'Lomé', 'Togo', 'Université catholique — école supérieure d’ingénieurs', 'private'),
-    ('a0000000-0000-0000-0000-000000000010', 'ESIG Global Success', 'Lomé', 'Togo', 'Établissement supérieur de gestion et d’informatique', 'private'),
-    ('a0000000-0000-0000-0000-000000000011', 'IAEC Université (Pôle Technologies & Informatique)', 'Lomé', 'Togo', 'Institut africain d’études commerciales et technologies numériques', 'private'),
-    ('a0000000-0000-0000-0000-000000000012', 'FORMATEC (Institut Supérieur Technologique)', 'Lomé', 'Togo', 'Institut supérieur technologique', 'private'),
-    ('a0000000-0000-0000-0000-000000000013', 'CIB-INTA', 'Lomé', 'Togo', 'Institut de formation en informatique', 'private')
+insert into public.institutions (id, name, city, country, description, sector, aliases, verification, website) values
+    ('a0000000-0000-0000-0000-000000000001', 'École Polytechnique de Lomé (EPL)', 'Lomé', 'Togo', 'École de l’Université de Lomé; appellation officielle consultée : EPL.', 'public', array['EPL', 'ENP (à confirmer)'], 'Établissement confirmé; parcours 2026-2027 à confirmer', 'https://univ-lome.tg/'),
+    ('a0000000-0000-0000-0000-000000000002', 'Université de Lomé (UL)', 'Lomé', 'Togo', 'Université publique; les masters recensés sont des appels antérieurs.', 'public', array['UL'], 'Établissement confirmé; offre 2026-2027 à vérifier', 'https://univ-lome.tg/'),
+    ('a0000000-0000-0000-0000-000000000003', 'Université de Kara (UK)', 'Kara', 'Togo', 'Université publique; offre informatique actuelle à confirmer.', 'public', array['UK'], 'Établissement confirmé; offre informatique à vérifier', 'https://www.univkara.tg/'),
+    ('a0000000-0000-0000-0000-000000000004', 'École Supérieure des Affaires (ESA)', 'Lomé', 'Togo', 'Établissement privé; offre informatique à confirmer.', 'private', array['ESA'], 'Piste à confirmer', null),
+    ('a0000000-0000-0000-0000-000000000005', 'Institut Africain d''Informatique — Représentation du Togo (IAI-Togo)', 'Lomé', 'Togo', 'Établissement inter-États spécialisé en informatique.', 'interstate', array['IAI-Togo', 'IAI Togo'], 'Établissement confirmé; cycles vérifiés sur le site officiel', 'https://new.iai-togo.tg/officiel/admission'),
+    ('a0000000-0000-0000-0000-000000000006', 'École Supérieure de Gestion, d''Informatique et des Sciences (ESGIS)', 'Lomé', 'Togo', 'Établissement privé; intitulés informatiques à confirmer.', 'private', array['ESGIS'], 'À confirmer auprès de l’établissement', null),
+    ('a0000000-0000-0000-0000-000000000007', 'IPNET Institute of Technology', 'Lomé', 'Togo', 'Établissement privé; formations informatiques à confirmer.', 'private', array['IPNET'], 'À confirmer auprès de l’établissement', null),
+    ('a0000000-0000-0000-0000-000000000008', 'Institut Polytechnique DEFITECH', 'Lomé', 'Togo', 'Établissement privé; formations informatiques à confirmer.', 'private', array['DEFITECH'], 'À confirmer auprès de l’établissement', null),
+    ('a0000000-0000-0000-0000-000000000009', 'Université Catholique de l''Afrique de l''Ouest — Unité Universitaire du Togo (UCAO-UUT)', 'Lomé', 'Togo', 'Établissement privé; formations informatiques à confirmer.', 'private', array['UCAO-UUT'], 'À confirmer auprès de l’établissement', null),
+    ('a0000000-0000-0000-0000-000000000010', 'École Supérieure d''Informatique et de Gestion (ESIG Global Success)', 'Lomé', 'Togo', 'Établissement privé; formations informatiques à confirmer.', 'private', array['ESIG Global Success'], 'À confirmer auprès de l’établissement', null),
+    ('a0000000-0000-0000-0000-000000000011', 'IAEC Université (Pôle Technologies & Informatique)', 'Lomé', 'Togo', 'Institut africain d’études commerciales et technologies numériques', 'private', array['IAEC'], 'À confirmer auprès de l’établissement', null),
+    ('a0000000-0000-0000-0000-000000000012', 'FORMATEC — Institut Supérieur Technologique', 'Lomé', 'Togo', 'Institut supérieur technologique; offre informatique à confirmer.', 'private', array['FORMATEC'], 'À confirmer auprès de l’établissement', null),
+    ('a0000000-0000-0000-0000-000000000013', 'Centre Informatique et Bureautique (CIB-INTA)', 'Lomé', 'Togo', 'Statut et offre actuels à confirmer.', 'private', array['CIB-INTA'], 'À confirmer auprès de l’établissement', null),
+    ('a0000000-0000-0000-0000-000000000014', 'Lomé Business School (LBS)', 'Lomé', 'Togo', 'Parcours informatique rapporté par une source secondaire; offre actuelle à confirmer.', 'private', array['LBS'], 'À confirmer auprès de l’établissement', null),
+    ('a0000000-0000-0000-0000-000000000015', 'Centre Informatique de Formation et d''Orientation Professionnelles (CIFOP)', 'Lomé', 'Togo', 'Formation informatique rapportée par une source secondaire; offre actuelle à confirmer.', 'private', array['CIFOP'], 'À confirmer auprès de l’établissement', null),
+    ('a0000000-0000-0000-0000-000000000016', 'Institut Technique Supérieur La Maîtrise', 'Lomé', 'Togo', 'Formation informatique rapportée par une source secondaire; offre actuelle à confirmer.', 'private', array['La Maîtrise'], 'À confirmer auprès de l’établissement', null),
+    ('a0000000-0000-0000-0000-000000000017', 'Institut Supérieur des Technologies et de Management (ISTM)', 'Lomé', 'Togo', 'Formation informatique rapportée par une source secondaire; offre actuelle à confirmer.', 'private', array['ISTM'], 'À confirmer auprès de l’établissement', null),
+    ('a0000000-0000-0000-0000-000000000018', 'Institut des Sciences, Technologies et Arts de Kara (ISTA-Kara)', 'Kara', 'Togo', 'Formations rapportées par une source secondaire; offre actuelle à confirmer.', 'private', array['ISTA-Kara'], 'À confirmer auprès de l’établissement', null),
+    ('a0000000-0000-0000-0000-000000000019', 'Institut Supérieur de Gestion Monseigneur Bakpessi', 'Kara', 'Togo', 'Formation informatique rapportée par une source secondaire; offre actuelle à confirmer.', 'private', array['ISG Mgr Bakpessi'], 'À confirmer auprès de l’établissement', null),
+    ('a0000000-0000-0000-0000-000000000020', 'Institut de Formation aux Normes et Technologies de l''Informatique (IFNTI)', 'Sokodé', 'Togo', 'Formation informatique rapportée par une source secondaire; offre actuelle à confirmer.', 'private', array['IFNTI'], 'À confirmer auprès de l’établissement', null),
+    ('a0000000-0000-0000-0000-000000000021', 'ESAT-Togo', 'Lomé', 'Togo', 'Piste de recherche; offre d’enseignement supérieur informatique à confirmer.', 'private', array[]::text[], 'Piste à vérifier', null),
+    ('a0000000-0000-0000-0000-000000000022', 'AIC-Togo', 'Lomé', 'Togo', 'Piste de recherche; offre d’enseignement supérieur informatique à confirmer.', 'private', array[]::text[], 'Piste à vérifier', null),
+    ('a0000000-0000-0000-0000-000000000023', 'IPM-Togo', 'Lomé', 'Togo', 'Piste de recherche; offre d’enseignement supérieur informatique à confirmer.', 'private', array[]::text[], 'Piste à vérifier', null),
+    ('a0000000-0000-0000-0000-000000000024', 'IFTS', 'Lomé', 'Togo', 'Piste de recherche; offre d’enseignement supérieur informatique à confirmer.', 'private', array[]::text[], 'Piste à vérifier', null),
+    ('a0000000-0000-0000-0000-000000000025', 'ISM Adonaï', 'Lomé', 'Togo', 'Piste de recherche; offre d’enseignement supérieur informatique à confirmer.', 'private', array[]::text[], 'Piste à vérifier', null),
+    ('a0000000-0000-0000-0000-000000000026', 'ESIBA', 'Lomé', 'Togo', 'Piste de recherche; offre d’enseignement supérieur informatique à confirmer.', 'private', array[]::text[], 'Piste à vérifier', null),
+    ('a0000000-0000-0000-0000-000000000027', 'Formation ENP signalée à Kara — à vérifier', 'Kara', 'Togo', 'Formation signalée dans la liste source mais non confirmée sur le site officiel consulté.', 'public', array['ENP Kara'], 'Piste à vérifier', null)
 on conflict (id) do update set
     name = excluded.name,
     city = excluded.city,
     country = excluded.country,
     description = excluded.description,
-    sector = excluded.sector;
+    sector = excluded.sector,
+    aliases = excluded.aliases,
+    verification = excluded.verification,
+    website = excluded.website;
+
+update public.programs
+set is_listed = false,
+    verification = 'Ancienne entrée conservée; parcours actuel à vérifier'
+where name in (
+    'Génie Logiciel & Systèmes d''Information (GL)',
+    'Génie Électrique & Télécommunications',
+    'Systèmes, Réseaux & Sécurité Informatique (SRI)',
+    'Intelligence Artificielle & Big Data',
+    'Cybersécurité & Sécurité des Systèmes d''Information',
+    'Mathématiques & Informatique Fondamentale (MIF)',
+    'Informatique Fondamentale et Appliquée (IFA)',
+    'Science des Données & Modélisation Mathématique',
+    'Sciences Économiques & Gestion (FASEG)',
+    'Mathématiques et Informatique (MI)',
+    'Réseaux Informatiques & Télécommunications (RIT)',
+    'Génie Logiciel & Technologies Web',
+    'Ingénierie du Génie Logiciel (IGL)',
+    'Administration Systèmes, Réseaux & Cloud (ASR)',
+    'Ingénierie des Systèmes d''Information (ISI)',
+    'Cybersécurité & Audit Informatique',
+    'Audit, Contrôle de Gestion & Finance',
+    'Marketing Digital & Stratégie Commerciale'
+)
+and institution_id in (
+    'a0000000-0000-0000-0000-000000000001',
+    'a0000000-0000-0000-0000-000000000002',
+    'a0000000-0000-0000-0000-000000000003',
+    'a0000000-0000-0000-0000-000000000005',
+    'a0000000-0000-0000-0000-000000000004'
+);
 
 insert into public.programs (institution_id, name, degree)
 select institutions.id, seed.name, seed.degree
 from (values
-    ('ENP Campus Lomé (EPL)', 'Génie Logiciel & Systèmes d''Information (GL)', 'Licence Professionnelle'),
-    ('ENP Campus Lomé (EPL)', 'Génie Électrique & Télécommunications', 'Diplôme d''Ingénieur'),
-    ('ENP Campus Lomé (EPL)', 'Systèmes, Réseaux & Sécurité Informatique (SRI)', 'Licence Professionnelle'),
-    ('ENP Campus Lomé (EPL)', 'Intelligence Artificielle & Big Data', 'Master Professionnel'),
-    ('ENP Campus Lomé (EPL)', 'Informatique et Systèmes (IS)', 'Licence Fondamentale'),
-    ('ENP Campus Lomé (EPL)', 'Cybersécurité & Sécurité des Systèmes d''Information', 'Master Professionnel'),
-    ('Université de Lomé (FDS - Informatique)', 'Mathématiques & Informatique Fondamentale (MIF)', 'Licence Fondamentale'),
-    ('Université de Lomé (FDS - Informatique)', 'Informatique Fondamentale et Appliquée (IFA)', 'Licence Fondamentale'),
-    ('Université de Lomé (FDS - Informatique)', 'Science des Données & Modélisation Mathématique', 'Master Recherche'),
-    ('Université de Lomé (FDS - Informatique)', 'Sciences Économiques & Gestion (FASEG)', 'Licence Fondamentale'),
-    ('Université de Kara (FST)', 'Mathématiques et Informatique (MI)', 'Licence Fondamentale'),
-    ('Université de Kara (FST)', 'Réseaux Informatiques & Télécommunications (RIT)', 'Licence Professionnelle'),
-    ('Université de Kara (FST)', 'Génie Logiciel & Technologies Web', 'Licence Professionnelle'),
-    ('IAI-Togo (Institut Africain d''Informatique)', 'Ingénierie du Génie Logiciel (IGL)', 'Licence Professionnelle'),
-    ('IAI-Togo (Institut Africain d''Informatique)', 'Administration Systèmes, Réseaux & Cloud (ASR)', 'Licence Professionnelle'),
-    ('IAI-Togo (Institut Africain d''Informatique)', 'Ingénierie des Systèmes d''Information (ISI)', 'Master Professionnel'),
-    ('IAI-Togo (Institut Africain d''Informatique)', 'Cybersécurité & Audit Informatique', 'Master Professionnel'),
-    ('ESGIS (École Supérieure de Gestion, d''Informatique et des Sciences)', 'Génie Logiciel & Applications Mobiles', 'Licence Professionnelle'),
-    ('ESGIS (École Supérieure de Gestion, d''Informatique et des Sciences)', 'Systèmes, Réseaux & Sécurité (LPSRI)', 'Licence Professionnelle'),
-    ('ESGIS (École Supérieure de Gestion, d''Informatique et des Sciences)', 'Intelligence Artificielle & Big Data Analytics', 'Master Professionnel'),
-    ('ESGIS (École Supérieure de Gestion, d''Informatique et des Sciences)', 'Informatique de Gestion & Systèmes d''Information (MIAGE)', 'Master Professionnel'),
+    ('École Polytechnique de Lomé (EPL)', 'Génie Logiciel (GL)', 'Licence Professionnelle'),
+    ('École Polytechnique de Lomé (EPL)', 'Systèmes et Réseaux Informatiques (SR)', 'Licence Professionnelle'),
+    ('École Polytechnique de Lomé (EPL)', 'Intelligence Artificielle et Big Data (IA-BD)', 'Diplôme d''Ingénieur'),
+    ('École Polytechnique de Lomé (EPL)', 'Informatique et Systèmes (IS)', 'Diplôme d''Ingénieur'),
+    ('Université de Lomé (UL)', 'Master international en Génie Informatique (UTT)', 'Master international'),
+    ('Université de Lomé (UL)', 'Master international Systèmes et Informatique (UTBM)', 'Master international'),
+    ('Université de Lomé (UL)', 'Master international Intelligence Artificielle et Big Data (UTBM)', 'Master international'),
+    ('Université de Kara (UK)', 'Mathématiques et Informatique Appliquées (LMIA)', 'Licence — intitulé historique à vérifier'),
+    ('Université de Kara (UK)', 'Physique Appliquée, Électronique et Informatique (LPAEI)', 'Licence — intitulé historique à vérifier'),
+    ('Institut Africain d''Informatique — Représentation du Togo (IAI-Togo)', 'Cycle Ingénieur Concepteur', 'Diplôme d''Ingénieur'),
+    ('Institut Africain d''Informatique — Représentation du Togo (IAI-Togo)', 'Cycle Ingénieur des Travaux Informatiques (ITI) et Licence Professionnelle', 'Licence Professionnelle'),
+    ('École Supérieure de Gestion, d''Informatique et des Sciences (ESGIS)', 'Génie Logiciel & Applications Mobiles', 'Licence Professionnelle'),
+    ('École Supérieure de Gestion, d''Informatique et des Sciences (ESGIS)', 'Systèmes, Réseaux & Sécurité (LPSRI)', 'Licence Professionnelle'),
+    ('École Supérieure de Gestion, d''Informatique et des Sciences (ESGIS)', 'Intelligence Artificielle & Big Data Analytics', 'Master Professionnel'),
+    ('École Supérieure de Gestion, d''Informatique et des Sciences (ESGIS)', 'Informatique de Gestion & Systèmes d''Information (MIAGE)', 'Master Professionnel'),
     ('IPNET Institute of Technology', 'Réseaux, Systèmes & Cybersécurité Internationale', 'Licence Professionnelle'),
     ('IPNET Institute of Technology', 'Génie Logiciel, DevOps & Cloud Computing', 'Licence Professionnelle'),
     ('IPNET Institute of Technology', 'Intelligence Artificielle, IoT & Big Data', 'Master Professionnel'),
     ('IPNET Institute of Technology', 'Gouvernance IT & Systèmes d''Information', 'Master Professionnel'),
-    ('DEFITECH (Institut Polytechnique DEFITECH)', 'Génie Logiciel & Systèmes d''Information', 'Licence Professionnelle'),
-    ('DEFITECH (Institut Polytechnique DEFITECH)', 'Maintenance Informatique & Réseaux Télécoms', 'Licence Professionnelle'),
-    ('DEFITECH (Institut Polytechnique DEFITECH)', 'Sécurité Réseaux & Systèmes d''Exploitation', 'Master Professionnel'),
-    ('DEFITECH (Institut Polytechnique DEFITECH)', 'Administration de Bases de Données & Data Science', 'Master Professionnel'),
-    ('UCAO-UUT (École Supérieure d''Ingénieurs - ESI)', 'Génie Informatique & Télécommunications', 'Diplôme d''Ingénieur'),
-    ('UCAO-UUT (École Supérieure d''Ingénieurs - ESI)', 'Cybersécurité & Confiance Numérique', 'Master Professionnel'),
-    ('UCAO-UUT (École Supérieure d''Ingénieurs - ESI)', 'Intelligence Artificielle & Sciences des Données', 'Master Professionnel'),
-    ('UCAO-UUT (École Supérieure d''Ingénieurs - ESI)', 'Conception Logicielle & Systèmes Embarqués', 'Licence Professionnelle'),
-    ('ESIG Global Success', 'Génie Logiciel & Développement Web/Mobile', 'Licence Professionnelle'),
-    ('ESIG Global Success', 'Administration Systèmes, Réseaux & Bases de Données', 'Licence Professionnelle'),
-    ('ESIG Global Success', 'Management des Systèmes d''Information', 'Master Professionnel'),
+    ('Institut Polytechnique DEFITECH', 'Génie Logiciel & Systèmes d''Information', 'Licence Professionnelle'),
+    ('Institut Polytechnique DEFITECH', 'Maintenance Informatique & Réseaux Télécoms', 'Licence Professionnelle'),
+    ('Institut Polytechnique DEFITECH', 'Sécurité Réseaux & Systèmes d''Exploitation', 'Master Professionnel'),
+    ('Institut Polytechnique DEFITECH', 'Administration de Bases de Données & Data Science', 'Master Professionnel'),
+    ('Université Catholique de l''Afrique de l''Ouest — Unité Universitaire du Togo (UCAO-UUT)', 'Génie Informatique & Télécommunications', 'Diplôme d''Ingénieur'),
+    ('Université Catholique de l''Afrique de l''Ouest — Unité Universitaire du Togo (UCAO-UUT)', 'Cybersécurité & Confiance Numérique', 'Master Professionnel'),
+    ('Université Catholique de l''Afrique de l''Ouest — Unité Universitaire du Togo (UCAO-UUT)', 'Intelligence Artificielle & Sciences des Données', 'Master Professionnel'),
+    ('Université Catholique de l''Afrique de l''Ouest — Unité Universitaire du Togo (UCAO-UUT)', 'Conception Logicielle & Systèmes Embarqués', 'Licence Professionnelle'),
+    ('École Supérieure d''Informatique et de Gestion (ESIG Global Success)', 'Génie Logiciel & Développement Web/Mobile', 'Licence Professionnelle'),
+    ('École Supérieure d''Informatique et de Gestion (ESIG Global Success)', 'Administration Systèmes, Réseaux & Bases de Données', 'Licence Professionnelle'),
+    ('École Supérieure d''Informatique et de Gestion (ESIG Global Success)', 'Management des Systèmes d''Information', 'Master Professionnel'),
     ('IAEC Université (Pôle Technologies & Informatique)', 'Génie Logiciel & Multimédia Numérique', 'Licence Professionnelle'),
     ('IAEC Université (Pôle Technologies & Informatique)', 'Informatique de Gestion (IG)', 'Licence Professionnelle'),
     ('IAEC Université (Pôle Technologies & Informatique)', 'Réseaux Informatiques & Télécommunications', 'Licence Professionnelle'),
-    ('FORMATEC (Institut Supérieur Technologique)', 'Génie Informatique & Réseaux Industriels', 'Licence Professionnelle'),
-    ('FORMATEC (Institut Supérieur Technologique)', 'Télécommunications & Systèmes Connectés', 'Diplôme d''Ingénieur'),
-    ('CIB-INTA', 'Développement Web & Génie Logiciel', 'Licence Professionnelle'),
-    ('CIB-INTA', 'Maintenance Informatique & Réseaux Locaux', 'Licence Professionnelle'),
-    ('École Supérieure des Affaires (ESA)', 'Audit, Contrôle de Gestion & Finance', 'Master Professionnel'),
-    ('École Supérieure des Affaires (ESA)', 'Marketing Digital & Stratégie Commerciale', 'Licence Professionnelle')
+    ('FORMATEC — Institut Supérieur Technologique', 'Génie Informatique & Réseaux Industriels', 'Licence Professionnelle'),
+    ('FORMATEC — Institut Supérieur Technologique', 'Télécommunications & Systèmes Connectés', 'Diplôme d''Ingénieur'),
+    ('Centre Informatique et Bureautique (CIB-INTA)', 'Développement Web & Génie Logiciel', 'Licence Professionnelle'),
+    ('Centre Informatique et Bureautique (CIB-INTA)', 'Maintenance Informatique & Réseaux Locaux', 'Licence Professionnelle'),
+    ('Lomé Business School (LBS)', 'Génie Logiciel — spécialité Systèmes d''Information', 'Niveau à confirmer'),
+    ('Centre Informatique de Formation et d''Orientation Professionnelles (CIFOP)', 'Développement d''Applications Informatiques', 'Niveau à confirmer'),
+    ('Institut Technique Supérieur La Maîtrise', 'Informatique de Gestion', 'Niveau à confirmer'),
+    ('Institut Supérieur des Technologies et de Management (ISTM)', 'Maintenance Informatique', 'Niveau à confirmer'),
+    ('Institut des Sciences, Technologies et Arts de Kara (ISTA-Kara)', 'Maintenance Informatique et Réseaux', 'Niveau à confirmer'),
+    ('Institut Supérieur de Gestion Monseigneur Bakpessi', 'Maintenance Informatique', 'Niveau à confirmer'),
+    ('Institut de Formation aux Normes et Technologies de l''Informatique (IFNTI)', 'Informatique', 'Niveau à confirmer')
 ) as seed(institution_name, name, degree)
 join public.institutions on institutions.name = seed.institution_name
-on conflict (institution_id, name) do update set degree = excluded.degree;
+on conflict (institution_id, name) do update set
+    degree = excluded.degree,
+    is_listed = true;
 
-insert into public.courses (program_id, name, code, semester)
-select programs.id, seed.name, seed.code, seed.semester
-from (values
-    ('ENP Campus Lomé (EPL)', 'Génie Logiciel & Systèmes d''Information (GL)', 'Architecture des Ordinateurs & Systèmes', 'INF101', 1),
-    ('ENP Campus Lomé (EPL)', 'Génie Logiciel & Systèmes d''Information (GL)', 'Algorithmique & Programmation C/C++', 'INF102', 1),
-    ('ENP Campus Lomé (EPL)', 'Génie Logiciel & Systèmes d''Information (GL)', 'Mathématiques pour l''Informatique (Algèbre & Analyse)', 'MAT101', 1),
-    ('ENP Campus Lomé (EPL)', 'Génie Logiciel & Systèmes d''Information (GL)', 'Programmation Orientée Objet (Java / Python)', 'INF201', 2),
-    ('ENP Campus Lomé (EPL)', 'Génie Logiciel & Systèmes d''Information (GL)', 'Structures de Données Avancées & Graphes', 'INF202', 2),
-    ('ENP Campus Lomé (EPL)', 'Génie Logiciel & Systèmes d''Information (GL)', 'Bases de Données Relationnelles & SQL', 'INF301', 3),
-    ('ENP Campus Lomé (EPL)', 'Génie Logiciel & Systèmes d''Information (GL)', 'Génie Logiciel & Modélisation UML', 'INF302', 3),
-    ('ENP Campus Lomé (EPL)', 'Génie Logiciel & Systèmes d''Information (GL)', 'Développement Web Full-Stack (JS/Node)', 'INF401', 4),
-    ('ENP Campus Lomé (EPL)', 'Génie Logiciel & Systèmes d''Information (GL)', 'Systèmes d''Exploitation & Linux Avancé', 'INF402', 4),
-    ('ENP Campus Lomé (EPL)', 'Génie Logiciel & Systèmes d''Information (GL)', 'Architectures Cloud & Microservices', 'INF501', 5),
-    ('ENP Campus Lomé (EPL)', 'Génie Logiciel & Systèmes d''Information (GL)', 'Cybersécurité & Tests Logiciels', 'INF502', 5),
-    ('ENP Campus Lomé (EPL)', 'Génie Logiciel & Systèmes d''Information (GL)', 'Projet de Fin d''Études & Stage Professionnel', 'INF601', 6),
-    ('Université de Lomé (FDS - Informatique)', 'Mathématiques & Informatique Fondamentale (MIF)', 'Analyse Mathématique I (Suites & Séries)', 'MAT101', 1),
-    ('Université de Lomé (FDS - Informatique)', 'Mathématiques & Informatique Fondamentale (MIF)', 'Analyse Mathématique II & Équations Différentielles', 'MAT201', 2),
-    ('Université de Lomé (FDS - Informatique)', 'Mathématiques & Informatique Fondamentale (MIF)', 'Probabilités & Statistiques Inférentielles', 'MAT301', 3),
-    ('Université de Lomé (FDS - Informatique)', 'Sciences Économiques & Gestion (FASEG)', 'Microéconomie Appliquée & Marchés', 'ECO102', 2),
-    ('Université de Lomé (FDS - Informatique)', 'Sciences Économiques & Gestion (FASEG)', 'Macroéconomie & Politiques Monétaires', 'ECO201', 3),
-    ('Université de Lomé (FDS - Informatique)', 'Sciences Économiques & Gestion (FASEG)', 'Comptabilité Générale & Analytique', 'GES101', 1),
-    ('ENP Campus Lomé (EPL)', 'Génie Électrique & Télécommunications', 'Électronique Numérique & Microprocesseurs', 'ELC301', 4),
-    ('ENP Campus Lomé (EPL)', 'Génie Électrique & Télécommunications', 'Traitement du Signal & Télécoms', 'TEL401', 5)
-) as seed(institution_name, program_name, name, code, semester)
-join public.institutions on institutions.name = seed.institution_name
-join public.programs on programs.institution_id = institutions.id and programs.name = seed.program_name
-on conflict (program_id, semester, name) do update set code = excluded.code;
+update public.programs
+set is_listed = true,
+    verification = 'Parcours rapporté; appel 2025-2026; reconduction 2026-2027 à confirmer',
+    source_url = 'https://univ-lome.tg/wp-content/uploads/2025/08/Appel_a-Candidatures-2025-2026-EPL.pdf'
+where institution_id = 'a0000000-0000-0000-0000-000000000001'
+  and name in (
+      'Génie Logiciel (GL)',
+      'Systèmes et Réseaux Informatiques (SR)',
+      'Intelligence Artificielle et Big Data (IA-BD)',
+      'Informatique et Systèmes (IS)'
+  );
+
+update public.programs
+set is_listed = true,
+    verification = 'Appel officiel publié pour 2025-2026; reconduction 2026-2027 à confirmer',
+    source_url = 'https://univ-lome.tg/appel-a-candidatures-2025-2026-master-international-en-genie-informatique/'
+where institution_id = 'a0000000-0000-0000-0000-000000000002'
+  and name = 'Master international en Génie Informatique (UTT)';
+
+update public.programs
+set is_listed = true,
+    verification = 'Appel officiel antérieur; ouverture actuelle à confirmer',
+    source_url = 'https://univ-lome.tg/appel-a-candidatures-aux-masters-systemes-et-informatique-intelligence-artificielle-et-big-data/'
+where institution_id = 'a0000000-0000-0000-0000-000000000002'
+  and name in (
+      'Master international Systèmes et Informatique (UTBM)',
+      'Master international Intelligence Artificielle et Big Data (UTBM)'
+  );
+
+update public.programs
+set is_listed = true,
+    verification = 'Cycle indiqué sur le site officiel de l’IAI-Togo; intitulés d’options à confirmer',
+    source_url = 'https://new.iai-togo.tg/officiel/admission'
+where institution_id = 'a0000000-0000-0000-0000-000000000005'
+  and name in (
+      'Cycle Ingénieur Concepteur',
+      'Cycle Ingénieur des Travaux Informatiques (ITI) et Licence Professionnelle'
+  );
+
+update public.programs
+set verification = 'Intitulé historique; offre actuelle à confirmer'
+where institution_id = 'a0000000-0000-0000-0000-000000000003'
+  and name in (
+      'Mathématiques et Informatique Appliquées (LMIA)',
+      'Physique Appliquée, Électronique et Informatique (LPAEI)'
+  );
+
+-- Les cours ne sont pas préremplis avec des curricula non vérifiés.
+-- Les membres ajoutent les cours réels depuis la page d'un parcours.

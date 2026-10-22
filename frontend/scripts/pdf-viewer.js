@@ -4,6 +4,10 @@
     const params = new URLSearchParams(location.search);
     const documentId = params.get("id") || "doc-algo-2026";
     const store = window.EduVaultStore;
+    const currentAcademicYear = () => {
+        const year = new Date().getFullYear();
+        return `${year}-${year + 1}`;
+    };
 
     // Configuration du worker PDF.js
     if (window.pdfjsLib) {
@@ -21,11 +25,11 @@
             id: documentId,
             title: params.get("title") || "Document Académique",
             course: params.get("course") || "Cours Universitaire",
-            institution: params.get("institution") || "ENP Campus Lomé (EPL)",
-            program: params.get("program") || "Génie Logiciel & Systèmes d'Information (GL)",
+            institution: params.get("institution") || "École Polytechnique de Lomé (EPL)",
+            program: params.get("program") || "Génie Logiciel (GL)",
             semester: parseInt(params.get("semester") || "3", 10),
             category: params.get("category") || "Support de Cours",
-            academic_year: params.get("year") || "2025-2026",
+            academic_year: params.get("year") || currentAcademicYear(),
             file_name: "document.pdf"
         };
     }
@@ -36,7 +40,7 @@
     const program = currentDoc.program || "Filière Académique";
     const semester = currentDoc.semester || 1;
     const category = currentDoc.category || "Support de Cours";
-    const year = currentDoc.academic_year || "2025-2026";
+    const year = currentDoc.academic_year || currentAcademicYear();
 
     const escapeHtml = (value = "") =>
         String(value).replace(/[&<>"']/g, (c) => ({
@@ -50,7 +54,7 @@
 
     if (titleEl) titleEl.textContent = title;
     if (courseEl) courseEl.textContent = `${institution} · ${program} · ${course} (${year})`;
-    document.title = `${title} — EduVault 2026`;
+    document.title = `${title} — EduVault`;
 
     if (badgesEl) {
         const catBadgeClass = category === "Examen/Annales" ? "badge-warning" : category === "TD/TP" ? "badge-accent" : "badge-primary";
@@ -156,10 +160,7 @@
     // ==================== RENDU VUE NAVIGATEUR (DÉFILEMENT CONTINU PLEIN ÉCRAN) ====================
     const renderContinuousView = async () => {
         if (!continuousWrapper) return;
-        if (readerViewport) {
-            readerViewport.scrollTop = 0;
-            readerViewport.scrollLeft = 0;
-        }
+        const targetPageNum = pageNum;
         continuousWrapper.innerHTML = "";
 
         if (!pdfDoc) return;
@@ -201,6 +202,13 @@
             console.warn("Continuous render error:", err);
         }
 
+        const targetPage = continuousWrapper.querySelector(`#page-container-${targetPageNum}`);
+        if (targetPage && readerViewport) {
+            const viewportTop = readerViewport.getBoundingClientRect().top;
+            const pageTop = targetPage.getBoundingClientRect().top;
+            readerViewport.scrollTop += pageTop - viewportTop - 12;
+            readerViewport.scrollLeft = 0;
+        }
         updateUIIndicators();
     };
 
@@ -276,14 +284,14 @@
         pageEl.innerHTML = `
             <div class="doc-mock-header">
                 <div>
-                    <span class="doc-mock-stamp">DOCUMENT OFFICIEL CERTIFIÉ · ED процессы 2026</span>
+                    <span class="doc-mock-stamp">APERÇU DE DÉMONSTRATION · EDUVAULT</span>
                     <h2 class="doc-mock-title" style="margin-top: 8px;">${escapeHtml(institution)}</h2>
                     <p style="margin: 0; font-size: 13px; color: #475569; font-weight: 600;">
                         ${escapeHtml(program)} — ${escapeHtml(course)}
                     </p>
                 </div>
                 <div style="text-align: right; font-size: 12px; color: #64748b;">
-                    <strong>Session 2025-2026</strong><br>
+                    <strong>Année académique ${escapeHtml(year)}</strong><br>
                     <span>Semestre ${semester} (S${semester})</span><br>
                     <span style="font-weight: 700; color: var(--primary);">Page ${pageData.num} / ${totalPages}</span>
                 </div>
@@ -291,7 +299,7 @@
 
             <div style="margin-bottom: 24px; padding: 12px 16px; background: #f8fafc; border-left: 4px solid #1e3a8a; border-radius: 4px;">
                 <strong style="color: #1e3a8a; font-size: 14px;">${escapeHtml(pageData.subtitle)}</strong>
-                <p style="margin: 4px 0 0; font-size: 12px; color: #64748b;">Support académique vérifié — Accès libre pour les étudiants et enseignants de la promotion.</p>
+                <p style="margin: 4px 0 0; font-size: 12px; color: #64748b;">Exemple pédagogique de démonstration. Vérifiez les sources et l’exactitude avant usage.</p>
             </div>
 
             ${pageData.sections.map(sec => `
@@ -304,7 +312,7 @@
 
             <div style="margin-top: 40px; padding-top: 14px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8;">
                 <span>EduVault Lomé · Coffre-Fort Numérique Universitaire</span>
-                <span>Document authentifié · Réf: ${escapeHtml(currentDoc.id)}</span>
+                <span>Document · Réf: ${escapeHtml(currentDoc.id)}</span>
             </div>
         `;
         return pageEl;
@@ -447,6 +455,27 @@
             renderSinglePage(pageNum);
         }
     };
+
+    let scrollUpdateScheduled = false;
+    readerViewport?.addEventListener("scroll", () => {
+        if (viewMode !== "continuous" || scrollUpdateScheduled) return;
+        scrollUpdateScheduled = true;
+        requestAnimationFrame(() => {
+            scrollUpdateScheduled = false;
+            const viewportTop = readerViewport.getBoundingClientRect().top;
+            const pageContainers = continuousWrapper?.querySelectorAll(".pdf-page-container") || [];
+            for (const pageContainer of pageContainers) {
+                if (pageContainer.getBoundingClientRect().bottom > viewportTop + 12) {
+                    const visiblePage = Number(pageContainer.id.replace("page-container-", ""));
+                    if (Number.isInteger(visiblePage) && visiblePage >= 1 && visiblePage <= totalPages) {
+                        pageNum = visiblePage;
+                        updateUIIndicators();
+                    }
+                    break;
+                }
+            }
+        });
+    }, { passive: true });
 
     // ==================== AJUSTEMENT INTELLIGENT DE LA LARGEUR (FIT) ====================
     const adjustFitWidth = async () => {

@@ -81,7 +81,14 @@
         const semesters = remoteCatalog
             ? Array.from(new Set(remoteCatalog.courses.filter((course) => course.program_id === selectedProg).map((course) => course.semester))).sort((a, b) => a - b)
             : store.getSemestersForProgram(selectedProg);
-        const semesterOptions = semesters.length ? semesters : remoteCatalog ? [1, 2, 3, 4, 5, 6] : [1, 2, 3, 4, 5, 6];
+        const currentProgram = remoteCatalog?.programs.find((program) => program.id === selectedProg);
+        const remoteDegree = currentProgram?.degree || "";
+        const defaultSemesterCount = /ingénieur/i.test(remoteDegree) ? 10 : /master/i.test(remoteDegree) ? 4 : 6;
+        const semesterOptions = semesters.length
+            ? semesters
+            : remoteCatalog
+                ? Array.from({ length: defaultSemesterCount }, (_, index) => index + 1)
+                : store.getSemestersForProgram(selectedProg);
 
         const currentVal = semSelect.value || "1";
         semSelect.innerHTML = semesterOptions.map((s) => `
@@ -390,7 +397,7 @@
 
         const formData = new FormData(form);
         const title = formData.get("title")?.trim() || fileToUpload.name.replace(/\.[^/.]+$/, "");
-        const institution = formData.get("institution") || "ENP Campus Lomé";
+        const institution = formData.get("institution") || "École Polytechnique de Lomé (EPL)";
         const degreeType = formData.get("degree_type") || "Licence Professionnelle";
         const program = progSelect?.value || "Génie Logiciel & Systèmes d'Information";
         const semester = parseInt(formData.get("semester") || "1", 10);

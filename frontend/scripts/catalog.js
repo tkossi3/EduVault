@@ -40,7 +40,9 @@
     const render = (data) => {
         currentData = data;
         let institutions = uniqueByName(data.institutions || []);
-        const selectedProgram = selectedProgramId && data.programs.find((program) => program.id === selectedProgramId);
+        const selectedProgram = selectedProgramId && data.programs.find((program) =>
+            program.id === selectedProgramId && program.is_listed !== false
+        );
         const parentInstitutionId = selectedProgram?.institution_id || selectedInstitutionId;
         if (selectedProgram) {
             const institution = institutions.find((item) => item.id === selectedProgram.institution_id);
@@ -77,7 +79,7 @@
                 const matchInst = inst.name.toLowerCase().includes(query)
                     || (inst.description && inst.description.toLowerCase().includes(query))
                     || (inst.aliases || []).some((alias) => alias.toLowerCase().includes(query));
-                const instPrograms = data.programs.filter((p) => p.institution_id === inst.id);
+                const instPrograms = data.programs.filter((p) => p.institution_id === inst.id && p.is_listed !== false);
                 const matchProg = instPrograms.some((p) => p.name.toLowerCase().includes(query));
                 return matchInst || matchProg;
             });
@@ -94,7 +96,9 @@
         }
 
         root.innerHTML = institutions.map((institution) => {
-            let programs = uniqueByName(data.programs.filter((program) => program.institution_id === institution.id));
+            let programs = uniqueByName(data.programs.filter((program) =>
+                program.institution_id === institution.id && program.is_listed !== false
+            ));
             if (selectedProgramId) programs = programs.filter((program) => program.id === selectedProgramId);
 
             if (currentSearch.trim()) {
@@ -111,6 +115,9 @@
                 ? "Inter-États"
                 : isPublic ? "Public" : "Privé · statut à vérifier";
             const autoOpen = Boolean(currentSearch.trim() || selectedInstitutionId || selectedProgramId);
+            const institutionSource = /^https?:\/\//i.test(institution.website || "")
+                ? `<a class="catalog-source-link" href="${escapeHtml(institution.website)}" target="_blank" rel="noopener noreferrer">Site officiel</a>`
+                : "";
 
             return `
             <details class="institution-accordion" data-institution-id="${escapeHtml(institution.id)}" ${autoOpen ? "open" : ""}>
@@ -124,6 +131,8 @@
                             <span class="badge ${badgeClass}" style="font-size: 10px; padding: 2px 7px;">${badgeLabel}</span>
                         </div>
                         <small style="color: var(--muted);">${escapeHtml(institution.city || "Lomé")} · ${escapeHtml(institution.description || "Informations à confirmer")}</small>
+                        <small class="catalog-verification">${escapeHtml(institution.verification || "Statut de l’offre à confirmer")}</small>
+                        ${institutionSource}
                     </div>
                     <span class="accordion-chevron" style="margin-left: auto; color: var(--muted); font-size: 16px;">▾</span>
                 </summary>
@@ -136,11 +145,17 @@
                         </div>
                     </div>
                     ${programs.length ? programs.map((program) => {
-                        const courses = data.courses.filter((course) => course.program_id === program.id);
-                        const semesters = Array.from(new Set(courses.map((course) => course.semester)))
-                            .sort((a, b) => a - b);
+                        const courses = data.courses.filter((course) =>
+                            course.program_id === program.id && course.is_demo !== true
+                        );
+                        const degreeLabel = program.degree || program.degree_type || "";
+                        const semesterCount = /ingénieur/i.test(degreeLabel) ? 10 : /master/i.test(degreeLabel) ? 4 : 6;
+                        const semesters = Array.from({ length: semesterCount }, (_, index) => index + 1);
                         const programUrl = `parcours.html?inst=${encodeURIComponent(institution.id)}&program=${encodeURIComponent(program.id)}`;
                         const openProgramLink = `<a class="button button-outline button-sm" href="${programUrl}">Voir les semestres</a>`;
+                        const programSource = /^https?:\/\//i.test(program.source_url || "")
+                            ? `<a class="catalog-source-link" href="${escapeHtml(program.source_url)}" target="_blank" rel="noopener noreferrer">Source</a>`
+                            : "";
                         
                         return `
                         <details class="program-accordion" ${selectedProgramId === program.id ? "open" : ""}>
@@ -156,6 +171,7 @@
                             </summary>
                             <div class="program-actions">
                                 ${!selectedProgramId ? openProgramLink : ""}
+                                ${programSource}
                                 <button class="button button-outline button-sm program-edit" type="button" data-program-id="${escapeHtml(program.id)}" aria-label="Proposer un renommage pour ${escapeHtml(program.name)}">
                                     ${icons?.edit || "Modifier"}
                                     <span>Proposer un renommage</span>
@@ -170,7 +186,10 @@
                                     <section class="semester-block">
                                         <div class="semester-heading">
                                             <h3>Semestre ${semester} (S${semester})</h3>
-                                            <a class="text-link" href="upload.html?${uploadParams}">Déposer un document</a>
+                                            <div class="semester-actions">
+                                                <button class="button button-outline button-sm course-add" type="button" data-program-id="${escapeHtml(program.id)}" data-semester="${semester}">Ajouter un cours</button>
+                                                <a class="text-link" href="upload.html?${uploadParams}">Déposer un document</a>
+                                            </div>
                                         </div>
                                         ${semesterCourses.length ? semesterCourses.map((course) => `
                                             <div class="course-row">
@@ -230,6 +249,116 @@
             });
         });
 
+        root.querySelectorAll(".course-add").forEach((button) => {
+            button.addEventListener("click", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                openCourseDialog(button);
+            });
+        });
+
+    };
+
+    const openCourseDialog = (button) => {
+        const dialog = document.querySelector("#course-add-dialog");
+        const nameInput = document.querySelector("#course-add-name");
+        const context = document.querySelector("#course-add-context");
+        const feedback = document.querySelector("#course-add-feedback");
+        const form = document.querySelector("#course-add-form");
+        if (!dialog || !nameInput || !context || !feedback || !form) return;
+
+        form.dataset.programId = button.dataset.programId || "";
+        form.dataset.semester = button.dataset.semester || "";
+        context.textContent = `Semestre ${form.dataset.semester} : le cours sera rattaché à ce parcours.`;
+        feedback.textContent = "";
+        nameInput.value = "";
+        dialog.showModal();
+        nameInput.focus();
+    };
+
+    document.querySelectorAll("[data-close-course-dialog]").forEach((button) => {
+        button.addEventListener("click", () => {
+            document.querySelector("#course-add-dialog")?.close();
+        });
+    });
+
+    document.querySelector("#course-add-dialog")?.addEventListener("click", (event) => {
+        if (event.target === event.currentTarget) event.currentTarget.close();
+    });
+
+    document.querySelector("#course-add-form")?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const nameInput = form.elements.namedItem("name");
+        const feedback = document.querySelector("#course-add-feedback");
+        if (!(nameInput instanceof HTMLInputElement) || !feedback) return;
+
+        const name = nameInput.value.trim();
+        if (name.length < 2) {
+            feedback.textContent = "Le nom du cours doit contenir au moins 2 caractères.";
+            nameInput.focus();
+            return;
+        }
+
+        const added = await submitCourse({
+            program_id: form.dataset.programId,
+            semester: Number(form.dataset.semester),
+            name
+        });
+        if (added) document.querySelector("#course-add-dialog")?.close();
+    });
+
+    const submitCourse = async (payload) => {
+        const name = payload.name.trim();
+        if (name.length < 2) {
+            window.EduVaultAuth?.showToast("Le nom du cours doit contenir au moins 2 caractères.", "error");
+            return false;
+        }
+
+        if (!usingRemoteCatalog) {
+            const existing = currentData.courses.find((course) =>
+                course.program_id === payload.program_id
+                && course.semester === payload.semester
+                && course.name.trim().toLocaleLowerCase() === name.toLocaleLowerCase()
+            );
+            if (existing) {
+                window.EduVaultAuth?.showToast("Ce cours existe déjà dans ce semestre.", "error");
+                return false;
+            }
+            store.addCourse({ ...payload, name });
+            window.EduVaultAuth?.showToast("Le cours a été ajouté à ce parcours.", "success");
+            render(store.loadState());
+            return true;
+        }
+
+        const auth = window.EduVaultAuth;
+        const session = await auth?.getSession();
+        if (!session?.access_token) {
+            auth?.open("login", "Connectez-vous pour ajouter un cours au catalogue.");
+            return false;
+        }
+
+        try {
+            const response = await fetch(`${config.API_BASE_URL}/catalog/courses`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${session.access_token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ ...payload, name })
+            });
+            if (!response.ok) {
+                const result = await response.json();
+                throw new Error(result.detail || "Le cours n'a pas pu être ajouté.");
+            }
+            auth.showToast("Le cours a été ajouté à ce parcours.", "success");
+            await loadCatalog();
+            return true;
+        } catch (error) {
+            console.error("Ajout du cours impossible :", error);
+            auth?.showToast(error.message || "Le service d'ajout de cours est indisponible.", "error");
+            return false;
+        }
     };
 
     const submitProgramChange = async (payload) => {

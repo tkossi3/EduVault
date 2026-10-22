@@ -7,6 +7,10 @@
     const DB_NAME = "eduvault_files_db_v2026";
     const DB_VERSION = 1;
     const STORE_FILES = "pdf_files";
+    const currentAcademicYear = () => {
+        const year = new Date().getFullYear();
+        return `${year}-${year + 1}`;
+    };
 
     // Cache mémoire temporaire
     const memoryFilesCache = new Map();
@@ -106,11 +110,11 @@
 
     // Un seul nom canonique par établissement; les acronymes sont conservés comme alias lisibles.
     const initialInstitutions = [
-        { id: "inst-1", name: "École Nationale Polytechnique (ENP) — Lomé", city: "Lomé", country: "Togo", sector: "public", aliases: ["EPL", "École Polytechnique de Lomé"], description: "École de l'Université de Lomé. « EPL » est l'ancienne appellation, pas un établissement distinct.", verification: "À confirmer auprès de l'école" },
-        { id: "inst-2", name: "Université de Lomé (UL)", city: "Lomé", country: "Togo", sector: "public", description: "Université publique. Les filières informatiques hors ENP doivent être confirmées par faculté.", verification: "Établissement confirmé; offre informatique à vérifier" },
-        { id: "inst-3", name: "Université de Kara (UK)", city: "Kara", country: "Togo", sector: "public", description: "Université publique. Les intitulés et l'ouverture actuelle des filières informatiques sont à vérifier.", verification: "Établissement confirmé; offre informatique à vérifier" },
-        { id: "inst-enp-kara", name: "École Nationale Polytechnique (ENP) — Kara", city: "Kara", country: "Togo", sector: "public", aliases: ["ENP Kara"], description: "Site de formation signalé à Kara; vérifier les parcours et l'organisation du campus avant publication.", verification: "À confirmer auprès de l'école" },
-        { id: "inst-iai", name: "Institut Africain d'Informatique — Représentation du Togo (IAI-Togo)", city: "Lomé", country: "Togo", sector: "interstate", aliases: ["IAI-Togo", "IAI Togo"], description: "Établissement inter-États spécialisé en informatique; les intitulés et options de diplôme doivent être vérifiés pour l'année en cours.", verification: "Établissement confirmé sur le site officiel; parcours à confirmer" },
+        { id: "inst-1", name: "École Polytechnique de Lomé (EPL)", city: "Lomé", country: "Togo", sector: "public", aliases: ["EPL", "ENP (appellation à confirmer)", "École Nationale Polytechnique"], description: "École de l'Université de Lomé. Le site officiel consulté en 2026 utilise le nom « École Polytechnique de Lomé (EPL) ».", verification: "École confirmée; parcours 2026-2027 à confirmer", website: "https://univ-lome.tg/?s=polytechnique" },
+        { id: "inst-2", name: "Université de Lomé (UL)", city: "Lomé", country: "Togo", sector: "public", description: "Université publique. Les masters informatiques documentés sont datés de 2024-2025 et 2025-2026; leur reconduction est à confirmer.", verification: "Établissement confirmé; offre 2026-2027 à vérifier", website: "https://univ-lome.tg/" },
+        { id: "inst-3", name: "Université de Kara (UK)", city: "Kara", country: "Togo", sector: "public", description: "Université publique. Les intitulés informatiques de la liste historique consultée datent de 2012; l'offre actuelle reste à confirmer.", verification: "Établissement confirmé; offre informatique à vérifier", website: "https://www.univkara.tg/" },
+        { id: "inst-enp-kara", name: "Formation ENP signalée à Kara — à vérifier", city: "Kara", country: "Togo", sector: "public", aliases: ["ENP Kara"], description: "Une présence de l'ENP à Kara est signalée dans la liste fournie, mais n'a pas pu être confirmée sur le site officiel consulté.", verification: "Piste à vérifier avant publication" },
+        { id: "inst-iai", name: "Institut Africain d'Informatique — Représentation du Togo (IAI-Togo)", city: "Lomé", country: "Togo", sector: "interstate", aliases: ["IAI-Togo", "IAI Togo"], description: "Établissement inter-États spécialisé en informatique. Le site officiel distingue les cycles Ingénieur Concepteur et ITI / Licence professionnelle.", verification: "Établissement et cycles confirmés; options à vérifier", website: "https://new.iai-togo.tg/officiel/admission" },
         { id: "inst-esgis", name: "École Supérieure de Gestion, d'Informatique et des Sciences (ESGIS)", city: "Lomé", country: "Togo", sector: "private", aliases: ["ESGIS"], description: "Établissement privé; vérifier les intitulés et niveaux proposés actuellement.", verification: "À confirmer auprès de l'école" },
         { id: "inst-ipnet", name: "IPNET Institute of Technology", city: "Lomé", country: "Togo", sector: "private", description: "Établissement privé; vérifier les intitulés et niveaux proposés actuellement.", verification: "À confirmer auprès de l'école" },
         { id: "inst-defitech", name: "Institut Polytechnique DEFITECH", city: "Lomé", country: "Togo", sector: "private", aliases: ["DEFITECH"], description: "Établissement privé; le catalogue officiel des parcours informatiques reste à confirmer.", verification: "À confirmer auprès de l'école" },
@@ -145,16 +149,17 @@
     ];
 
     const initialPrograms = [
-        { id: "prog-1", institution_id: "inst-1", name: "Génie Logiciel (GL)", degree_type: "Licence Professionnelle", degree: "Licence professionnelle — niveau Bac+3 à confirmer", verification: "À confirmer auprès de l'école" },
-        { id: "prog-3", institution_id: "inst-1", name: "Systèmes et Réseaux Informatiques (SR)", degree_type: "Licence Professionnelle", degree: "Licence professionnelle — niveau Bac+3 à confirmer", verification: "À confirmer auprès de l'école" },
-        { id: "prog-4", institution_id: "inst-1", name: "Intelligence Artificielle et Big Data (IA-BD)", degree_type: "Diplôme d'Ingénieur", degree: "Cycle ingénieur — à confirmer", verification: "À confirmer auprès de l'école" },
-        { id: "prog-epl-is", institution_id: "inst-1", name: "Informatique et Systèmes (IS)", degree_type: "Diplôme d'Ingénieur", degree: "Cycle ingénieur — à confirmer", verification: "À confirmer auprès de l'école" },
+        { id: "prog-1", institution_id: "inst-1", name: "Génie Logiciel (GL)", degree_type: "Licence Professionnelle", degree: "Licence professionnelle — niveau Bac+3 à confirmer", verification: "Parcours rapporté; admission 2026-2027 à confirmer", source_url: "https://univ-lome.tg/wp-content/uploads/2025/08/Appel_a-Candidatures-2025-2026-EPL.pdf" },
+        { id: "prog-3", institution_id: "inst-1", name: "Systèmes et Réseaux Informatiques (SR)", degree_type: "Licence Professionnelle", degree: "Licence professionnelle — niveau Bac+3 à confirmer", verification: "Parcours rapporté; admission 2026-2027 à confirmer", source_url: "https://univ-lome.tg/wp-content/uploads/2025/08/Appel_a-Candidatures-2025-2026-EPL.pdf" },
+        { id: "prog-4", institution_id: "inst-1", name: "Intelligence Artificielle et Big Data (IA-BD)", degree_type: "Diplôme d'Ingénieur", degree: "Cycle ingénieur — à confirmer", verification: "Parcours rapporté; admission 2026-2027 à confirmer", source_url: "https://univ-lome.tg/wp-content/uploads/2025/08/Appel_a-Candidatures-2025-2026-EPL.pdf" },
+        { id: "prog-epl-is", institution_id: "inst-1", name: "Informatique et Systèmes (IS)", degree_type: "Diplôme d'Ingénieur", degree: "Cycle ingénieur — à confirmer", verification: "Parcours rapporté; admission 2026-2027 à confirmer", source_url: "https://univ-lome.tg/wp-content/uploads/2025/08/Appel_a-Candidatures-2025-2026-EPL.pdf" },
         { id: "prog-uk-mi", institution_id: "inst-3", name: "Mathématiques et Informatique Appliquées (LMIA)", degree_type: "Licence Fondamentale", degree: "Licence — intitulé historique à vérifier", verification: "Source ancienne; offre actuelle non confirmée" },
         { id: "prog-uk-lpaei", institution_id: "inst-3", name: "Physique Appliquée, Électronique et Informatique (LPAEI)", degree_type: "Licence Fondamentale", degree: "Licence — intitulé historique à vérifier", verification: "Source ancienne; offre actuelle non confirmée" },
-        { id: "prog-iai-igl", institution_id: "inst-iai", name: "Ingénieur des Travaux Informatiques (ITI) — Génie Logiciel et Systèmes d'Information (GLSI)", degree_type: "Diplôme d'Ingénieur", degree: "ITI — niveau exact à confirmer", verification: "À confirmer auprès de l'IAI-Togo" },
-        { id: "prog-iai-asr", institution_id: "inst-iai", name: "Ingénieur des Travaux Informatiques (ITI) — Administration des Systèmes et Réseaux (ASR)", degree_type: "Diplôme d'Ingénieur", degree: "ITI — niveau exact à confirmer", verification: "À confirmer auprès de l'IAI-Togo" },
-        { id: "prog-iai-lpi-glsi", institution_id: "inst-iai", name: "Licence Professionnelle en Informatique (LPI) — option GLSI", degree_type: "Licence Professionnelle", degree: "LPI — niveau exact à confirmer", verification: "À confirmer auprès de l'IAI-Togo" },
-        { id: "prog-iai-lpi-asr", institution_id: "inst-iai", name: "Licence Professionnelle en Informatique (LPI) — option ASR", degree_type: "Licence Professionnelle", degree: "LPI — niveau exact à confirmer", verification: "À confirmer auprès de l'IAI-Togo" },
+        { id: "prog-iai-igl", institution_id: "inst-iai", name: "Cycle Ingénieur Concepteur", degree_type: "Diplôme d'Ingénieur", degree: "Cycle Ingénieur Concepteur", verification: "Cycle indiqué sur le site officiel de l'IAI-Togo", source_url: "https://new.iai-togo.tg/officiel/admission" },
+        { id: "prog-iai-asr", institution_id: "inst-iai", name: "Cycle Ingénieur des Travaux Informatiques (ITI) et Licence Professionnelle", degree_type: "Licence Professionnelle", degree: "ITI / Licence professionnelle", verification: "Cycle indiqué sur le site officiel de l'IAI-Togo; options à confirmer", source_url: "https://new.iai-togo.tg/officiel/admission" },
+        { id: "prog-ul-genie", institution_id: "inst-2", name: "Master international en Génie Informatique (UTT)", degree_type: "Master Recherche", degree: "Master international — appel 2025-2026", verification: "Appel officiel publié en 2025; reconduction 2026-2027 à confirmer", source_url: "https://univ-lome.tg/appel-a-candidatures-2025-2026-master-international-en-genie-informatique/" },
+        { id: "prog-ul-systemes", institution_id: "inst-2", name: "Master international Systèmes et Informatique (UTBM)", degree_type: "Master Recherche", degree: "Master international — appel antérieur", verification: "Appel officiel antérieur; ouverture actuelle à confirmer", source_url: "https://univ-lome.tg/appel-a-candidatures-aux-masters-systemes-et-informatique-intelligence-artificielle-et-big-data/" },
+        { id: "prog-ul-ia", institution_id: "inst-2", name: "Master international Intelligence Artificielle et Big Data (UTBM)", degree_type: "Master Recherche", degree: "Master international — appel antérieur", verification: "Appel officiel antérieur; ouverture actuelle à confirmer", source_url: "https://univ-lome.tg/appel-a-candidatures-aux-masters-systemes-et-informatique-intelligence-artificielle-et-big-data/" },
         { id: "prog-esgis-gl", institution_id: "inst-esgis", name: "Informatique, Réseaux et Télécommunications", degree_type: "", degree: "Niveau à confirmer", verification: "Source secondaire; intitulé et niveau à confirmer" },
         { id: "prog-esgis-sri", institution_id: "inst-esgis", name: "Systèmes, Réseaux et Sécurité Informatique", degree_type: "", degree: "Niveau à confirmer", verification: "Source secondaire; intitulé et niveau à confirmer" },
         { id: "prog-esgis-ia", institution_id: "inst-esgis", name: "Intelligence Artificielle et Big Data", degree_type: "", degree: "Niveau à confirmer", verification: "Source secondaire; intitulé et niveau à confirmer" },
@@ -335,7 +340,8 @@
             type: "new_document",
             document_id: "doc-algo-2026",
             created_at: "2026-03-02T11:30:00Z",
-            is_read: false
+            is_read: false,
+            is_demo: true
         }
     ];
 
@@ -349,14 +355,21 @@
         if (!Array.isArray(state.documents)) { state.documents = []; modified = true; }
 
         const currentSeedProgramIds = new Set(initialPrograms.map((program) => program.id));
-        const retainedLocalProgram = (program) => /^prog-\d{13}$/.test(program.id);
-        const filteredPrograms = state.programs.filter((program) =>
-            !program.id.startsWith("prog-") || currentSeedProgramIds.has(program.id) || retainedLocalProgram(program)
-        );
-        if (filteredPrograms.length !== state.programs.length) {
-            state.programs = filteredPrograms;
-            modified = true;
-        }
+        const retainedLocalProgram = (program) =>
+            typeof program.id === "string" && /^prog-\d{13}$/.test(program.id);
+        state.programs.forEach((program) => {
+            if (
+                typeof program.id === "string"
+                && program.id.startsWith("prog-")
+                && !currentSeedProgramIds.has(program.id)
+                && !retainedLocalProgram(program)
+                && program.is_listed !== false
+            ) {
+                program.is_listed = false;
+                program.verification = "Ancienne entrée de démonstration conservée, offre active à vérifier.";
+                modified = true;
+            }
+        });
 
         initialInstitutions.forEach((initInst) => {
             const exists = state.institutions.find((i) => i.id === initInst.id || (i.name && i.name.toLowerCase() === initInst.name.toLowerCase()));
@@ -382,9 +395,24 @@
         });
 
         initialCourses.forEach((initCourse) => {
-            const exists = state.courses.find((c) => c.id === initCourse.id || (c.program_id === initCourse.program_id && c.name.toLowerCase() === initCourse.name.toLowerCase()));
-            if (!exists) {
-                state.courses.push(initCourse);
+            const existsById = state.courses.find((course) => course.id === initCourse.id);
+            const existsByName = state.courses.find((course) =>
+                course.program_id === initCourse.program_id
+                && course.name.toLowerCase() === initCourse.name.toLowerCase()
+            );
+            if (!existsById && !existsByName) {
+                state.courses.push({ ...initCourse, is_demo: true });
+                modified = true;
+            } else if (existsById && !existsById.is_demo) {
+                existsById.is_demo = true;
+                modified = true;
+            }
+        });
+
+        const demoDocumentIds = new Set(initialDocuments.map((document) => document.id));
+        state.documents.forEach((document) => {
+            if (demoDocumentIds.has(document.id) && !document.is_demo) {
+                document.is_demo = true;
                 modified = true;
             }
         });
@@ -407,8 +435,8 @@
                 const initial = {
                     institutions: initialInstitutions,
                     programs: initialPrograms,
-                    courses: initialCourses,
-                    documents: initialDocuments
+                    courses: initialCourses.map((course) => ({ ...course, is_demo: true })),
+                    documents: initialDocuments.map((document) => ({ ...document, is_demo: true }))
                 };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
                 return initial;
@@ -450,15 +478,22 @@
         try {
             const raw = localStorage.getItem(USER_KEY);
             if (raw) {
-                return JSON.parse(raw);
+                const profile = JSON.parse(raw);
+                if (["ENP Campus Lomé", "ENP Campus Lomé (EPL)", "École Polytechnique de Lomé", "École Nationale Polytechnique (ENP) — Lomé"].includes(profile.institution)) {
+                    profile.institution = "École Polytechnique de Lomé (EPL)";
+                }
+                if (profile.program_id === "prog-1" || profile.program === "Génie Logiciel & Systèmes d'Information") {
+                    profile.program = "Génie Logiciel (GL)";
+                }
+                return profile;
             }
             return {
                 id: "user-student",
                 name: "Étudiant Universitaire",
                 email: "etudiant@eduvault.tg",
-                institution: "ENP Campus Lomé",
+                institution: "École Polytechnique de Lomé (EPL)",
                 institution_id: "inst-1",
-                program: "Génie Logiciel & Systèmes d'Information",
+                program: "Génie Logiciel (GL)",
                 program_id: "prog-1",
                 level: "Licence 3",
                 bio: "Étudiant à Lomé, partage et consultation de documents académiques.",
@@ -470,7 +505,7 @@
                 id: "user-student",
                 name: "Étudiant Universitaire",
                 email: "etudiant@eduvault.tg",
-                institution: "ENP Campus Lomé",
+                institution: "École Polytechnique de Lomé (EPL)",
                 level: "Licence 3"
             };
         }
@@ -524,7 +559,9 @@
                 localStorage.setItem(NOTIF_KEY, JSON.stringify(initialNotifications));
                 return initialNotifications;
             }
-            return JSON.parse(raw);
+            return JSON.parse(raw).map((notification) =>
+                notification.id === "notif-2" ? { ...notification, is_demo: true } : notification
+            );
         } catch {
             return initialNotifications;
         }
@@ -555,7 +592,7 @@
 
     const updateBadgeUI = () => {
         const list = getNotifications();
-        const unreadCount = list.filter((n) => !n.is_read).length;
+        const unreadCount = list.filter((n) => !n.is_demo && !n.is_read).length;
         document.querySelectorAll("#notification-count, .notification-count").forEach((badge) => {
             if (unreadCount > 0) {
                 badge.textContent = unreadCount > 9 ? "9+" : String(unreadCount);
@@ -627,7 +664,7 @@
 
     const getProgramsByInstitutionAndDegree = (institutionIdentifier, degreeType) => {
         const state = loadState();
-        let progs = state.programs;
+        let progs = state.programs.filter((program) => program.is_listed !== false);
         if (institutionIdentifier) {
             const inst = state.institutions.find((i) => i.id === institutionIdentifier || i.name.toLowerCase() === institutionIdentifier.toLowerCase());
             if (inst) {
@@ -642,15 +679,16 @@
 
     const getProgramsByInstitution = (institutionIdentifier) => {
         const state = loadState();
-        if (!institutionIdentifier) return state.programs;
+        if (!institutionIdentifier) return state.programs.filter((program) => program.is_listed !== false);
         const inst = state.institutions.find((i) => i.id === institutionIdentifier || i.name.toLowerCase() === institutionIdentifier.toLowerCase());
         if (!inst) {
             return state.programs.filter((p) => {
+                if (p.is_listed === false) return false;
                 const parentInst = state.institutions.find(i => i.id === p.institution_id);
                 return parentInst && parentInst.name.toLowerCase().includes(institutionIdentifier.toLowerCase());
             });
         }
-        return state.programs.filter((p) => p.institution_id === inst.id);
+        return state.programs.filter((p) => p.is_listed !== false && p.institution_id === inst.id);
     };
 
     const getSemestersForProgram = (programIdentifier) => {
@@ -678,7 +716,7 @@
             const semNum = parseInt(semesterNumber, 10);
             courses = courses.filter((c) => c.semester === semNum);
         }
-        return courses;
+        return courses.filter((course) => course.is_demo !== true);
     };
 
     const getCoursesByProgram = (programIdentifier) => {
@@ -689,7 +727,11 @@
     const addCourse = ({ name, program_id, semester = 1, code = null }) => {
         const state = loadState();
         const trimmedName = name.trim();
-        const existing = state.courses.find(c => c.name.toLowerCase() === trimmedName.toLowerCase() && (!program_id || c.program_id === program_id));
+        const existing = state.courses.find(c =>
+            c.is_demo !== true
+            && c.name.toLowerCase() === trimmedName.toLowerCase()
+            && (!program_id || c.program_id === program_id)
+        );
         if (existing) return existing;
 
         const generatedCode = code || `${trimmedName.slice(0, 3).toUpperCase()}${semester}0${(state.courses.length % 9) + 1}`;
@@ -739,13 +781,13 @@
             id: docId,
             title: docData.title.trim(),
             category: docData.category || "Support de Cours",
-            academic_year: docData.academic_year || "2025-2026",
+            academic_year: docData.academic_year || currentAcademicYear(),
             course_id: docData.course_id || "course-1",
             course: docData.course || "Ressource Académique",
             semester: parseInt(docData.semester, 10) || 1,
             degree_type: docData.degree_type || "Licence Professionnelle",
-            program: docData.program || user.program || "Génie Logiciel & Systèmes d'Information",
-            institution: docData.institution || user.institution || "ENP Campus Lomé",
+            program: docData.program || user.program || "Génie Logiciel (GL)",
+            institution: docData.institution || user.institution || "École Polytechnique de Lomé (EPL)",
             uploaded_by: user.id || "user-student",
             uploader_name: user.name || "Étudiant",
             file_size: docData.file_size || 2048576,

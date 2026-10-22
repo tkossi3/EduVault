@@ -25,17 +25,84 @@
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" 
     })[char]);
 
+    const carouselStates = new Map();
+    const syncAutoCarousel = (container) => {
+        if (!container) return;
+        let state = carouselStates.get(container.id);
+        if (!state) {
+            state = { timer: null, hovered: false, focused: false, manuallyPaused: false, bound: false };
+            carouselStates.set(container.id, state);
+        }
+        if (state.timer) clearInterval(state.timer);
+
+        const toggle = document.querySelector(`[data-carousel-toggle="${container.id}"]`);
+        const isVertical = window.matchMedia("(max-width: 768px)").matches;
+        const canScroll = container.classList.contains("is-carousel")
+            && container.children.length > 1
+            && (isVertical
+                ? container.scrollHeight > container.clientHeight + 4
+                : container.scrollWidth > container.clientWidth + 4)
+            && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (toggle) toggle.hidden = !canScroll;
+        if (!canScroll) return;
+
+        if (!state.bound) {
+            container.addEventListener("pointerenter", () => { state.hovered = true; });
+            container.addEventListener("pointerleave", () => { state.hovered = false; });
+            container.addEventListener("focusin", () => { state.focused = true; });
+            container.addEventListener("focusout", (event) => {
+                state.focused = container.contains(event.relatedTarget);
+            });
+            container.addEventListener("touchstart", () => { state.hovered = true; }, { passive: true });
+            container.addEventListener("touchend", () => {
+                window.setTimeout(() => { state.hovered = false; }, 2500);
+            }, { passive: true });
+            toggle?.addEventListener("click", () => {
+                state.manuallyPaused = !state.manuallyPaused;
+                toggle.setAttribute("aria-pressed", String(state.manuallyPaused));
+                toggle.textContent = state.manuallyPaused ? "Reprendre" : "Pause";
+            });
+            state.bound = true;
+        }
+
+        state.timer = window.setInterval(() => {
+            if (state.hovered || state.focused || state.manuallyPaused || document.hidden) return;
+            const firstCard = container.firstElementChild;
+            if (!firstCard) return;
+            const gap = parseFloat(getComputedStyle(container).gap) || 0;
+            if (isVertical) {
+                const stride = firstCard.getBoundingClientRect().height + gap;
+                const maxScroll = container.scrollHeight - container.clientHeight;
+                const nextTop = container.scrollTop + stride;
+                container.scrollTo({
+                    top: nextTop >= maxScroll - 4 ? 0 : nextTop,
+                    behavior: "smooth"
+                });
+            } else {
+                const stride = firstCard.getBoundingClientRect().width + gap;
+                const maxScroll = container.scrollWidth - container.clientWidth;
+                const nextLeft = container.scrollLeft + stride;
+                container.scrollTo({
+                    left: nextLeft >= maxScroll - 4 ? 0 : nextLeft,
+                    behavior: "smooth"
+                });
+            }
+        }, 4500);
+    };
+
     const formatSize = (bytes) => {
         if (!bytes) return "PDF";
         return (bytes / (1024 * 1024)).toFixed(1) + " Mo";
     };
 
     const render = () => {
-        let visible = currentDocuments.filter((item) => !activeCategory || item.category === activeCategory);
+        let visible = currentDocuments.filter((item) =>
+            !item.is_demo && (!activeCategory || item.category === activeCategory)
+        );
         if (isExplorerPage && !currentQuery) {
             const mobile = window.matchMedia("(max-width: 768px)").matches;
             visible = visible.slice(0, mobile ? 4 : 8);
-            results.classList.toggle("is-carousel", !mobile);
+            results.classList.add("is-carousel");
         } else {
             results.classList.remove("is-carousel");
         }
@@ -44,6 +111,7 @@
 
         if (!visible.length) {
             results.innerHTML = "";
+            syncAutoCarousel(results);
             return;
         }
 
@@ -97,6 +165,7 @@
                 </div>
             </article>`;
         }).join("");
+        syncAutoCarousel(results);
     };
 
     const search = async (query = "") => {
@@ -113,6 +182,19 @@
         }
 
         const normalizedQuery = query.toLowerCase().trim();
+        const localDocuments = (store?.loadState().documents || []).filter((document) => !document.is_demo);
+        if (isLibraryPage && courseId) {
+            const courseName = pageParams.get("course") || "";
+            currentDocuments = localDocuments.filter((doc) => doc.course_id === courseId || doc.course === courseName);
+        } else if (!normalizedQuery) {
+            currentDocuments = localDocuments;
+        } else {
+            currentDocuments = localDocuments.filter((doc) => {
+                const text = `${doc.title} ${doc.course} ${doc.program} ${doc.institution} ${doc.category} s${doc.semester} semestre ${doc.semester}`.toLowerCase();
+                return text.includes(normalizedQuery);
+            });
+        }
+        render();
 
         try {
             if (isLibraryPage && courseId) {
@@ -125,12 +207,12 @@
                 const data = await response.json();
                 currentDocuments = data.documents || [];
                 if (!currentDocuments.length && !query) {
-                    currentDocuments = store?.loadState().documents || [];
+                    currentDocuments = (store?.loadState().documents || []).filter((document) => !document.is_demo);
                 }
             }
         } catch {
             const state = store?.loadState();
-            const allDocs = state?.documents || [];
+            const allDocs = (state?.documents || []).filter((document) => !document.is_demo);
             if (isLibraryPage && courseId) {
                 const courseName = pageParams.get("course") || "";
                 currentDocuments = allDocs.filter((doc) => doc.course_id === courseId || doc.course === courseName);
@@ -151,21 +233,19 @@
         const container = document.querySelector("#institution-list");
         if (!container) return;
 
-        let institutions = [];
-        try {
-            const response = await fetch(`${config.API_BASE_URL}/catalog`);
-            if (response.ok) {
-                const data = await response.json();
-                institutions = data.institutions || [];
-            } else {
-                institutions = store?.loadState().institutions || [];
-            }
-        } catch {
-            institutions = store?.loadState().institutions || [];
-        }
-
+        let institutions = store?.loadState().institutions || [];
         currentInstitutions = institutions;
         renderInstitutions();
+        try {
+            const response = await fetch(`${config.API_BASE_URL}/catalog`);
+            if (!response.ok) throw new Error(`Réponse API ${response.status}`);
+            const data = await response.json();
+            institutions = data.institutions || [];
+            currentInstitutions = institutions;
+            renderInstitutions();
+        } catch (error) {
+            console.warn("Catalogue des établissements indisponible; données locales affichées.", error);
+        }
     };
 
     const renderInstitutions = () => {
@@ -175,7 +255,7 @@
         const visibleInstitutions = isExplorerPage
             ? currentInstitutions.slice(0, mobile ? 4 : 8)
             : currentInstitutions;
-        container.classList.toggle("is-carousel", isExplorerPage && !mobile);
+        container.classList.toggle("is-carousel", isExplorerPage);
         container.innerHTML = visibleInstitutions.map((inst) => `
             <a href="${catalogHref}?inst=${encodeURIComponent(inst.id)}" class="institution-card">
                 <div class="institution-icon">
@@ -193,6 +273,7 @@
 
         const moreLink = document.querySelector("#institutions-more");
         if (moreLink) moreLink.hidden = currentInstitutions.length <= visibleInstitutions.length;
+        syncAutoCarousel(container);
     };
 
     if (isLibraryPage && courseId) {

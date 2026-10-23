@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f8fafc">
+    <meta name="description" content="EduVault — Consultez et partagez des cours, TD et annales universitaires au Togo.">
+    <title>EduVault — Le Coffre-Fort Académique Universitaire</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="assets/eduvault.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Manrope:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles/variables.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/animations.css">
+    <link rel="stylesheet" href="styles/components.css">
+</head>
+
+<body data-page="explorer">
+    <a class="skip-link" href="#contenu">Aller au contenu</a>
+    
+    <header class="topbar">
+        <a class="brand" href="index.html" aria-label="EduVault, accueil">
+            <img src="assets/eduvault.svg" alt="Logo EduVault" width="36" height="36">
+            <span>Edu<span class="brand-accent">Vault</span></span>
+        </a>
+        
+        <button class="icon-button menu-toggle" id="menu-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        
+        <nav class="main-nav" id="main-nav" aria-label="Navigation principale">
+            <a class="nav-link is-active" href="index.html">Explorer</a>
+            <a class="nav-link" href="pages/library.html">Bibliothèque</a>
+            <a class="nav-link" href="pages/parcours.html">Parcours & Filières</a>
+            <a class="nav-link" href="pages/upload.html">Déposer un document</a>
+            <a class="nav-link" href="pages/profile.html">Mon Profil</a>
+        </nav>
+        
+        <div class="topbar-actions">
+            <a class="icon-button notification-link" href="pages/notifications.html" aria-label="Notifications" title="Consulter mes notifications">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                <span class="notification-count" id="notification-count" hidden>0</span>
+            </a>
+            
+            <button class="icon-button theme-toggle" data-theme-toggle type="button" aria-label="Changer de thème">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </button>
+            
+            <a class="button button-sm button-primary header-auth-btn" id="account-button" href="pages/login.html" aria-label="Se connecter" title="Se connecter à votre compte">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                <span>Se connecter</span>
+            </a>
+        </div>
+    </header>
+
+    <main id="contenu">
+        <!-- SECTION HERO -->
+        <section class="hero-section page-width">
+            <div class="hero-copy reveal">
+                <p class="eyebrow"><span class="eyebrow-mark"></span> RESSOURCES UNIVERSITAIRES AU TOGO</p>
+                <h1>Tout ton campus.<br><span>Dans un seul coffre.</span></h1>
+                <p class="hero-description">Retrouvez et partagez des supports de cours, TD et annales. Les documents sont publiés après modération ; leur exactitude reste à vérifier auprès de l’établissement concerné.</p>
+                
+                <form class="hero-search" id="search-form" role="search">
+                    <div class="search-icon-wrapper" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </div>
+                    <label class="visually-hidden" for="global-search">Rechercher un cours ou un document</label>
+                    <input id="global-search" name="q" type="search" placeholder="Rechercher un document, un examen, une école (ex: ENP Lomé, Algorithmique)..." autocomplete="off">
+                    <button class="button button-primary search-submit" type="submit">
+                        <span>Explorer</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </button>
+                </form>
+                
+                <div class="popular-searches">
+                    <span>Suggestions :</span>
+                    <button type="button" data-query="Algorithmique">Algorithmique</button>
+                    <button type="button" data-query="Bases de Données">Bases de Données</button>
+                    <button type="button" data-query="Analyse">Analyse Mathématique</button>
+                    <button type="button" data-query="EPL">EPL</button>
+                </div>
+            </div>
+            
+            <div class="hero-art reveal" aria-label="Aperçu du coffre académique">
+                <div class="vault-card-hero">
+                    <div class="vault-icon-badge">
+                        <img src="assets/eduvault.svg" alt="" width="44" height="44">
+                    </div>
+                    <h3>Bibliothèque universitaire</h3>
+                    <p>Consultez les documents partagés en ligne ou contribuez aux ressources de votre établissement.</p>
+                    <div class="hero-stats-mini">
+                        <div>
+                            <strong>100% PDF</strong>
+                            <small>Lecture dans le navigateur</small>
+                        </div>
+                        <div>
+                            <strong>Étudiants</strong>
+                            <small>Partage communautaire</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="float-chip float-chip-top">
+                    <span class="badge badge-accent">Parcours</span>
+                    <span id="homepage-program-chip" style="font-size: 13px; font-weight: 700;">Votre filière</span>
+                </div>
+                
+                <div class="float-chip float-chip-bottom">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span id="homepage-institution-chip" style="font-size: 13px; font-weight: 600;">Votre établissement</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- BANDEAU STATISTIQUES -->
+        <section class="stats-strip page-width" aria-label="Chiffres clés">
+            <div class="stats-strip-item">
+                <div class="stats-strip-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                </div>
+                <div>
+                    <strong>Documents PDF</strong>
+                    <span>Lecture directe dans le navigateur</span>
+                </div>
+            </div>
+            
+            <div class="stats-strip-item">
+                <div class="stats-strip-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="12"></line><line x1="15" y1="12" x2="15" y2="22"></line><line x1="9" y1="12" x2="15" y2="12"></line></svg>
+                </div>
+                <div>
+                    <strong>Établissements</strong>
+                    <span>Universités et écoles du Togo</span>
+                </div>
+            </div>
+            
+            <div class="stats-strip-item">
+                <div class="stats-strip-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
+                <div>
+                    <strong>Modération</strong>
+                    <span>Les dépôts attendent une validation</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION DOCUMENTS DISPONIBLES -->
+        <section class="page-width" id="results-section">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">SÉLECTION DE LA COMMUNAUTÉ</p>
+                    <h2 id="results-title">Documents phares</h2>
+                </div>
+                <div class="section-actions">
+                    <button class="carousel-toggle" type="button" data-carousel-toggle="document-results" aria-controls="document-results" aria-pressed="false" hidden>Pause</button>
+                    <a class="text-link" href="pages/library.html">
+                        <span>Voir toute la bibliothèque</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </a>
+                </div>
+            </div>
+
+            <div class="filter-row" aria-label="Filtrer par catégorie">
+                <button class="filter-chip is-selected" type="button" data-category="">Tous les types</button>
+                <button class="filter-chip" type="button" data-category="Support de Cours">Supports de Cours</button>
+                <button class="filter-chip" type="button" data-category="TD/TP">TD & Travaux Pratiques</button>
+                <button class="filter-chip" type="button" data-category="Examen/Annales">Examens & Annales</button>
+                <button class="filter-chip" type="button" data-category="Fiche de révision">Fiches de Révision</button>
+            </div>
+
+            <div class="document-grid home-document-carousel" id="document-results" aria-live="polite">
+                <!-- Les cartes de documents sont injectées dynamiquement par store/app.js -->
+            </div>
+
+            <div class="empty-state" id="empty-state" hidden>
+                <div class="empty-state-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </div>
+                <h3>Aucun document trouvé</h3>
+                <p>Essayez un autre mot-clé ou parcourez l'arborescence des filières.</p>
+            </div>
+        </section>
+
+        <!-- SECTION ÉTABLISSEMENTS & CAMPUS -->
+        <section class="institution-band">
+            <div class="page-width">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">CAMPUS PARTENAIRES</p>
+                        <h2>Vos universités & grandes écoles</h2>
+                    </div>
+                    <div class="section-actions">
+                        <button class="carousel-toggle" type="button" data-carousel-toggle="institution-list" aria-controls="institution-list" aria-pressed="false" hidden>Pause</button>
+                        <a class="text-link" id="institutions-more" href="pages/parcours.html">
+                            <span>Voir toutes les universités</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="institution-grid" id="institution-list">
+                    <!-- Rendu dynamique -->
+                </div>
+            </div>
+        </section>
+
+        <!-- BANDEAU CTA PARTAGE -->
+        <section class="page-width">
+            <div class="share-band">
+                <div>
+                    <p class="eyebrow" style="color: #a7f3d0;">CONTRIBUTION ÉTUDIANTE 2026</p>
+                    <h2>Vous possédez un document ou une annale utile ?</h2>
+                    <p>Déposez votre support en 30 secondes pour aider toute votre promotion à réussir.</p>
+                </div>
+                <a class="button button-accent" href="pages/upload.html">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <span>Déposer un document</span>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- PIED DE PAGE -->
+    <footer class="site-footer page-width">
+        <div class="footer-brand">
+            <a class="brand" href="index.html">
+                <img src="assets/eduvault.svg" alt="Logo EduVault" width="30" height="30">
+                <span>Edu<span class="brand-accent">Vault</span></span>
+            </a>
+            <p class="footer-brand-desc">La plateforme académique togolaise de partage et consultation de documents universitaires. Gratuit, ouvert, pour tous.</p>
+        </div>
+
+        <div class="footer-nav">
+            <p class="footer-nav-title">Explorer</p>
+            <div class="footer-nav-links">
+                <a href="pages/library.html">Bibliothèque & Documents</a>
+                <a href="pages/parcours.html">Parcours & Filières</a>
+                <a href="pages/profile.html">Mon Profil</a>
+            </div>
+        </div>
+
+        <div class="footer-nav">
+            <p class="footer-nav-title">Contribuer</p>
+            <div class="footer-nav-links">
+                <a href="pages/upload.html">Déposer un document</a>
+                <a href="pages/notifications.html">Mes Notifications</a>
+                <a href="pages/register.html">Créer un compte</a>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <span>© 2026 EduVault — Le coffre-fort académique universitaire. Tous droits réservés.</span>
+            <span style="font-size: 11px; opacity: 0.7;">Togo · Open Education · 2026</span>
+        </div>
+    </footer>
+
+
+
+    <div class="cursor-dot" aria-hidden="true"></div>
+    <div class="cursor-ring" aria-hidden="true"></div>
+
+    <script src="scripts/icons.js"></script>
+    <script src="scripts/store.js"></script>
+    <script src="scripts/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="scripts/theme.js"></script>
+    <script src="scripts/auth.js"></script>
+    <script src="scripts/cursor.js"></script>
+    <script src="scripts/notifications.js"></script>
+    <script src="scripts/app.js"></script>
+    <script src="scripts/service-worker.js"></script>
+</body>
+
+</html>

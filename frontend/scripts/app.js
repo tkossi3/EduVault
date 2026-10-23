@@ -75,19 +75,24 @@
                 const maxScroll = container.scrollHeight - container.clientHeight;
                 const nextTop = container.scrollTop + stride;
                 container.scrollTo({
-                    top: nextTop >= maxScroll - 4 ? 0 : nextTop,
+                    top: container.scrollTop >= maxScroll - 4 ? 0 : Math.min(nextTop, maxScroll),
                     behavior: "smooth"
                 });
             } else {
                 const stride = firstCard.getBoundingClientRect().width + gap;
                 const maxScroll = container.scrollWidth - container.clientWidth;
-                const nextLeft = container.scrollLeft + stride;
-                container.scrollTo({
-                    left: nextLeft >= maxScroll - 4 ? 0 : nextLeft,
-                    behavior: "smooth"
-                });
+                if (container.scrollLeft >= maxScroll - 6) {
+                    // Revenir doucement au début sans à-coup
+                    container.scrollTo({ left: 0, behavior: "smooth" });
+                } else {
+                    const nextLeft = container.scrollLeft + stride;
+                    container.scrollTo({
+                        left: Math.min(nextLeft, maxScroll),
+                        behavior: "smooth"
+                    });
+                }
             }
-        }, 4500);
+        }, 3600);
     };
 
     const formatSize = (bytes) => {

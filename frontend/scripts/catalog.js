@@ -187,7 +187,7 @@
                                         <div class="semester-heading">
                                             <h3>Semestre ${semester} (S${semester})</h3>
                                             <div class="semester-actions">
-                                                <button class="button button-outline button-sm course-add" type="button" data-program-id="${escapeHtml(program.id)}" data-semester="${semester}">Ajouter un cours</button>
+                                                <button class="button button-outline button-sm course-add" type="button" data-program-id="${escapeHtml(program.id)}" data-program-name="${escapeHtml(program.name)}" data-semester="${semester}">Ajouter un cours</button>
                                                 <a class="text-link" href="upload.html?${uploadParams}">Déposer un document</a>
                                             </div>
                                         </div>
@@ -268,8 +268,9 @@
         if (!dialog || !nameInput || !context || !feedback || !form) return;
 
         form.dataset.programId = button.dataset.programId || "";
+        form.dataset.programName = button.dataset.programName || "";
         form.dataset.semester = button.dataset.semester || "";
-        context.textContent = `Semestre ${form.dataset.semester} : le cours sera rattaché à ce parcours.`;
+        context.textContent = `${form.dataset.programName} · Semestre ${form.dataset.semester}`;
         feedback.textContent = "";
         nameInput.value = "";
         dialog.showModal();
@@ -300,12 +301,18 @@
             return;
         }
 
-        const added = await submitCourse({
-            program_id: form.dataset.programId,
-            semester: Number(form.dataset.semester),
-            name
-        });
-        if (added) document.querySelector("#course-add-dialog")?.close();
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+        try {
+            const added = await submitCourse({
+                program_id: form.dataset.programId,
+                semester: Number(form.dataset.semester),
+                name
+            });
+            if (added) document.querySelector("#course-add-dialog")?.close();
+        } finally {
+            if (submitButton) submitButton.disabled = false;
+        }
     });
 
     const submitCourse = async (payload) => {

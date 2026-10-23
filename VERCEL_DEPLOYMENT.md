@@ -8,6 +8,7 @@ Ce guide déploie le frontend statique **EduVault** sur **Vercel**. Le backend F
 
 1. Un compte [Vercel](https://vercel.com) (connexion gratuite avec GitHub, GitLab ou email).
 2. Votre code source déposé sur un dépôt GitHub (ou via l'outil CLI Vercel).
+3. Node.js **20.19+** ou **22.12+** pour les installations et builds locaux.
 
 ---
 
@@ -22,17 +23,22 @@ Ce guide déploie le frontend statique **EduVault** sur **Vercel**. Le backend F
 1. **Framework Preset** : Sélectionnez `Other`.
 2. **Root Directory** : Laissez `./` (la racine du projet contient déjà le fichier `vercel.json`).
 3. Dans la section **Build and Output Settings** :
-   - *Build Command* : Laissez vide.
-   - *Output Directory* : Laissez vide. `vercel.json` sert les fichiers du dossier `frontend`.
+   - *Build Command* : `npm --prefix frontend run build`
+   - *Output Directory* : `frontend/dist`
+   - *Install Command* : `npm --prefix frontend ci`
+
+   Ces paramètres sont également enregistrés dans [`vercel.json`](./vercel.json).
 
 ### Étape 3 : Configurer Supabase et l'API
 
 1. Exécutez d'abord les étapes du [guide Supabase](./SUPABASE_SETUP.md).
-2. Renseignez l'URL Supabase et la clé `anon` publique dans `frontend/scripts/config.js`.
-3. Déployez le backend FastAPI sur un hébergeur compatible séparément. Puis configurez `API_BASE_URL` dans ce même fichier avec son URL publique suivie de `/api` et autorisez le domaine Vercel dans `CORS_ORIGINS`.
+2. Déployez le backend FastAPI sur un hébergeur compatible séparément, puis définissez `VITE_API_BASE_URL` dans les variables d'environnement Vercel avec son URL publique suivie de `/api`. Autorisez le domaine Vercel dans `CORS_ORIGINS`.
+3. Renseignez l'URL Supabase et la clé `anon` publique dans `frontend/scripts/config.js`.
 4. Ne placez jamais la clé Supabase `service_role` dans le frontend ou dans une variable exposée au navigateur; elle appartient uniquement au backend.
 
-Sans backend public configuré, les appels API distants ne sont pas disponibles. Le frontend peut alors utiliser ses données locales de démonstration; celles-ci ne constituent pas une base partagée entre les visiteurs.
+Sans backend public configuré, les appels API distants ne sont pas disponibles. Les documents déposés en local restent dans le navigateur concerné et ne sont pas partagés entre les visiteurs.
+
+Le lecteur affiche le fichier PDF original associé à son identifiant. Si le PDF, le backend ou son URL signée n’est pas accessible, une erreur est affichée : aucun faux document n’est généré à la place.
 
 ### Étape 4 : Déployer
 1. Cliquez sur **"Deploy"**.
@@ -59,22 +65,7 @@ vercel --prod
 
 ## 🔄 Configuration de routage
 
-Le fichier [`vercel.json`](./vercel.json) à la racine du projet assure le routage des pages, styles, scripts et ressources statiques. Il ne redirige volontairement pas `/api` vers `localhost` : une telle adresse désignerait l'ordinateur de chaque visiteur, pas votre backend.
-
-```json
-{
-  "version": 2,
-  "name": "eduvault",
-  "cleanUrls": true,
-  "routes": [
-    { "src": "/pages/(.*)", "dest": "/frontend/pages/$1" },
-    { "src": "/styles/(.*)", "dest": "/frontend/styles/$1" },
-    { "src": "/scripts/(.*)", "dest": "/frontend/scripts/$1" },
-    { "src": "/assets/(.*)", "dest": "/frontend/assets/$1" },
-    { "src": "/(.*)", "dest": "/frontend/$1" }
-  ]
-}
-```
+Vercel construit les neuf entrées HTML React de Vite et publie `frontend/dist`, qui contient aussi les ressources statiques historiques nécessaires au fonctionnement des pages. Il ne redirige volontairement pas `/api` vers `localhost` : une telle adresse désignerait l'ordinateur de chaque visiteur, pas votre backend.
 
 ---
 

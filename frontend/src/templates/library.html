@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f8fafc">
+    <meta name="description" content="Parcourez tous les cours, TD, examens et documents partagés sur EduVault.">
+    <title>Bibliothèque de documents — EduVault</title>
+    <link rel="manifest" href="../manifest.json">
+    <link rel="icon" href="../assets/eduvault.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../styles/variables.css">
+    <link rel="stylesheet" href="../styles/main.css">
+    <link rel="stylesheet" href="../styles/animations.css">
+    <link rel="stylesheet" href="../styles/components.css">
+    <link rel="stylesheet" href="../styles/pages.css">
+</head>
+
+<body data-page="library">
+    <header class="topbar">
+        <a class="brand" href="../index.html" aria-label="EduVault, accueil">
+            <img src="../assets/eduvault.svg" alt="" width="36" height="36">
+            <span>Edu<span class="brand-accent">Vault</span></span>
+        </a>
+        <button class="icon-button menu-toggle" id="menu-toggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        <nav class="main-nav" id="main-nav" aria-label="Navigation principale">
+            <a class="nav-link" href="../index.html">Explorer</a>
+            <a class="nav-link is-active" href="library.html" aria-current="page">Bibliothèque</a>
+            <a class="nav-link" href="parcours.html">Universités</a>
+            <a class="nav-link" href="upload.html">Déposer un document</a>
+            <a class="nav-link" href="profile.html">Mon Profil</a>
+        </nav>
+        <div class="topbar-actions">
+            <a class="icon-button notification-link" href="notifications.html" aria-label="Notifications">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                <span class="notification-count" id="notification-count" hidden>0</span>
+            </a>
+            <button class="icon-button theme-toggle" data-theme-toggle type="button" aria-label="Changer de thème">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </button>
+            <a class="button button-sm button-primary header-auth-btn" id="account-button" href="login.html" aria-label="Se connecter">
+                <span>Se connecter</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="page-width inner-page">
+        <p class="eyebrow"><span class="eyebrow-mark"></span> RESSOURCES ACADÉMIQUES</p>
+        <h1>Bibliothèque de documents</h1>
+        <p class="page-intro">Retrouvez tous les supports de cours, TD, examens et fiches partagés par la communauté. Recherchez par matière ou filtrez par type de document.</p>
+
+        <form class="hero-search library-search" id="search-form" role="search">
+            <div class="search-icon-wrapper" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+            <label class="visually-hidden" for="global-search">Rechercher dans la bibliothèque</label>
+            <input id="global-search" name="q" type="search" placeholder="Rechercher un document, une matière ou une filière…" autocomplete="off">
+            <button class="button button-primary search-submit" type="submit"><span>Rechercher</span></button>
+        </form>
+
+        <section id="results-section" aria-labelledby="results-title">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">TOUS LES DOCUMENTS</p>
+                    <h2 id="results-title">Bibliothèque complète</h2>
+                </div>
+                <a class="text-link" href="upload.html">Ajouter un document</a>
+            </div>
+            <div class="filter-row" aria-label="Filtrer par catégorie">
+                <button class="filter-chip is-selected" type="button" data-category="">Tous les types</button>
+                <button class="filter-chip" type="button" data-category="Support de Cours">Supports de cours</button>
+                <button class="filter-chip" type="button" data-category="TD/TP">TD & travaux pratiques</button>
+                <button class="filter-chip" type="button" data-category="Examen/Annales">Examens & annales</button>
+                <button class="filter-chip" type="button" data-category="Fiche de révision">Fiches de révision</button>
+            </div>
+            <div class="document-grid" id="document-results" aria-live="polite"></div>
+            <div class="empty-state" id="empty-state" hidden>
+                <div class="empty-state-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </div>
+                <h3>Aucun document trouvé</h3>
+                <p>Essayez un autre terme ou modifiez le type de document sélectionné.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer page-width">
+        <div class="footer-brand">
+            <a class="brand" href="../index.html"><img src="../assets/eduvault.svg" alt="Logo EduVault" width="28" height="28"><span>Edu<span class="brand-accent">Vault</span></span></a>
+            <p class="footer-brand-desc">La plateforme académique togolaise de partage et consultation de documents universitaires.</p>
+        </div>
+        <div class="footer-nav">
+            <p class="footer-nav-title">Explorer</p>
+            <div class="footer-nav-links">
+                <a href="../index.html">Accueil</a>
+                <a href="parcours.html">Universités & parcours</a>
+                <a href="profile.html">Mon profil</a>
+            </div>
+        </div>
+        <div class="footer-bottom"><span>© 2026 EduVault — Tous droits réservés.</span></div>
+    </footer>
+
+    <div class="cursor-dot" aria-hidden="true"></div>
+    <div class="cursor-ring" aria-hidden="true"></div>
+    <script src="../scripts/icons.js"></script>
+    <script src="../scripts/store.js"></script>
+    <script src="../scripts/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../scripts/theme.js"></script>
+    <script src="../scripts/auth.js"></script>
+    <script src="../scripts/cursor.js"></script>
+    <script src="../scripts/notifications.js"></script>
+    <script src="../scripts/app.js"></script>
+    <script src="../scripts/service-worker.js"></script>
+</body>
+
+</html>

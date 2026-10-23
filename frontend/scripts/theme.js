@@ -1,20 +1,20 @@
-/* Gestion du thème clair par défaut avec bascule dynamique et icônes SVG */
+﻿/* Gestion du thÃ¨me clair par dÃ©faut avec bascule dynamique et icÃ´nes SVG */
 (() => {
     const key = "eduvault-theme";
-    // Thème clair par défaut explicite
+    // ThÃ¨me clair par dÃ©faut explicite
     const saved = localStorage.getItem(key) || "light";
     document.documentElement.dataset.theme = saved;
 
     const updateButtons = (theme) => {
         const icons = window.EduVaultIcons;
         const iconSvg = theme === "dark" 
-            ? (icons?.sun || '<span aria-hidden="true">☼</span>') 
-            : (icons?.moon || '<span aria-hidden="true">☾</span>');
+            ? (icons?.sun || '<span aria-hidden="true">â˜¼</span>') 
+            : (icons?.moon || '<span aria-hidden="true">â˜¾</span>');
         
         document.querySelectorAll("[data-theme-toggle]").forEach((button) => {
             button.innerHTML = iconSvg;
-            button.setAttribute("title", theme === "dark" ? "Passer au thème clair" : "Passer au thème sombre");
-            button.setAttribute("aria-label", theme === "dark" ? "Passer au thème clair" : "Passer au thème sombre");
+            button.setAttribute("title", theme === "dark" ? "Passer au thÃ¨me clair" : "Passer au thÃ¨me sombre");
+            button.setAttribute("aria-label", theme === "dark" ? "Passer au thÃ¨me clair" : "Passer au thÃ¨me sombre");
         });
     };
 
@@ -24,9 +24,9 @@
         updateButtons(theme);
     };
 
-    document.addEventListener("DOMContentLoaded", () => {
+    const initThemeControls = () => {
         updateButtons(document.documentElement.dataset.theme || "light");
-        
+
         document.querySelectorAll("[data-theme-toggle]").forEach((button) => {
             button.addEventListener("click", () => {
                 const current = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
@@ -34,7 +34,13 @@
                 applyTheme(next);
             });
         });
-    });
+    };
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initThemeControls);
+    } else {
+        initThemeControls();
+    }
 
     // Exposition globale
     window.EduVaultTheme = { applyTheme, getTheme: () => document.documentElement.dataset.theme || "light" };

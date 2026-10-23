@@ -79,23 +79,32 @@ Dans **Authentication > URL Configuration**, renseignez l'adresse Vercel comme *
 
 ## ⚙️ Étape 6 : Connecter le frontend et le backend
 
-### 1. Frontend : [`frontend/scripts/config.js`](./frontend/scripts/config.js)
+### 1. Frontend : [`frontend/scripts/config.js`](./frontend/scripts/config.js) et `frontend/.env.local`
+
+Configurez l’URL du backend dans `frontend/.env.local` (copiez d’abord `.env.example`) :
+
+```env
+VITE_API_BASE_URL=http://localhost:8000/api
+```
+
+En production, définissez la même variable dans les paramètres Vercel avec l’URL publique du backend suivie de `/api`. Configurez aussi les clés publiques Supabase dans `frontend/scripts/config.js` :
+
 ```javascript
 window.EDUVAULT_CONFIG = {
-    API_BASE_URL: "https://votre-api-publique/api",
+    API_BASE_URL: window.EDUVAULT_API_URL || "https://votre-api-publique/api",
     SUPABASE_URL: "https://xyzprojectid.supabase.co",
     SUPABASE_ANON_KEY: "votre-cle-anon-publique"
 };
 ```
 
-Utilisez l'URL publique du backend FastAPI. Vercel héberge ici le frontend statique, pas l'API.
+Vercel héberge le frontend statique, pas l'API. Redémarrez Vite après avoir modifié `.env.local`.
 
 ### 2. Backend : variables d'environnement du service FastAPI
 ```env
 SUPABASE_URL=https://xyzprojectid.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=votre-cle-service-role-secrete
 SUPABASE_ANON_KEY=votre-cle-anon-publique
-CORS_ORIGINS=["https://votre-domaine-vercel.app","http://localhost:5500","http://127.0.0.1:5500"]
+CORS_ORIGINS=["https://votre-domaine-vercel.app","http://localhost:5173","http://127.0.0.1:5173","http://localhost:4173","http://127.0.0.1:4173"]
 ```
 
 Configurez ces valeurs dans les paramètres privés de l'hébergeur backend (ou dans `backend/.env` en local). **Ne publiez pas la clé `SUPABASE_SERVICE_ROLE_KEY` dans le frontend, GitHub ou un message.**
@@ -115,7 +124,7 @@ Les changements de filière restent indisponibles entre utilisateurs tant que le
 3. Déployez le frontend Vercel avec l'URL API configurée. Vérifiez que `CORS_ORIGINS` contient le domaine Vercel exact.
 4. Créez un compte de test, confirmez l'adresse selon le réglage Auth et vérifiez la connexion.
 5. Déposez un petit PDF avec ce compte. Il doit apparaître dans **Profil** avec l'état **En attente**, sans être visible dans la bibliothèque publique.
-6. Faites approuver le document par un modérateur. Vérifiez la lecture page par page, le défilement continu, et que le téléchargement ouvre le même fichier.
+6. Faites approuver le document par un modérateur. Vérifiez que le lecteur affiche le PDF déposé page par page et en défilement continu, et que le téléchargement restitue le même fichier.
 7. Supprimez le dépôt de test depuis le profil et vérifiez qu'il n'est plus disponible.
 
 ### En cas de problème
@@ -123,6 +132,6 @@ Les changements de filière restent indisponibles entre utilisateurs tant que le
 - **Erreur SQL** : lisez le premier message rouge dans SQL Editor et assurez-vous que le fichier entier a été copié.
 - **Catalogue vide / erreur API** : vérifiez l'URL API, les variables Supabase du backend et les logs de ce service.
 - **Erreur CORS** : ajoutez le domaine exact de Vercel dans `CORS_ORIGINS`, puis redéployez le backend.
-- **Erreur de lecture ou de dépôt PDF** : vérifiez que le bucket privé `academic-documents` existe et que le backend possède la clé `service_role`.
+- **Erreur de lecture ou de dépôt PDF** : vérifiez que le bucket privé `academic-documents` existe, que le backend possède la clé `service_role` et que l’API retourne une URL signée accessible. Le lecteur ne remplace jamais un PDF manquant par un document fictif.
 
 La base n'est créée qu'après l'exécution du SQL dans votre projet Supabase. Ce dépôt ne crée pas le projet cloud à votre place.

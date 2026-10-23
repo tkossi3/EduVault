@@ -2,7 +2,7 @@
    Supporte le Mode Page par Page et la Vue Navigateur (Défilement Continu Plein Écran) */
 (async () => {
     const params = new URLSearchParams(location.search);
-    const documentId = params.get("id") || "doc-algo-2026";
+    const documentId = params.get("id");
     const store = window.EduVaultStore;
     const currentAcademicYear = () => {
         const year = new Date().getFullYear();
@@ -103,8 +103,34 @@
     let totalPages = 1;
     let scale = 1.35;
     let viewMode = "single"; // "single" (Page par Page) ou "continuous" (Vue Navigateur / Défilement continu)
-    let rawPdfBlobUrl = null;
     let rawPdfBytes = null;
+
+    const showReaderError = (message) => {
+        if (loadingIndicator) {
+            const errorMessage = document.createElement("p");
+            errorMessage.setAttribute("role", "alert");
+            errorMessage.textContent = message;
+            loadingIndicator.replaceChildren(errorMessage);
+            loadingIndicator.style.display = "flex";
+        }
+        if (canvasWrapper) canvasWrapper.style.display = "none";
+        if (continuousWrapper) continuousWrapper.style.display = "none";
+        if (toggleViewBtn) toggleViewBtn.disabled = true;
+        for (const button of [
+            document.querySelector("#download-document"),
+            document.querySelector("#print-document"),
+            document.querySelector("#previous-page"),
+            document.querySelector("#next-page"),
+            document.querySelector("#zoom-in"),
+            document.querySelector("#zoom-out"),
+            document.querySelector("#zoom-reset"),
+            document.querySelector("#zoom-fit"),
+            pageInput
+        ]) {
+            if (button) button.disabled = true;
+        }
+        if (modeTag) modeTag.textContent = "Document indisponible";
+    };
 
     // Helper: conversion Base64 DataURL -> Uint8Array
     const dataUrlToUint8Array = (dataUrl) => {
@@ -151,7 +177,9 @@
             }).promise;
 
         } catch (err) {
-            console.warn("Single page render error:", err);
+            console.error("Single page render error:", err);
+            showReaderError("Cette page du document PDF n’a pas pu être affichée.");
+            return;
         }
 
         updateUIIndicators();
@@ -199,7 +227,9 @@
                 }).promise;
             }
         } catch (err) {
-            console.warn("Continuous render error:", err);
+            console.error("Continuous render error:", err);
+            showReaderError("Le document PDF n’a pas pu être affiché en entier.");
+            return;
         }
 
         const targetPage = continuousWrapper.querySelector(`#page-container-${targetPageNum}`);
@@ -209,133 +239,6 @@
             readerViewport.scrollTop += pageTop - viewportTop - 12;
             readerViewport.scrollLeft = 0;
         }
-        updateUIIndicators();
-    };
-
-    // ==================== GÉNÉRATEUR ACADÉMIQUE MULTI-PAGES HAUTE FIDÉLITÉ (DOCUMENTS EXEMPLES) ====================
-    const mockPagesContent = [
-        {
-            num: 1,
-            subtitle: "Partie I : Énoncé Officiel & Structures Fondamentales",
-            sections: [
-                {
-                    title: "Exercice 1 — Théorie des Graphes & Plus Court Chemin (6 points)",
-                    text: `Soit un graphe orienté et pondéré G = (V, E, W) représentant le réseau fédérateur interconnectant les campus universitaires de Lomé et Kara. On désigne par V = {A, B, C, D, E, F} l'ensemble des nœuds de routage.<br><br>
-                    1. Écrire la matrice d'adjacence pondérée du graphe.<br>
-                    2. Appliquer l'algorithme de Dijkstra pas à pas à partir du sommet source A. Détailler l'état du vecteur des distances minimales et des prédécesseurs à chaque itération.<br>
-                    3. Quelle est la complexité asymptotique de cet algorithme en utilisant une file de priorité min-heap ?`
-                },
-                {
-                    title: "Extrait de Code — Structure de Données Adjacence (C / Python)",
-                    code: `typedef struct Arc {\n    int destination;\n    double poids;\n    struct Arc* suivant;\n} Arc;\n\ntypedef struct Graphe {\n    int nombreSommets;\n    Arc** listesAdjacence;\n} Graphe;`
-                }
-            ]
-        },
-        {
-            num: 2,
-            subtitle: "Partie II : Arbres Binaires de Recherche Équilibrés & Optimisation",
-            sections: [
-                {
-                    title: "Exercice 2 — Arbres AVL et Rotations d'Équilibrage (7 points)",
-                    text: `On considère un arbre AVL initialement vide dans lequel on insère consécutivement les clés suivantes : [45, 12, 67, 89, 34, 23, 78, 90, 10].<br><br>
-                    1. Définir le facteur d'équilibre d'un nœud et la condition de balance d'un arbre AVL.<br>
-                    2. Dessiner l'arbre après chaque insertion provoquant un déséquilibre. Préciser le type de rotation effectuée (Rotation Simple Gauche, Simple Droite, Double Gauche-Droite, Double Droite-Gauche).<br>
-                    3. Démontrer que la hauteur h d'un arbre AVL à n nœuds vérifie h < 1.44 * log2(n + 2).`
-                }
-            ]
-        },
-        {
-            num: 3,
-            subtitle: "Partie III : Programmation Dynamique & Analyse Algorithmique",
-            sections: [
-                {
-                    title: "Exercice 3 — Problème du Sac à Dos & Sous-Structure Optimale (7 points)",
-                    text: `Une unité de calcul dispose d'une capacité maximale de bande passante C = 15 Gbps. On dispose de 5 flux de données à prioriser ayant chacun un poids (en Gbps) et une valeur d'utilité académique :<br>
-                    • Flux 1 : (poids: 3, valeur: 12) | Flux 2 : (poids: 4, valeur: 15)<br>
-                    • Flux 3 : (poids: 5, valeur: 25) | Flux 4 : (poids: 2, valeur: 8)<br>
-                    • Flux 5 : (poids: 6, valeur: 28)<br><br>
-                    1. Donner la relation de récurrence de Bellman pour la programmation dynamique du Sac à Dos 0/1.<br>
-                    2. Construire le tableau dynamique 2D complet et expliciter le choix optimal de flux maximisant l'utilité globale.`
-                }
-            ]
-        },
-        {
-            num: 4,
-            subtitle: "Partie IV : Corrigé Officiel & Barème de Notation Certifié",
-            sections: [
-                {
-                    title: "Barème Académique & Solution Synthétique",
-                    text: `<strong>Exercice 1 :</strong> Initialisation correcte (1 pt) ; Tableau des itérations de Dijkstra sans erreur (3 pts) ; Complexité O((|V| + |E|) log |V|) justifiée (2 pts).<br><br>
-                    <strong>Exercice 2 :</strong> Facteurs d'équilibre explicites (2 pts) ; Rotations appliquées adéquatement (3 pts) ; Démonstration de la hauteur (2 pts).<br><br>
-                    <strong>Exercice 3 :</strong> Matrice DP correcte avec valeur max = 61 (4 pts) ; Rétro-traçage de la solution optimale {Flux 2, Flux 3, Flux 5} (3 pts).`
-                }
-            ]
-        }
-    ];
-
-    const createMockPageDom = (pageData) => {
-        const pageEl = document.createElement("div");
-        pageEl.className = "pdf-mockup-page";
-        pageEl.style.width = "100%";
-        pageEl.style.maxWidth = `${Math.min(1050, Math.floor(780 * scale))}px`;
-        pageEl.style.margin = "0 auto";
-        pageEl.style.boxShadow = "0 10px 32px rgba(0, 0, 0, 0.12)";
-
-        pageEl.innerHTML = `
-            <div class="doc-mock-header">
-                <div>
-                    <span class="doc-mock-stamp">APERÇU DE DÉMONSTRATION · EDUVAULT</span>
-                    <h2 class="doc-mock-title" style="margin-top: 8px;">${escapeHtml(institution)}</h2>
-                    <p style="margin: 0; font-size: 13px; color: #475569; font-weight: 600;">
-                        ${escapeHtml(program)} — ${escapeHtml(course)}
-                    </p>
-                </div>
-                <div style="text-align: right; font-size: 12px; color: #64748b;">
-                    <strong>Année académique ${escapeHtml(year)}</strong><br>
-                    <span>Semestre ${semester} (S${semester})</span><br>
-                    <span style="font-weight: 700; color: var(--primary);">Page ${pageData.num} / ${totalPages}</span>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 24px; padding: 12px 16px; background: #f8fafc; border-left: 4px solid #1e3a8a; border-radius: 4px;">
-                <strong style="color: #1e3a8a; font-size: 14px;">${escapeHtml(pageData.subtitle)}</strong>
-                <p style="margin: 4px 0 0; font-size: 12px; color: #64748b;">Exemple pédagogique de démonstration. Vérifiez les sources et l’exactitude avant usage.</p>
-            </div>
-
-            ${pageData.sections.map(sec => `
-                <div class="doc-mock-section">
-                    <h4>${escapeHtml(sec.title)}</h4>
-                    ${sec.text ? `<p>${sec.text}</p>` : ''}
-                    ${sec.code ? `<pre class="doc-mock-code"><code>${escapeHtml(sec.code)}</code></pre>` : ''}
-                </div>
-            `).join('')}
-
-            <div style="margin-top: 40px; padding-top: 14px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8;">
-                <span>EduVault Lomé · Coffre-Fort Numérique Universitaire</span>
-                <span>Document · Réf: ${escapeHtml(currentDoc.id)}</span>
-            </div>
-        `;
-        return pageEl;
-    };
-
-    const renderMockSinglePage = (num) => {
-        if (!canvasWrapper) return;
-        canvasWrapper.innerHTML = "";
-        const pageData = mockPagesContent.find(p => p.num === num) || mockPagesContent[0];
-        canvasWrapper.appendChild(createMockPageDom(pageData));
-        updateUIIndicators();
-    };
-
-    const renderMockContinuousView = () => {
-        if (!continuousWrapper) return;
-        continuousWrapper.innerHTML = "";
-        mockPagesContent.forEach(pageData => {
-            const container = document.createElement("div");
-            container.className = "pdf-page-container";
-            container.style.width = "100%";
-            container.appendChild(createMockPageDom(pageData));
-            continuousWrapper.appendChild(container);
-        });
         updateUIIndicators();
     };
 
@@ -361,13 +264,18 @@
         }
     };
 
-    let signedPdfUrl = null;
-
     // ==================== CHARGEMENT DU DOCUMENT ====================
     const loadPdfDocument = async () => {
         if (loadingIndicator) loadingIndicator.style.display = "flex";
 
         try {
+            if (!documentId) {
+                throw new Error("Aucun document n’a été sélectionné.");
+            }
+            if (!window.pdfjsLib) {
+                throw new Error("Le lecteur PDF n’a pas pu être chargé.");
+            }
+
             let fileRawData = sessionStorage.getItem(`eduvault_file_${currentDoc.id}`);
             if (!fileRawData && store) {
                 fileRawData = await store.getPdfFile(currentDoc.id);
@@ -382,18 +290,13 @@
                 if (typeof fileRawData === "string" && fileRawData.startsWith("data:")) {
                     rawPdfBytes = dataUrlToUint8Array(fileRawData);
                     if (rawPdfBytes) {
-                        const blob = new Blob([rawPdfBytes], { type: "application/pdf" });
-                        rawPdfBlobUrl = URL.createObjectURL(blob);
                         pdfSource = { data: rawPdfBytes };
                     } else {
                         pdfSource = fileRawData;
                     }
                 } else if (fileRawData instanceof Uint8Array || fileRawData instanceof ArrayBuffer) {
-                    const blob = new Blob([fileRawData], { type: "application/pdf" });
-                    rawPdfBlobUrl = URL.createObjectURL(blob);
                     pdfSource = { data: fileRawData };
                 } else if (fileRawData instanceof Blob) {
-                    rawPdfBlobUrl = URL.createObjectURL(fileRawData);
                     const buf = await fileRawData.arrayBuffer();
                     pdfSource = { data: new Uint8Array(buf) };
                 } else {
@@ -401,9 +304,12 @@
                 }
             }
 
-            if (!pdfSource && currentDoc.id && window.pdfjsLib) {
+            if (!pdfSource && currentDoc.id) {
                 const config = window.EDUVAULT_CONFIG || {};
                 const session = await window.EduVaultAuth?.getSession();
+                if (!config.API_BASE_URL) {
+                    throw new Error("L’adresse de l’API n’est pas configurée.");
+                }
                 const endpoint = session?.access_token
                     ? `${config.API_BASE_URL}/documents/${encodeURIComponent(currentDoc.id)}/owner-view-url`
                     : `${config.API_BASE_URL}/documents/${encodeURIComponent(currentDoc.id)}/view-url`;
@@ -417,14 +323,12 @@
                     throw new Error(result.detail || `Lecture impossible (${response.status}).`);
                 }
                 const result = await response.json();
-                signedPdfUrl = result.signed_url;
-                pdfSource = signedPdfUrl;
+                pdfSource = result.signed_url;
             }
 
             if (!pdfSource) {
                 throw new Error("Le fichier PDF original est introuvable.");
             }
-            if (!window.pdfjsLib) throw new Error("Le lecteur PDF n’a pas pu être chargé.");
 
             const loadingTask = pdfjsLib.getDocument(pdfSource);
             pdfDoc = await loadingTask.promise;
@@ -434,17 +338,19 @@
             await adjustFitWidth();
 
         } catch (err) {
-            console.error("Chargement du PDF original impossible :", err);
-            if (loadingIndicator) {
-                loadingIndicator.style.display = "flex";
-                loadingIndicator.innerHTML = `<p role="alert">${escapeHtml(err.message || "Le document ne peut pas être affiché.")}</p>`;
-            }
-            if (singleCanvas) singleCanvas.hidden = true;
-            if (toggleViewBtn) toggleViewBtn.disabled = true;
+            console.error("Impossible de charger le document PDF demandé :", err);
+            pdfDoc = null;
+            showReaderError(
+                err instanceof Error
+                    ? `Impossible de lire le document fourni : ${err.message}`
+                    : "Impossible de lire le document fourni."
+            );
         }
     };
 
     const renderCurrentMode = () => {
+        if (!pdfDoc) return;
+
         if (viewMode === "continuous") {
             if (canvasWrapper) canvasWrapper.style.display = "none";
             if (continuousWrapper) continuousWrapper.style.display = "flex";
@@ -584,15 +490,18 @@
         const fileName = currentDoc.file_name || `${title.replace(/[^a-zA-Z0-9_-]/g, "_")}.pdf`;
         try {
             const data = rawPdfBytes || (pdfDoc ? await pdfDoc.getData() : null);
-            if (!data) throw new Error("Le PDF original n’est pas disponible au téléchargement.");
-            const downloadUrl = URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
-            const a = document.createElement("a");
-            a.href = downloadUrl;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+            if (data) {
+                const downloadUrl = URL.createObjectURL(new Blob([data], { type: "application/pdf" }));
+                const a = document.createElement("a");
+                a.href = downloadUrl;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+            } else {
+                throw new Error("Le fichier PDF original n’est pas disponible au téléchargement.");
+            }
         } catch (error) {
             console.error("Téléchargement du PDF original impossible :", error);
             window.EduVaultAuth?.showToast(error.message || "Le PDF ne peut pas être téléchargé.", "error");

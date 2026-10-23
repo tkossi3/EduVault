@@ -712,13 +712,22 @@ img {
     overflow-x: auto;
     overscroll-behavior-inline: contain;
     scroll-snap-type: x mandatory;
-    scrollbar-width: thin;
-    padding: 2px 2px 12px;
+    scrollbar-width: none; /* Masque la barre sous Firefox */
+    -ms-overflow-style: none; /* Masque la barre sous IE/Edge */
+    padding: 6px 4px 16px;
+    scroll-behavior: smooth;
+}
+
+.home-document-carousel.is-carousel::-webkit-scrollbar,
+.institution-grid.is-carousel::-webkit-scrollbar {
+    display: none; /* Masque la barre horizontale sous Chrome/Safari/Brave */
+    width: 0;
+    height: 0;
 }
 
 .home-document-carousel.is-carousel > *,
 .institution-grid.is-carousel > * {
-    flex: 0 0 min(280px, 32vw);
+    flex: 0 0 min(300px, 32vw);
     scroll-snap-align: start;
 }
 
@@ -870,8 +879,16 @@ img {
         overflow-y: auto;
         overscroll-behavior-y: contain;
         scroll-snap-type: y mandatory;
-        scrollbar-width: thin;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
         padding: 2px 2px 12px;
+    }
+
+    .home-document-carousel.is-carousel::-webkit-scrollbar,
+    .institution-grid.is-carousel::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
     }
 
     .home-document-carousel.is-carousel {

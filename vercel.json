@@ -2,28 +2,9 @@
   "version": 2,
   "name": "eduvault",
   "public": false,
+  "installCommand": "npm --prefix frontend ci",
+  "buildCommand": "npm --prefix frontend run build",
+  "outputDirectory": "frontend/dist",
   "cleanUrls": true,
-  "trailingSlash": false,
-  "routes": [
-    {
-      "src": "/pages/(.*)",
-      "dest": "/frontend/pages/$1"
-    },
-    {
-      "src": "/styles/(.*)",
-      "dest": "/frontend/styles/$1"
-    },
-    {
-      "src": "/scripts/(.*)",
-      "dest": "/frontend/scripts/$1"
-    },
-    {
-      "src": "/assets/(.*)",
-      "dest": "/frontend/assets/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/frontend/$1"
-    }
-  ]
+  "trailingSlash": false
 }

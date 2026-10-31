@@ -1,5 +1,29 @@
 /* Bibliothèque d'icônes SVG pour EduVault — Design épuré, net et professionnel */
+const institutionMark = (institution = {}) => {
+    const name = String(institution.name || "Établissement");
+    const suffix = name.match(/\(([^()]*)\)\s*$/)?.[1];
+    const alias = (institution.aliases || []).find((value) => /^[A-Z0-9-]{2,8}$/i.test(value));
+    const candidate = alias || suffix;
+    const mark = (candidate
+        ? candidate.split(/[-\s]/)[0]
+        : name.split(/\s+/).filter((word) => !["de", "des", "du", "et", "la", "le", "les"].includes(word.toLowerCase())).map((word) => word[0]).join("")
+    ).slice(0, 4).toUpperCase().replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[char]);
+    const sectorClass = institution.sector === "private"
+        ? " is-private"
+        : institution.sector === "interstate" ? " is-interstate" : "";
+
+    return `<svg class="institution-logo${sectorClass}" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <rect class="institution-logo-bg" x="3" y="3" width="58" height="58" rx="18"></rect>
+        <path class="institution-logo-roof" d="M15 28 32 16l17 12M18 29v20m28-20v20M14 49h36"></path>
+        <circle class="institution-logo-seal" cx="32" cy="37" r="13"></circle>
+        <text class="institution-logo-text" x="32" y="40" text-anchor="middle">${mark}</text>
+    </svg>`;
+};
+
 window.EduVaultIcons = {
+    institutionMark,
     search: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`,
     bell: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>`,
     sun: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`,

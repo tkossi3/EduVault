@@ -806,12 +806,13 @@
 }
 
 .catalog-edit-notice {
-    padding: 12px 16px;
-    border: 1px solid var(--warning);
-    border-radius: var(--radius-sm);
-    background: var(--warning-soft);
+    padding: 14px 18px;
+    border: 1px solid var(--primary-border);
+    border-radius: var(--radius-md);
+    background: var(--primary-light);
     color: var(--text-secondary);
     font-size: 13px;
+    line-height: 1.6;
 }
 
 .program-review-card {
@@ -861,6 +862,14 @@
     gap: 8px;
 }
 
+.catalog-empty-programs {
+    margin: 0;
+    padding: 18px 20px;
+    border-top: 1px solid var(--line-subtle);
+    color: var(--muted);
+    font-size: 13px;
+}
+
 .catalog-loading,
 .catalog-load-error {
     margin: 0;
@@ -885,6 +894,60 @@
 .institution-accordion:hover,
 .program-accordion:hover {
     border-color: var(--primary-border);
+}
+
+.institution-summary-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.institution-summary-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.institution-summary-title strong {
+    font-size: 17px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.institution-summary-title .badge {
+    padding: 3px 8px;
+    font-size: 11px;
+}
+
+.institution-summary-content > small {
+    display: block;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.institution-summary-content .catalog-source-link {
+    display: inline-flex;
+    margin-top: 6px;
+}
+
+.catalog-institution-mark {
+    display: grid;
+    width: 56px;
+    height: 56px;
+    flex: 0 0 56px;
+    place-items: center;
+    border-radius: 16px;
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.institution-accordion .institution-logo {
+    width: 56px;
+    height: 56px;
+    flex: 0 0 56px;
 }
 
 .institution-accordion > summary,

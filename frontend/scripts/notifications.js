@@ -60,16 +60,26 @@
             trigger.setAttribute("aria-expanded", "false");
         };
 
+        const positionMobilePopup = () => {
+            if (!window.matchMedia("(max-width: 600px)").matches) return;
+            const triggerRect = trigger.getBoundingClientRect();
+            popup.style.setProperty("--notification-popover-top", `${triggerRect.bottom + 10}px`);
+        };
+
         trigger.addEventListener("click", (event) => {
             if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
             event.preventDefault();
             if (popup.hidden) {
                 renderPopup();
+                positionMobilePopup();
                 popup.hidden = false;
                 trigger.setAttribute("aria-expanded", "true");
             } else {
                 closePopup();
             }
+        });
+        window.addEventListener("resize", () => {
+            if (!popup.hidden) positionMobilePopup();
         });
         document.addEventListener("click", (event) => {
             if (!actions.contains(event.target)) closePopup();

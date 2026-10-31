@@ -1,20 +1,20 @@
-﻿/* Gestion du thÃ¨me clair par dÃ©faut avec bascule dynamique et icÃ´nes SVG */
+﻿/* Gestion du thème clair par défaut avec bascule dynamique et icônes SVG */
 (() => {
     const key = "eduvault-theme";
-    // ThÃ¨me clair par dÃ©faut explicite
+    // Thème clair par défaut explicite
     const saved = localStorage.getItem(key) || "light";
     document.documentElement.dataset.theme = saved;
 
     const updateButtons = (theme) => {
         const icons = window.EduVaultIcons;
-        const iconSvg = theme === "dark" 
-            ? (icons?.sun || '<span aria-hidden="true">â˜¼</span>') 
-            : (icons?.moon || '<span aria-hidden="true">â˜¾</span>');
+        const iconSvg = theme === "dark"
+            ? (icons?.sun || '<span aria-hidden="true">☼</span>')
+            : (icons?.moon || '<span aria-hidden="true">☾</span>');
         
         document.querySelectorAll("[data-theme-toggle]").forEach((button) => {
             button.innerHTML = iconSvg;
-            button.setAttribute("title", theme === "dark" ? "Passer au thÃ¨me clair" : "Passer au thÃ¨me sombre");
-            button.setAttribute("aria-label", theme === "dark" ? "Passer au thÃ¨me clair" : "Passer au thÃ¨me sombre");
+            button.setAttribute("title", theme === "dark" ? "Passer au thème clair" : "Passer au thème sombre");
+            button.setAttribute("aria-label", theme === "dark" ? "Passer au thème clair" : "Passer au thème sombre");
         });
     };
 

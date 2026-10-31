@@ -36,18 +36,27 @@
         .trim();
 
     const uniqueByName = (items) => [...new Map(items.map((item) => [catalogNameKey(item.name), item])).values()];
+    const isCatalogProgram = (program) => {
+        if (!program || program.is_listed === false) return false;
+        const status = `${program.degree || ""} ${program.verification || ""}`;
+        if (/(?:historique|source secondaire|source ancienne)/i.test(status)) return false;
+        if (!/(?:à vérifier|à confirmer)/i.test(status)) return true;
+        return /^https:\/\/(?:www\.)?(?:univ-lome\.tg|univkara\.tg|new\.iai-togo\.tg|iai-togo\.tg|esgis\.org|defitech\.tg|esig\.tg)(?:\/|$)/i.test(program.source_url || "");
+    };
 
     const render = (data) => {
         currentData = data;
-        let institutions = uniqueByName(data.institutions || []);
+        let institutions = uniqueByName((data.institutions || []).filter((institution) =>
+            institution.is_listed !== false && !/(?:à vérifier|à confirmer)/i.test(institution.name)
+        ));
         const selectedProgram = selectedProgramId && data.programs.find((program) =>
-            program.id === selectedProgramId && program.is_listed !== false
+            program.id === selectedProgramId && isCatalogProgram(program)
         );
         const parentInstitutionId = selectedProgram?.institution_id || selectedInstitutionId;
         if (selectedProgram) {
             const institution = institutions.find((item) => item.id === selectedProgram.institution_id);
             if (pageTitle) pageTitle.textContent = selectedProgram.name;
-            if (pageIntro) pageIntro.textContent = [institution?.name, selectedProgram.degree || "Niveau à confirmer"].filter(Boolean).join(" · ");
+            if (pageIntro) pageIntro.textContent = [institution?.name, selectedProgram.degree || selectedProgram.degree_type || "Parcours en informatique"].filter(Boolean).join(" · ");
             if (breadcrumb) {
                 breadcrumb.innerHTML = `<a href="parcours.html?inst=${encodeURIComponent(selectedProgram.institution_id)}">${escapeHtml(institution?.name || "Établissement")}</a><span aria-hidden="true">›</span><span>${escapeHtml(selectedProgram.name)}</span>`;
                 breadcrumb.hidden = false;
@@ -56,7 +65,7 @@
             const institution = institutions.find((item) => item.id === selectedInstitutionId);
             if (institution) {
                 if (pageTitle) pageTitle.textContent = institution.name;
-                if (pageIntro) pageIntro.textContent = `${institution.city || "Togo"} · Formations recensées en informatique, à confirmer auprès de l’établissement.`;
+                if (pageIntro) pageIntro.textContent = `${institution.city || "Togo"} · ${institution.sector === "interstate" ? "Établissement inter-États" : institution.sector === "private" ? "Établissement privé" : "Établissement public"}`;
                 if (breadcrumb) {
                     breadcrumb.innerHTML = `<a href="parcours.html">Tous les établissements</a><span aria-hidden="true">›</span><span>${escapeHtml(institution.name)}</span>`;
                     breadcrumb.hidden = false;
@@ -79,7 +88,7 @@
                 const matchInst = inst.name.toLowerCase().includes(query)
                     || (inst.description && inst.description.toLowerCase().includes(query))
                     || (inst.aliases || []).some((alias) => alias.toLowerCase().includes(query));
-                const instPrograms = data.programs.filter((p) => p.institution_id === inst.id && p.is_listed !== false);
+                const instPrograms = data.programs.filter((p) => p.institution_id === inst.id && isCatalogProgram(p));
                 const matchProg = instPrograms.some((p) => p.name.toLowerCase().includes(query));
                 return matchInst || matchProg;
             });
@@ -97,7 +106,7 @@
 
         root.innerHTML = institutions.map((institution) => {
             let programs = uniqueByName(data.programs.filter((program) =>
-                program.institution_id === institution.id && program.is_listed !== false
+                program.institution_id === institution.id && isCatalogProgram(program)
             ));
             if (selectedProgramId) programs = programs.filter((program) => program.id === selectedProgramId);
 
@@ -113,7 +122,7 @@
             const badgeClass = isPublic ? "badge-primary" : "badge-accent";
             const badgeLabel = institution.sector === "interstate"
                 ? "Inter-États"
-                : isPublic ? "Public" : "Privé · statut à vérifier";
+                : isPublic ? "Public" : "Privé";
             const autoOpen = Boolean(currentSearch.trim() || selectedInstitutionId || selectedProgramId);
             const institutionSource = /^https?:\/\//i.test(institution.website || "")
                 ? `<a class="catalog-source-link" href="${escapeHtml(institution.website)}" target="_blank" rel="noopener noreferrer">Site officiel</a>`
@@ -122,16 +131,13 @@
             return `
             <details class="institution-accordion" data-institution-id="${escapeHtml(institution.id)}" ${autoOpen ? "open" : ""}>
                 <summary>
-                    <div class="institution-icon" style="width: 38px; height: 38px; border-radius: 8px; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; background: ${isPublic ? 'var(--primary-light)' : 'var(--accent-soft)'}; color: ${isPublic ? 'var(--primary)' : 'var(--accent)'}; border: 1px solid ${isPublic ? 'var(--primary-border)' : 'var(--accent-border)'};">
-                        ${escapeHtml(institution.name.slice(0, 1))}
-                    </div>
-                    <div style="flex: 1; min-width: 0;">
-                        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 2px;">
-                            <strong style="font-size: 15px;">${escapeHtml(institution.name)}</strong>
-                            <span class="badge ${badgeClass}" style="font-size: 10px; padding: 2px 7px;">${badgeLabel}</span>
+                    ${icons?.institutionMark?.(institution) || `<span class="catalog-institution-mark" aria-hidden="true">${escapeHtml(institution.name.slice(0, 1))}</span>`}
+                    <div class="institution-summary-content">
+                        <div class="institution-summary-title">
+                            <strong>${escapeHtml(institution.name)}</strong>
+                            <span class="badge ${badgeClass}">${badgeLabel}</span>
                         </div>
-                        <small style="color: var(--muted);">${escapeHtml(institution.city || "Lomé")} · ${escapeHtml(institution.description || "Informations à confirmer")}</small>
-                        <small class="catalog-verification">${escapeHtml(institution.verification || "Statut de l’offre à confirmer")}</small>
+                        <small>${escapeHtml(institution.city || "Togo")}</small>
                         ${institutionSource}
                     </div>
                     <span class="accordion-chevron" style="margin-left: auto; color: var(--muted); font-size: 16px;">▾</span>
@@ -162,7 +168,7 @@
                             <summary>
                                 <div>
                                     <strong>${escapeHtml(program.name)}</strong>
-                                    <small>${escapeHtml(program.degree || "Niveau à confirmer")} · <span class="catalog-verification">${escapeHtml(program.verification || "À confirmer")}</span></small>
+                                    <small>${escapeHtml(program.degree || program.degree_type || "Parcours en informatique")}</small>
                                 </div>
                                 <span class="badge badge-outline" style="margin-left: auto; font-size: 11px;">
                                     ${courses.length} cours
@@ -213,7 +219,7 @@
                                 }).join("")}
                             </div>
                         </details>`;
-                    }).join("") : '<p style="padding: 16px; color: var(--muted); font-size: 13px;">Aucun parcours informatique confirmé pour cet établissement.</p>'}
+                    }).join("") : '<p class="catalog-empty-programs">Aucun parcours recensé pour cet établissement.</p>'}
                 </div>
             </details>`;
         }).join("");
@@ -495,8 +501,34 @@
             });
             remoteData.institutions = (remoteData.institutions || []).map((institution) => {
                 const known = knownInstitutions.get(catalogNameKey(institution.name));
-                return { ...institution, ...(known || {}), id: institution.id };
+                return {
+                    ...institution,
+                    ...(known || {}),
+                    id: institution.id,
+                    is_listed: known ? known.is_listed !== false : institution.is_listed === true
+                };
             });
+            localData.institutions.forEach((institution) => {
+                const exists = remoteData.institutions.some((remoteInstitution) =>
+                    [remoteInstitution.name, ...(remoteInstitution.aliases || [])]
+                        .some((name) => catalogNameKey(name) === catalogNameKey(institution.name))
+                );
+                if (!exists) remoteData.institutions.push(institution);
+            });
+            const localInstitutionById = new Map(localData.institutions.map((institution) => [institution.id, institution]));
+            remoteData.programs = [
+                ...(remoteData.programs || []).filter(isCatalogProgram),
+                ...localData.programs.filter(isCatalogProgram).map((program) => {
+                    const localInstitution = localInstitutionById.get(program.institution_id);
+                    const remoteInstitution = localInstitution && remoteData.institutions.find((institution) =>
+                        [institution.name, ...(institution.aliases || [])]
+                            .some((name) => catalogNameKey(name) === catalogNameKey(localInstitution.name))
+                    );
+                    return remoteInstitution
+                        ? { ...program, institution_id: remoteInstitution.id }
+                        : program;
+                })
+            ];
             remoteData.documents = [];
             usingRemoteCatalog = true;
             render(remoteData);

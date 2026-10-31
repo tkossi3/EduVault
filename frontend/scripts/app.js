@@ -24,6 +24,13 @@
     const escapeHtml = (value = "") => String(value).replace(/[&<>"']/g, (char) => ({ 
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" 
     })[char]);
+    const institutionKey = (value = "") => String(value)
+        .replace(/^\s*[A-Z]{2,6}\s*[-–:]\s*/, "")
+        .replace(/\([^)]*\)/g, " ")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
 
     const carouselStates = new Map();
     const syncAutoCarousel = (container) => {
@@ -107,7 +114,7 @@
         results.innerHTML = visible.map((item) => {
             const courseName = item.course || pageParams.get("course") || "Ressource académique";
             const institutionName = item.institution || pageParams.get("institution") || "Établissement universitaire";
-            const programName = item.program || pageParams.get("program") || "Filière à confirmer";
+            const programName = item.program || pageParams.get("program") || "Parcours non précisé";
             const semester = item.semester || pageParams.get("semester") || 1;
             const params = new URLSearchParams({
                 id: item.id, 
@@ -229,7 +236,31 @@
             const response = await fetch(`${config.API_BASE_URL}/catalog`);
             if (!response.ok) throw new Error(`Réponse API ${response.status}`);
             const data = await response.json();
-            institutions = data.institutions || [];
+            const localInstitutions = store?.loadState().institutions || [];
+            const listingByName = new Map();
+            localInstitutions.forEach((institution) => {
+                [institution.name, ...(institution.aliases || [])].forEach((name) => {
+                    listingByName.set(institutionKey(name), institution.is_listed !== false);
+                });
+            });
+            institutions = (data.institutions || []).map((institution) => {
+                const listed = listingByName.get(institutionKey(institution.name));
+                return {
+                    ...institution,
+                    is_listed: listed === undefined ? institution.is_listed === true : listed
+                };
+            });
+            const remoteNames = new Set(institutions.flatMap((institution) =>
+                [institution.name, ...(institution.aliases || [])].map(institutionKey)
+            ));
+            localInstitutions.forEach((institution) => {
+                if (
+                    institution.is_listed !== false
+                    && ![institution.name, ...(institution.aliases || [])].some((name) => remoteNames.has(institutionKey(name)))
+                ) {
+                    institutions.push(institution);
+                }
+            });
             currentInstitutions = institutions;
             renderInstitutions();
         } catch (error) {
@@ -240,25 +271,25 @@
     const renderInstitutions = () => {
         const container = document.querySelector("#institution-list");
         if (!container) return;
-        const visibleInstitutions = currentInstitutions;
+        const visibleInstitutions = currentInstitutions.filter((inst) =>
+            inst.is_listed !== false && !/(?:à vérifier|à confirmer)/i.test(inst.name)
+        );
         container.classList.toggle("is-carousel", isExplorerPage);
         container.innerHTML = visibleInstitutions.map((inst) => `
             <a href="${catalogHref}?inst=${encodeURIComponent(inst.id)}" class="institution-card">
-                <div class="institution-icon">
-                    ${escapeHtml(inst.name.slice(0, 1))}
-                </div>
-                <div style="flex: 1; min-width: 0;">
+                ${icons?.institutionMark?.(inst) || `<div class="institution-icon" aria-hidden="true">${escapeHtml(inst.name.slice(0, 1))}</div>`}
+                <div class="institution-card-content">
                     <strong>${escapeHtml(inst.name)}</strong>
-                    <small>${escapeHtml(inst.city || "Lomé")} · ${escapeHtml(inst.description || "Campus Universitaire")}</small>
+                    <small>${escapeHtml(inst.city || "Togo")} · ${inst.sector === "interstate" ? "Inter-États" : inst.sector === "private" ? "Privé" : "Public"}</small>
                 </div>
-                <span style="color: var(--primary); font-weight: bold;">
+                <span class="institution-card-arrow" aria-hidden="true">
                     ${icons?.arrowRight || '→'}
                 </span>
             </a>
         `).join("");
 
         const moreLink = document.querySelector("#institutions-more");
-        if (moreLink) moreLink.hidden = currentInstitutions.length === 0;
+        if (moreLink) moreLink.hidden = visibleInstitutions.length === 0;
         syncAutoCarousel(container);
     };
 

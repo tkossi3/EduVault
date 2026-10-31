@@ -36,12 +36,9 @@
         if (state.timer) clearInterval(state.timer);
 
         const toggle = document.querySelector(`[data-carousel-toggle="${container.id}"]`);
-        const isVertical = window.matchMedia("(max-width: 768px)").matches;
         const canScroll = container.classList.contains("is-carousel")
             && container.children.length > 1
-            && (isVertical
-                ? container.scrollHeight > container.clientHeight + 4
-                : container.scrollWidth > container.clientWidth + 4)
+            && container.scrollWidth > container.clientWidth + 4
             && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         if (toggle) toggle.hidden = !canScroll;
         if (!canScroll) return;
@@ -70,27 +67,16 @@
             const firstCard = container.firstElementChild;
             if (!firstCard) return;
             const gap = parseFloat(getComputedStyle(container).gap) || 0;
-            if (isVertical) {
-                const stride = firstCard.getBoundingClientRect().height + gap;
-                const maxScroll = container.scrollHeight - container.clientHeight;
-                const nextTop = container.scrollTop + stride;
+            const stride = firstCard.getBoundingClientRect().width + gap;
+            const maxScroll = container.scrollWidth - container.clientWidth;
+            if (container.scrollLeft >= maxScroll - 6) {
+                container.scrollTo({ left: 0, behavior: "smooth" });
+            } else {
+                const nextLeft = container.scrollLeft + stride;
                 container.scrollTo({
-                    top: container.scrollTop >= maxScroll - 4 ? 0 : Math.min(nextTop, maxScroll),
+                    left: Math.min(nextLeft, maxScroll),
                     behavior: "smooth"
                 });
-            } else {
-                const stride = firstCard.getBoundingClientRect().width + gap;
-                const maxScroll = container.scrollWidth - container.clientWidth;
-                if (container.scrollLeft >= maxScroll - 6) {
-                    // Revenir doucement au début sans à-coup
-                    container.scrollTo({ left: 0, behavior: "smooth" });
-                } else {
-                    const nextLeft = container.scrollLeft + stride;
-                    container.scrollTo({
-                        left: Math.min(nextLeft, maxScroll),
-                        behavior: "smooth"
-                    });
-                }
             }
         }, 3600);
     };
@@ -105,8 +91,6 @@
             !item.is_demo && (!activeCategory || item.category === activeCategory)
         );
         if (isExplorerPage && !currentQuery) {
-            const mobile = window.matchMedia("(max-width: 768px)").matches;
-            visible = visible.slice(0, mobile ? 4 : 8);
             results.classList.add("is-carousel");
         } else {
             results.classList.remove("is-carousel");
@@ -256,10 +240,7 @@
     const renderInstitutions = () => {
         const container = document.querySelector("#institution-list");
         if (!container) return;
-        const mobile = window.matchMedia("(max-width: 768px)").matches;
-        const visibleInstitutions = isExplorerPage
-            ? currentInstitutions.slice(0, mobile ? 4 : 8)
-            : currentInstitutions;
+        const visibleInstitutions = currentInstitutions;
         container.classList.toggle("is-carousel", isExplorerPage);
         container.innerHTML = visibleInstitutions.map((inst) => `
             <a href="${catalogHref}?inst=${encodeURIComponent(inst.id)}" class="institution-card">
@@ -277,7 +258,7 @@
         `).join("");
 
         const moreLink = document.querySelector("#institutions-more");
-        if (moreLink) moreLink.hidden = currentInstitutions.length <= visibleInstitutions.length;
+        if (moreLink) moreLink.hidden = currentInstitutions.length === 0;
         syncAutoCarousel(container);
     };
 

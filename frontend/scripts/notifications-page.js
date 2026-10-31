@@ -14,6 +14,7 @@
     const formatDate = (isoString) => {
         try {
             const date = new Date(isoString);
+            if (Number.isNaN(date.getTime())) return "Récemment";
             return date.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
         } catch {
             return "Récemment";
@@ -59,7 +60,7 @@
                 </div>
                 <div class="notification-body">
                     <strong>${escapeHtml(item.title)}</strong>
-                    <small>${formatDate(item.created_at)}</small>
+                    <time datetime="${escapeHtml(item.created_at)}">${formatDate(item.created_at)}</time>
                 </div>
                 <div class="notification-actions">
                     ${item.document_id ? `
@@ -72,7 +73,7 @@
                             ${icons?.check || ''}
                             <span>Lu</span>
                         </button>`}
-                    <button class="icon-button btn-delete-notif" type="button" data-id="${item.id}" title="Supprimer cette alerte" style="width: 32px; height: 32px;">
+                    <button class="icon-button btn-delete-notif" type="button" data-id="${item.id}" title="Supprimer cette alerte" aria-label="Supprimer cette notification">
                         ${icons?.trash || '×'}
                     </button>
                 </div>

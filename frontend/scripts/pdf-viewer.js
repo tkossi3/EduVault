@@ -254,13 +254,13 @@
             if (continuousPageCount) {
                 continuousPageCount.textContent = `Vue Navigateur (Défilement continu) · ${totalPages} pages`;
             }
-            if (toggleViewText) toggleViewText.textContent = "Mode Page par Page";
-            if (modeTag) modeTag.textContent = "Défilement Continu Plein Écran";
+            if (toggleViewText) toggleViewText.textContent = "Lecture page par page";
+            if (modeTag) modeTag.textContent = "Défilement continu";
         } else {
             if (pageNavGroup) pageNavGroup.style.display = "flex";
             if (continuousInfoGroup) continuousInfoGroup.style.display = "none";
-            if (toggleViewText) toggleViewText.textContent = "Vue Navigateur (Défilement continu)";
-            if (modeTag) modeTag.textContent = "Mode Page par Page HD";
+            if (toggleViewText) toggleViewText.textContent = "Défilement continu";
+            if (modeTag) modeTag.textContent = "Lecture page par page";
         }
     };
 

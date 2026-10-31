@@ -907,14 +907,34 @@ img {
 
     .institution-card {
         min-width: 0;
-        gap: 8px;
-        padding: 12px 10px;
+        min-height: 154px;
+        gap: 14px;
+        padding: 20px 18px;
+        border-radius: var(--radius-md);
     }
 
     .institution-card .institution-icon {
-        width: 32px;
-        height: 32px;
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-sm);
+        font-size: 18px;
     }
+
+    .institution-card strong {
+        font-size: 17px;
+        line-height: 1.35;
+    }
+
+    .institution-card small {
+        margin-top: 6px;
+        font-size: 13px;
+        line-height: 1.45;
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+    }
+
 }
 
 @media (max-width: 900px) {
@@ -1007,9 +1027,10 @@ img {
         justify-content: center;
         gap: 3px;
         color: var(--muted);
-        font-size: 10px;
+        font-size: clamp(9px, 2.8vw, 11px);
         font-weight: 700;
         line-height: 1.15;
+        letter-spacing: -0.02em;
         text-align: center;
     }
 

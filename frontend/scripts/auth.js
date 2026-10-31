@@ -485,16 +485,16 @@
                 const libraryLink = document.createElement("a");
                 libraryLink.className = "nav-link";
                 libraryLink.href = libraryHref;
-                libraryLink.textContent = "BibliothÃ¨que";
+                libraryLink.textContent = "Bibliothèque";
                 nav.insertBefore(libraryLink, nav.children[1] || null);
             }
 
             const currentPath = window.location.pathname;
             const mobileLinks = [
                 { href: homeHref, label: "Explorer", icon: "M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z", active: /\/index\.html$|\/$/.test(currentPath) },
-                { href: libraryHref, label: "BibliothÃ¨que", icon: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z", active: /library\.html$/.test(currentPath) },
+                { href: libraryHref, label: "Bibliothèque", icon: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z", active: /library\.html$/.test(currentPath) },
                 { href: uploadHref, label: "Ajouter", icon: "M12 5v14M5 12h14", active: /upload\.html$/.test(currentPath), primary: true },
-                { href: catalogHref, label: "UniversitÃ©s", icon: "M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 9h.01M15 9h.01", active: /parcours\.html$/.test(currentPath) },
+                { href: catalogHref, label: "Universités", icon: "M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 9h.01M15 9h.01", active: /parcours\.html$/.test(currentPath) },
                 { href: profileHref, label: "Profil", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z", active: /profile\.html$/.test(currentPath) }
             ];
             const mobileNav = document.createElement("nav");

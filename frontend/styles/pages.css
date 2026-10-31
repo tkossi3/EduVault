@@ -279,6 +279,22 @@
     border-bottom: 1px solid var(--line);
 }
 
+.profile-documents-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+}
+
+.profile-documents-heading h3 {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
 .user-doc-item {
     display: flex;
     align-items: center;
@@ -335,6 +351,40 @@
     border: 1px solid var(--line);
     border-radius: var(--radius-sm);
     background: var(--surface);
+}
+
+.profile-doc-copy {
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-doc-badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.profile-doc-title {
+    margin: 0 0 5px;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.profile-doc-title a {
+    color: var(--text);
+    text-decoration: none;
+}
+
+.profile-doc-meta {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
 }
 
 .profile-doc-actions {
@@ -1209,9 +1259,28 @@
         gap: 12px;
     }
 
-    .stats-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
+    .profile-stats {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .profile-stats .stat-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 16px;
+    }
+
+    .profile-stats .stat-card-title {
+        margin: 0;
+        font-size: 11px;
+    }
+
+    .profile-stats .stat-card-value {
+        flex: 0 0 auto;
+        font-size: 24px;
     }
 
     .exploration-cta-group {
@@ -1233,11 +1302,30 @@
     .profile-doc-card {
         align-items: flex-start;
         flex-direction: column;
+        gap: 14px;
+        padding: 16px;
     }
 
     .profile-doc-actions {
         width: 100%;
-        justify-content: flex-end;
+        justify-content: stretch;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+    }
+
+    .profile-doc-actions > * {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .profile-documents-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .profile-new-document {
+        width: 100%;
     }
 
     .reader-header {
@@ -1304,8 +1392,13 @@
 }
 
 @media (max-width: 480px) {
-    .stats-grid {
-        grid-template-columns: 1fr;
+    .profile-content-area {
+        gap: 18px;
+    }
+
+    .profile-section-card {
+        padding: 16px;
+        border-radius: var(--radius-md);
     }
 
     .exploration-card-header {

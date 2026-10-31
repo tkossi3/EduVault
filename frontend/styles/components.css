@@ -390,14 +390,23 @@
 
 .notification-popover-list {
     display: grid;
-    padding-top: 6px;
+    gap: 8px;
+    padding-top: 12px;
 }
 
 .notification-popover-item {
     display: grid;
-    gap: 3px;
-    padding: 10px 8px;
-    border-radius: var(--radius-xs);
+    gap: 5px;
+    padding: 13px 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+}
+
+.notification-popover-item.is-unread {
+    border-left: 3px solid var(--primary);
+    border-color: var(--primary-border);
+    border-left-width: 3px;
+    padding-left: 11px;
 }
 
 .notification-popover-item:hover,
@@ -418,7 +427,16 @@
 
 @media (max-width: 600px) {
     .notification-popover {
-        right: 0;
+        position: fixed;
+        top: 50vh;
+        right: auto;
+        left: 50vw;
+        width: min(420px, calc(100vw - 32px));
+        max-height: min(72dvh, 560px);
+        padding: 18px;
+        border-radius: var(--radius-lg);
+        box-shadow: 0 0 0 100vmax rgb(15 23 42 / 0.32), 0 24px 64px rgb(0 0 0 / 0.28);
+        transform: translate(-50%, -50%);
     }
 }
 

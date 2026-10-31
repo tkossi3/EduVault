@@ -202,8 +202,8 @@
 
             return `
             <article class="profile-doc-card">
-                <div style="flex: 1; min-width: 0;">
-                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 6px;">
+                <div class="profile-doc-copy">
+                    <div class="profile-doc-badges">
                         <span class="badge badge-primary" style="font-size: 10px;">${escapeHtml(doc.category)}</span>
                         <span class="badge badge-accent" style="font-size: 10px; font-weight: 700;">Semestre ${doc.semester || 1} (S${doc.semester || 1})</span>
                         <span class="badge ${doc.status === "approved" ? "badge-primary" : doc.status === "rejected" ? "badge-danger" : "badge-warning"}" style="font-size: 10px;">
@@ -211,12 +211,12 @@
                         </span>
                         <span class="badge badge-outline" style="font-size: 10px; border: 1px solid var(--line);">${escapeHtml(doc.program || "Filière")}</span>
                     </div>
-                    <h4 style="margin: 0 0 4px; font-size: 14px; font-weight: 700; line-height: 1.3;">
+                    <h4 class="profile-doc-title">
                         <a href="document-view.html?${params}" style="color: var(--text); text-decoration: none;">
                             ${escapeHtml(doc.title)}
                         </a>
                     </h4>
-                    <p style="margin: 0; font-size: 12px; color: var(--muted);">
+                    <p class="profile-doc-meta">
                         ${escapeHtml(doc.course)} · ${escapeHtml(doc.institution)} · ${formatSize(doc.file_size)}
                     </p>
                 </div>

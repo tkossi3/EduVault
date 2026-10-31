@@ -65,7 +65,8 @@
             const institution = institutions.find((item) => item.id === selectedInstitutionId);
             if (institution) {
                 if (pageTitle) pageTitle.textContent = institution.name;
-                if (pageIntro) pageIntro.textContent = `${institution.city || "Togo"} · ${institution.sector === "interstate" ? "Établissement inter-États" : institution.sector === "private" ? "Établissement privé" : "Établissement public"}`;
+                const institutionLocation = [institution.city, institution.country && institution.country !== "Togo" ? institution.country : ""].filter(Boolean).join(", ") || "Togo";
+                if (pageIntro) pageIntro.textContent = `${institutionLocation} · ${institution.sector === "interstate" ? "Établissement inter-États" : institution.sector === "private" ? "Établissement privé" : "Établissement public"}`;
                 if (breadcrumb) {
                     breadcrumb.innerHTML = `<a href="parcours.html">Tous les établissements</a><span aria-hidden="true">›</span><span>${escapeHtml(institution.name)}</span>`;
                     breadcrumb.hidden = false;
@@ -137,7 +138,7 @@
                             <strong>${escapeHtml(institution.name)}</strong>
                             <span class="badge ${badgeClass}">${badgeLabel}</span>
                         </div>
-                        <small>${escapeHtml(institution.city || "Togo")}</small>
+                        <small>${escapeHtml([institution.city, institution.country && institution.country !== "Togo" ? institution.country : ""].filter(Boolean).join(", ") || "Togo")}</small>
                         ${institutionSource}
                     </div>
                     <span class="accordion-chevron" style="margin-left: auto; color: var(--muted); font-size: 16px;">▾</span>

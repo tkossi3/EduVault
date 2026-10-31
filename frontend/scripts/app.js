@@ -37,18 +37,66 @@
         if (!container) return;
         let state = carouselStates.get(container.id);
         if (!state) {
-            state = { timer: null, hovered: false, focused: false, manuallyPaused: false, bound: false };
+            state = { timer: null, frame: null, hovered: false, focused: false, manuallyPaused: false, bound: false };
             carouselStates.set(container.id, state);
         }
         if (state.timer) clearInterval(state.timer);
+        if (state.frame) cancelAnimationFrame(state.frame);
 
         const toggle = document.querySelector(`[data-carousel-toggle="${container.id}"]`);
+        const isCampusCarousel = container.id === "institution-list";
+        if (isCampusCarousel) {
+            container.classList.remove("is-continuous-carousel");
+            container.querySelectorAll(":scope > [data-carousel-clone]").forEach((clone) => clone.remove());
+        }
         const canScroll = container.classList.contains("is-carousel")
             && container.children.length > 1
             && container.scrollWidth > container.clientWidth + 4
             && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         if (toggle) toggle.hidden = !canScroll;
         if (!canScroll) return;
+
+        if (isCampusCarousel) {
+            const cards = [...container.children];
+            cards.forEach((card) => {
+                const clone = card.cloneNode(true);
+                clone.dataset.carouselClone = "true";
+                clone.setAttribute("aria-hidden", "true");
+                clone.setAttribute("inert", "");
+                container.append(clone);
+            });
+            const firstCard = cards[0];
+            const firstClone = container.querySelector(":scope > [data-carousel-clone]");
+            state.loopDistance = firstClone.getBoundingClientRect().left - firstCard.getBoundingClientRect().left;
+            state.position = container.scrollLeft;
+            state.lastRenderedScroll = container.scrollLeft;
+            container.classList.add("is-continuous-carousel");
+            if (!state.scrollBound) {
+                container.addEventListener("scroll", () => {
+                    if (Math.abs(container.scrollLeft - state.lastRenderedScroll) > 1) {
+                        state.position = container.scrollLeft;
+                    }
+                }, { passive: true });
+                state.scrollBound = true;
+            }
+            let previousFrameTime = 0;
+            const animate = (time) => {
+                if (document.hidden) {
+                    previousFrameTime = 0;
+                } else if (previousFrameTime) {
+                    state.position += (time - previousFrameTime) * 0.025;
+                    if (state.position >= state.loopDistance) {
+                        state.position -= state.loopDistance;
+                    }
+                    container.scrollLeft = state.position;
+                    state.lastRenderedScroll = container.scrollLeft;
+                }
+                previousFrameTime = time;
+                state.frame = requestAnimationFrame(animate);
+            };
+            state.frame = requestAnimationFrame(animate);
+            return;
+        }
 
         if (!state.bound) {
             container.addEventListener("pointerenter", () => { state.hovered = true; });
@@ -280,7 +328,7 @@
                 ${icons?.institutionMark?.(inst) || `<div class="institution-icon" aria-hidden="true">${escapeHtml(inst.name.slice(0, 1))}</div>`}
                 <div class="institution-card-content">
                     <strong>${escapeHtml(inst.name)}</strong>
-                    <small>${escapeHtml(inst.city || "Togo")} · ${inst.sector === "interstate" ? "Inter-États" : inst.sector === "private" ? "Privé" : "Public"}</small>
+                    <small>${escapeHtml([inst.city, inst.country && inst.country !== "Togo" ? inst.country : ""].filter(Boolean).join(", ") || "Togo")} · ${inst.sector === "interstate" ? "Inter-États" : inst.sector === "private" ? "Privé" : "Public"}</small>
                 </div>
                 <span class="institution-card-arrow" aria-hidden="true">
                     ${icons?.arrowRight || '→'}

@@ -784,6 +784,11 @@ img {
     scroll-behavior: smooth;
 }
 
+.institution-grid.is-continuous-carousel {
+    scroll-behavior: auto;
+    scroll-snap-type: none;
+}
+
 .home-document-carousel.is-carousel::-webkit-scrollbar,
 .institution-grid.is-carousel::-webkit-scrollbar {
     display: none; /* Masque la barre horizontale sous Chrome/Safari/Brave */

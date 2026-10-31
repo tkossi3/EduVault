@@ -135,10 +135,14 @@
         { id: "inst-ipm", name: "IPM-Togo", city: "Lomé", country: "Togo", sector: "private", description: "Piste de recherche citée dans un annuaire; existence d'un parcours informatique supérieur à confirmer.", verification: "Piste à vérifier; aucun parcours informatique confirmé" },
         { id: "inst-ifts", name: "IFTS", city: "Lomé", country: "Togo", sector: "private", description: "Piste de recherche citée dans un annuaire; existence d'un parcours informatique supérieur à confirmer.", verification: "Piste à vérifier; aucun parcours informatique confirmé" },
         { id: "inst-ism-adonai", name: "ISM Adonaï", city: "Lomé", country: "Togo", sector: "private", description: "Piste de recherche citée dans un annuaire; existence d'un parcours informatique supérieur à confirmer.", verification: "Piste à vérifier; aucun parcours informatique confirmé" },
-        { id: "inst-esiba", name: "ESIBA", city: "Lomé", country: "Togo", sector: "private", description: "Piste de recherche citée dans un annuaire; existence d'un parcours informatique supérieur à confirmer.", verification: "Piste à vérifier; aucun parcours informatique confirmé" }
+        { id: "inst-esiba", name: "ESIBA", city: "Lomé", country: "Togo", sector: "private", description: "Piste de recherche citée dans un annuaire; existence d'un parcours informatique supérieur à confirmer.", verification: "Piste à vérifier; aucun parcours informatique confirmé" },
+        { id: "inst-ro-uaic", name: "Faculté d'Informatique — Université Alexandru Ioan Cuza", city: "Iași", country: "Roumanie", sector: "public", aliases: ["UAIC", "FII UAIC"], description: "Faculté publique proposant des licences en informatique et intelligence artificielle, ainsi que des masters en informatique.", website: "https://info.uaic.ro/" },
+        { id: "inst-ro-upb", name: "Faculté d'Automatique et d'Informatique — POLITEHNICA Bucarest", city: "Bucarest", country: "Roumanie", sector: "public", aliases: ["ACS UPB", "POLITEHNICA Bucarest"], description: "Faculté publique formant en ingénierie des systèmes et en informatique et technologies de l'information.", website: "https://acs.upb.ro/" },
+        { id: "inst-ro-ubb", name: "Faculté de Mathématiques et d'Informatique — Université Babeș-Bolyai", city: "Cluj-Napoca", country: "Roumanie", sector: "public", aliases: ["UBB", "FMI UBB"], description: "Faculté publique proposant des études de mathématiques et d'informatique.", website: "https://www.cs.ubbcluj.ro/" }
     ];
     const listedInstitutionIds = new Set([
-        "inst-1", "inst-2", "inst-3", "inst-iai", "inst-esgis", "inst-defitech", "inst-esig"
+        "inst-1", "inst-2", "inst-3", "inst-iai", "inst-esgis", "inst-defitech", "inst-esig",
+        "inst-ro-uaic", "inst-ro-upb", "inst-ro-ubb"
     ]);
     initialInstitutions.forEach((institution) => {
         institution.is_listed = listedInstitutionIds.has(institution.id);
@@ -173,7 +177,14 @@
         { id: "prog-defitech-sri", institution_id: "inst-defitech", name: "Systèmes et réseaux informatiques", degree_type: "Parcours en informatique", source_url: "https://defitech.tg/" },
         { id: "prog-defitech-iabd", institution_id: "inst-defitech", name: "Intelligence artificielle et Big Data", degree_type: "Parcours en informatique", source_url: "https://defitech.tg/" },
         { id: "prog-esig-informatique", institution_id: "inst-esig", name: "Informatique, réseaux et cybersécurité", degree_type: "Sciences & Technologies", source_url: "https://esig.tg/parcours-academique.html" },
-        { id: "prog-esig-ia", institution_id: "inst-esig", name: "Intelligence artificielle", degree_type: "Sciences & Technologies", source_url: "https://esig.tg/parcours-academique.html" }
+        { id: "prog-esig-ia", institution_id: "inst-esig", name: "Intelligence artificielle", degree_type: "Sciences & Technologies", source_url: "https://esig.tg/parcours-academique.html" },
+        { id: "prog-ro-uaic-informatica", institution_id: "inst-ro-uaic", name: "Informatique (licence)", degree_type: "Licence", degree: "Licence en informatique", source_url: "https://info.uaic.ro/studii-de-licenta/" },
+        { id: "prog-ro-uaic-ai", institution_id: "inst-ro-uaic", name: "Intelligence artificielle (licence)", degree_type: "Licence", degree: "Licence en intelligence artificielle", source_url: "https://info.uaic.ro/studii-de-licenta/" },
+        { id: "prog-ro-uaic-se", institution_id: "inst-ro-uaic", name: "Software Engineering (master)", degree_type: "Master", degree: "Master en anglais", source_url: "https://info.uaic.ro/programe-studii/" },
+        { id: "prog-ro-uaic-security", institution_id: "inst-ro-uaic", name: "Information Security (master)", degree_type: "Master", degree: "Master en anglais", source_url: "https://info.uaic.ro/programe-studii/" },
+        { id: "prog-ro-upb-cti", institution_id: "inst-ro-upb", name: "Calculatoare și Tehnologia Informației", degree_type: "Licence", degree: "Domaine de licence", source_url: "https://acs.upb.ro/" },
+        { id: "prog-ro-upb-systems", institution_id: "inst-ro-upb", name: "Ingineria Sistemelor", degree_type: "Licence", degree: "Domaine de licence", source_url: "https://acs.upb.ro/" },
+        { id: "prog-ro-ubb-informatica", institution_id: "inst-ro-ubb", name: "Informatique", degree_type: "Licence", degree: "Études en informatique", source_url: "https://www.cs.ubbcluj.ro/" }
     ];
     const initialCourses = [
         // Génie Logiciel (prog-1)

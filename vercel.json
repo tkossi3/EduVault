@@ -1,10 +1,5 @@
 {
-  "version": 2,
-  "name": "eduvault",
-  "public": false,
-  "installCommand": "npm --prefix frontend ci",
-  "buildCommand": "npm --prefix frontend run build",
-  "outputDirectory": "frontend/dist",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "trailingSlash": false
 }

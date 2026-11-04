@@ -5,6 +5,6 @@ window.EDUVAULT_CONFIG = {
             ? "http://localhost:8000/api"
             : "/api"
     ),
-    SUPABASE_URL: "https://your-project.supabase.co",
-    SUPABASE_ANON_KEY: "your-supabase-anon-key"
+    SUPABASE_URL: "https://lxywdipkwkgnuooouvoi.supabase.co",
+    SUPABASE_ANON_KEY: "sb_publishable_ilLjyZ_hStVUg_w-8WjZPQ_WKwRH18P"
 };

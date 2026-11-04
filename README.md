@@ -99,16 +99,22 @@ EduVault/
 
 ### 1. Démarrer l’interface
 
-Dans un terminal PowerShell :
+Depuis la racine du dépôt, un terminal peut lancer directement :
 
 ```powershell
-cd frontend
-Copy-Item .env.example .env.local
-npm ci
 npm run dev
 ```
 
-La copie de `.env.example` est à faire une seule fois. Gardez `VITE_API_BASE_URL=http://localhost:8000/api` pour le démarrage local. Ouvrez l’URL affichée par Vite, généralement <http://localhost:5173>.
+Cette commande utilise les dépendances du frontend. Pour installer celles-ci la première fois, ou lancer l’interface sans passer par les commandes racine :
+
+```powershell
+cd frontend
+npm ci
+Copy-Item .env.example .env.local
+npm run dev
+```
+
+La copie de `.env.example` est à faire une seule fois. Gardez `VITE_API_BASE_URL=http://localhost:8000/api` pour le démarrage local. Ouvrez l’URL affichée par Vite, généralement <http://localhost:5173>. Pour préparer le déploiement depuis la racine, utilisez `npm run build`.
 
 Les pages Explorer, Bibliothèque, Parcours, dépôt, profil, connexion, notifications et lecteur sont accessibles depuis cette adresse. N’ouvrez pas les fichiers HTML directement avec `file://`.
 

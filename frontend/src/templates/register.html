@@ -70,7 +70,7 @@
 
         <!-- PANNEAU DROIT : FORMULAIRE D'INSCRIPTION -->
         <main class="auth-form-panel">
-            <div class="auth-form-card" style="max-width: 520px;">
+            <div class="auth-form-card">
                 <div class="auth-form-header">
                     <div class="mobile-brand-wrapper">
                         <a class="brand" href="../index.html">
@@ -171,16 +171,14 @@
     <script src="../scripts/config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../scripts/theme.js"></script>
+    <script src="../scripts/standalone-auth.js"></script>
     <script>
         (() => {
             const store = window.EduVaultStore;
-            const form = document.querySelector("#standalone-register-form");
-            const feedback = document.querySelector("#register-feedback");
             const passwordInput = document.querySelector("#reg-password");
             const togglePasswordBtn = document.querySelector("#toggle-reg-password");
             const instSelect = document.querySelector("#reg-institution");
             const progSelect = document.querySelector("#reg-program");
-            const googleBtn = document.querySelector("#signup-google-btn");
 
             // Remplir les établissements et lier les filières
             const populateHierarchy = () => {
@@ -221,53 +219,6 @@
             togglePasswordBtn?.addEventListener("click", () => {
                 const isPassword = passwordInput.type === "password";
                 passwordInput.type = isPassword ? "text" : "password";
-            });
-
-            // Soumission inscription
-            form?.addEventListener("submit", (e) => {
-                e.preventDefault();
-                const name = document.querySelector("#reg-name").value.trim();
-                const institution = instSelect.value;
-                const program = progSelect.value;
-                const level = document.querySelector("#reg-level").value;
-                const email = document.querySelector("#reg-email").value.trim();
-                const password = passwordInput.value;
-
-                if (feedback) feedback.textContent = "";
-
-                if (store) {
-                    store.loginUser({
-                        name,
-                        email,
-                        institution,
-                        program,
-                        level
-                    });
-                }
-
-                feedback.className = "form-feedback is-success";
-                feedback.textContent = "Compte étudiant créé avec succès ! Bienvenue sur EduVault.";
-
-                setTimeout(() => {
-                    location.href = "profile.html";
-                }, 600);
-            });
-
-            // Google signup
-            googleBtn?.addEventListener("click", () => {
-                if (store) {
-                    store.loginUser({
-                        name: "Étudiant Google",
-                        email: "etudiant.google@eduvault.tg",
-                        institution: instSelect?.value || "École Polytechnique de Lomé (EPL)",
-                        program: progSelect?.value || "Génie Logiciel"
-                    });
-                }
-                feedback.className = "form-feedback is-success";
-                feedback.textContent = "Compte créé via Google ! Redirection...";
-                setTimeout(() => {
-                    location.href = "profile.html";
-                }, 500);
             });
 
             populateHierarchy();

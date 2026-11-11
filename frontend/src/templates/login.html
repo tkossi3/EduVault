@@ -143,51 +143,16 @@
     <script src="../scripts/config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../scripts/theme.js"></script>
+    <script src="../scripts/standalone-auth.js"></script>
     <script>
         (() => {
-            const store = window.EduVaultStore;
-            const form = document.querySelector("#standalone-login-form");
-            const feedback = document.querySelector("#login-feedback");
             const passwordInput = document.querySelector("#login-password");
             const togglePasswordBtn = document.querySelector("#toggle-login-password");
-            const googleBtn = document.querySelector("#login-google-btn");
 
             // Toggle mot de passe
             togglePasswordBtn?.addEventListener("click", () => {
                 const isPassword = passwordInput.type === "password";
                 passwordInput.type = isPassword ? "text" : "password";
-            });
-
-            // Soumission connexion
-            form?.addEventListener("submit", (e) => {
-                e.preventDefault();
-                const email = document.querySelector("#login-email").value.trim();
-                const password = passwordInput.value;
-
-                if (feedback) feedback.textContent = "";
-
-                if (store) {
-                    store.loginUser({ email, name: email.split("@")[0] });
-                }
-
-                feedback.className = "form-feedback is-success";
-                feedback.textContent = "Connexion réussie ! Redirection en cours...";
-
-                setTimeout(() => {
-                    location.href = "profile.html";
-                }, 600);
-            });
-
-            // Google login
-            googleBtn?.addEventListener("click", () => {
-                if (store) {
-                    store.loginUser({ email: "etudiant.google@eduvault.tg", name: "Étudiant Google" });
-                }
-                feedback.className = "form-feedback is-success";
-                feedback.textContent = "Connexion Google réussie ! Redirection...";
-                setTimeout(() => {
-                    location.href = "profile.html";
-                }, 500);
             });
 
             document.querySelector("#forgot-password-link")?.addEventListener("click", (e) => {

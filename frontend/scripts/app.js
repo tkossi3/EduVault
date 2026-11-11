@@ -37,13 +37,12 @@
         if (!container) return;
         let state = carouselStates.get(container.id);
         if (!state) {
-            state = { timer: null, frame: null, hovered: false, focused: false, manuallyPaused: false, bound: false };
+            state = { timer: null, frame: null, hovered: false, focused: false, bound: false };
             carouselStates.set(container.id, state);
         }
         if (state.timer) clearInterval(state.timer);
         if (state.frame) cancelAnimationFrame(state.frame);
 
-        const toggle = document.querySelector(`[data-carousel-toggle="${container.id}"]`);
         const isCampusCarousel = container.id === "institution-list";
         if (isCampusCarousel) {
             container.classList.remove("is-continuous-carousel");
@@ -53,7 +52,6 @@
             && container.children.length > 1
             && container.scrollWidth > container.clientWidth + 4
             && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        if (toggle) toggle.hidden = !canScroll;
         if (!canScroll) return;
 
         if (isCampusCarousel) {
@@ -109,16 +107,11 @@
             container.addEventListener("touchend", () => {
                 window.setTimeout(() => { state.hovered = false; }, 2500);
             }, { passive: true });
-            toggle?.addEventListener("click", () => {
-                state.manuallyPaused = !state.manuallyPaused;
-                toggle.setAttribute("aria-pressed", String(state.manuallyPaused));
-                toggle.textContent = state.manuallyPaused ? "Reprendre" : "Pause";
-            });
             state.bound = true;
         }
 
         state.timer = window.setInterval(() => {
-            if (state.hovered || state.focused || state.manuallyPaused || document.hidden) return;
+            if (state.hovered || state.focused || document.hidden) return;
             const firstCard = container.firstElementChild;
             if (!firstCard) return;
             const gap = parseFloat(getComputedStyle(container).gap) || 0;

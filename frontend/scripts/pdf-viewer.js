@@ -102,7 +102,7 @@
     let pageNum = 1;
     let totalPages = 1;
     let scale = 1.35;
-    let viewMode = "single"; // "single" (Page par Page) ou "continuous" (Vue Navigateur / Défilement continu)
+    let viewMode = "continuous";
     let rawPdfBytes = null;
 
     const showReaderError = (message) => {
@@ -252,7 +252,7 @@
             if (pageNavGroup) pageNavGroup.style.display = "none";
             if (continuousInfoGroup) continuousInfoGroup.style.display = "flex";
             if (continuousPageCount) {
-                continuousPageCount.textContent = `Vue Navigateur (Défilement continu) · ${totalPages} pages`;
+                continuousPageCount.textContent = `Défilement continu · ${totalPages} pages`;
             }
             if (toggleViewText) toggleViewText.textContent = "Lecture page par page";
             if (modeTag) modeTag.textContent = "Défilement continu";

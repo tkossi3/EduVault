@@ -1490,26 +1490,18 @@
 /* ==================== PAGES DE CONNEXION & INSCRIPTION (DÉDIÉES) ==================== */
 .auth-page-body {
     min-height: 100vh;
-    background: var(--page);
-    display: flex;
-    flex-direction: column;
+    background: radial-gradient(circle at top right, #1e3a8a 0%, #0f172a 60%, #090d16 100%);
+    background-attachment: fixed;
 }
 
 .auth-page-wrapper {
     display: grid;
-    grid-template-columns: 1.1fr 1fr;
+    grid-template-columns: 1fr;
     min-height: 100vh;
 }
 
 .auth-showcase-panel {
-    background: linear-gradient(145deg, #0f172a 0%, #1e3a8a 50%, #064e3b 100%);
-    color: #ffffff;
-    padding: 56px 64px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    position: relative;
-    overflow: hidden;
+    display: none;
 }
 
 .auth-showcase-panel::after {
@@ -1699,18 +1691,23 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 48px 32px;
-    background: var(--surface);
+    min-height: 100vh;
+    padding: clamp(24px, 5vh, 60px) 20px;
+    background: transparent;
 }
 
 .auth-form-card {
     width: 100%;
-    max-width: 460px;
-    padding: 16px 0;
+    max-width: 680px;
+    padding: clamp(28px, 4vw, 48px);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35);
 }
 
 .mobile-brand-wrapper {
-    display: none;
+    display: block;
     margin-bottom: 24px;
 }
 
@@ -1837,36 +1834,13 @@
     }
 }
 
-/* RESPONSIVE AUTH PAGES (MOBILE SHOWCASE BACKGROUND) */
+/* Keep the same centered auth card on every screen size. */
 @media (max-width: 960px) {
-    .auth-page-wrapper {
-        grid-template-columns: 1fr;
-        min-height: 100vh;
-        background: radial-gradient(circle at top right, #1e3a8a 0%, #0f172a 60%, #090d16 100%);
-        background-attachment: fixed;
-    }
-
-    .auth-showcase-panel {
-        display: none;
-    }
-
-    .mobile-brand-wrapper {
-        display: block;
-    }
-
     .auth-form-panel {
-        background: transparent;
-        padding: 40px 16px;
-        align-items: center;
-        justify-content: center;
+        padding: 24px 16px;
     }
 
     .auth-form-card {
-        background: var(--surface);
-        padding: 32px 24px;
-        border-radius: var(--radius-lg);
-        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35);
-        border: 1px solid var(--line);
-        max-width: 480px;
+        padding: 28px 24px;
     }
 }

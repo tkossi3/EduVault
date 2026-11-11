@@ -134,7 +134,10 @@ function LegacyPage({ loadTemplate }) {
     }
 
     for (const link of page.links) {
-      if (!link.href) continue;
+      if (
+        !link.href
+        || (link.rel === 'stylesheet' && /(?:^|\/)styles\//.test(link.href))
+      ) continue;
       const element = document.createElement('link');
       element.rel = link.rel;
       element.href = new URL(link.href, window.location.href).href;

@@ -270,7 +270,20 @@
 
         popup.showModal();
 
-        document.querySelector("#btn-popup-logout")?.addEventListener("click", () => {
+        document.querySelector("#btn-popup-logout")?.addEventListener("click", async () => {
+            if (client) {
+                try {
+                    const { error } = await client.auth.signOut();
+                    if (error) {
+                        showToast(error.message, "error");
+                        return;
+                    }
+                } catch (error) {
+                    console.error("La déconnexion Supabase a échoué.", error);
+                    showToast(error instanceof Error ? error.message : "La déconnexion a échoué.", "error");
+                    return;
+                }
+            }
             popup.close();
             if (store) store.logoutUser();
             updateAccountUI();
@@ -282,6 +295,22 @@
     // Mise à jour de l'icône de compte dans la barre supérieure
     const updateAccountUI = async () => {
         ensureDialogsInDOM();
+        const session = await getSession();
+        if (session?.user && store) {
+            const user = session.user;
+            const metadata = user.user_metadata || {};
+            const profile = store.getCurrentUserProfile();
+            if (!store.isLoggedIn() || profile.id !== user.id) {
+                store.loginUser({
+                    id: user.id,
+                    email: user.email || "",
+                    name: metadata.name || metadata.full_name || user.email?.split("@")[0] || "Étudiant",
+                    institution: metadata.institution || profile.institution,
+                    program: metadata.program || profile.program,
+                    level: metadata.level || profile.level
+                });
+            }
+        }
         const isInPages = window.location.pathname.includes("/pages/");
         const loginUrl = isInPages ? "login.html" : "pages/login.html";
         const profileUrl = isInPages ? "profile.html" : "pages/profile.html";
@@ -388,23 +417,10 @@
             if (feedback) feedback.textContent = "";
 
             if (!client) {
-                if (store) {
-                    store.loginUser({ email, name, institution });
-                }
                 if (feedback) {
-                    feedback.className = "form-feedback is-success";
-                    feedback.textContent = currentAuthTab === "signup"
-                        ? "Compte créé avec succès ! Bienvenue sur EduVault."
-                        : "Connexion réussie !";
+                    feedback.className = "form-feedback";
+                    feedback.textContent = "Authentification indisponible : vérifiez la configuration Supabase.";
                 }
-                setTimeout(() => {
-                    updateAccountUI();
-                    document.querySelector("#auth-dialog")?.close();
-                    showToast(`Bienvenue, ${name} ! Espace académique prêt.`, "success");
-                    requestedAction?.(null);
-                    requestedAction = null;
-                    document.dispatchEvent(new CustomEvent("eduvault:auth_state_changed", { detail: { isLoggedIn: true } }));
-                }, 500);
                 return;
             }
 
@@ -430,7 +446,12 @@
                 }
 
                 if (store) {
-                    store.loginUser({ email, name, institution });
+                    store.loginUser({
+                        id: result.data.user?.id,
+                        email,
+                        name,
+                        institution
+                    });
                 }
                 await updateAccountUI();
                 document.querySelector("#auth-dialog")?.close();
@@ -441,7 +462,7 @@
             } catch (err) {
                 if (feedback) {
                     feedback.className = "form-feedback";
-                    feedback.textContent = "Erreur de connexion. Veuillez vérifier vos identifiants.";
+                    feedback.textContent = err instanceof Error ? err.message : "La connexion a échoué. Réessayez.";
                 }
             }
         });
@@ -449,16 +470,33 @@
         // Google sign-in
         document.querySelector("#google-sign-in")?.addEventListener("click", async () => {
             if (!client) {
-                if (store) {
-                    store.loginUser({ email: "etudiant.google@eduvault.tg", name: "Étudiant Google" });
+                const feedback = document.querySelector("#auth-feedback");
+                if (feedback) {
+                    feedback.className = "form-feedback";
+                    feedback.textContent = "Authentification indisponible : vérifiez la configuration Supabase.";
                 }
-                updateAccountUI();
-                document.querySelector("#auth-dialog")?.close();
-                showToast("Connexion réussie avec Google !", "success");
-                document.dispatchEvent(new CustomEvent("eduvault:auth_state_changed", { detail: { isLoggedIn: true } }));
                 return;
             }
-            await client.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.href } });
+            try {
+                const { error } = await client.auth.signInWithOAuth({
+                    provider: "google",
+                    options: { redirectTo: window.location.href }
+                });
+                if (error) {
+                    const feedback = document.querySelector("#auth-feedback");
+                    if (feedback) {
+                        feedback.className = "form-feedback";
+                        feedback.textContent = error.message;
+                    }
+                }
+            } catch (error) {
+                console.error("La connexion Google a échoué.", error);
+                const feedback = document.querySelector("#auth-feedback");
+                if (feedback) {
+                    feedback.className = "form-feedback";
+                    feedback.textContent = error instanceof Error ? error.message : "La connexion Google a échoué.";
+                }
+            }
         });
 
         // Menu mobile hamburger sur toutes les pages

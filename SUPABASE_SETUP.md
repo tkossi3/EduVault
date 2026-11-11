@@ -64,7 +64,16 @@ Pour un projet existant, faites une sauvegarde et vérifiez les noms d'établiss
 
 ## 🔑 Étape 4 : Configurer l'authentification
 
-Dans **Authentication > URL Configuration**, renseignez l'adresse Vercel comme **Site URL** et ajoutez-la aux **Redirect URLs**. Ajoutez aussi les adresses locales employées pendant le développement.
+Dans **Authentication > URL Configuration**, renseignez l'adresse Vercel comme **Site URL** et ajoutez les URL de redirection autorisées, dont `https://votre-domaine/pages/profile.html`. Ajoutez aussi `http://localhost:5173/pages/profile.html` pour le développement local.
+
+Pour activer **Continuer avec Google** :
+
+1. Dans Google Cloud Console, créez un identifiant OAuth de type **Application Web** et configurez l'écran de consentement.
+2. Dans **Authentication > Providers > Google** sur Supabase, activez Google et renseignez le Client ID et le Client secret fournis par Google.
+3. Ajoutez comme URI de redirection autorisée dans Google l'URL de callback affichée dans le panneau du fournisseur Google Supabase. Elle ressemble à `https://<project-ref>.supabase.co/auth/v1/callback`.
+4. Enregistrez le fournisseur. Les secrets Google restent dans Supabase et ne doivent jamais être ajoutés au frontend.
+
+Sans l'activation du fournisseur et de ses URL de redirection, le bouton affiche l'erreur retournée par Supabase au lieu de simuler une connexion.
 
 ## 🔑 Étape 5 : Récupérer vos clés d'API
 

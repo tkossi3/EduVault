@@ -12,6 +12,10 @@ Le site en production est `https://eduvaultcampus.vercel.app`. Si vous changez d
 
 ---
 
+> ✅ **Déjà fait (20 novembre 2026)** : projet Supabase `eduvault` créé (identifiant `eyvkvqnyzwjeeweledro`, région Irlande). Les étapes 1 à 5 et 8 sont terminées : base, sécurité, stockage des PDF, catalogue, clés dans `config.js`, adresses de retour. La confirmation d'inscription par e-mail est **désactivée** (le service d'e-mail gratuit de Supabase est trop limité). Pour la réactiver : **Authentication → Sign In / Providers → Email → Confirm email**, après avoir configuré un SMTP.
+>
+> **Il reste à faire** : la connexion Google (étapes 6 et 7) et le rôle de modérateur pour votre compte (fin du guide). Les étapes 1 à 5 restent utiles si vous devez un jour recréer le projet.
+
 ## Étape 1 — Créer le projet Supabase
 
 1. Ouvrez <https://supabase.com/dashboard> et cliquez sur **New project**.

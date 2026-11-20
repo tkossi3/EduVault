@@ -124,6 +124,11 @@ create index if not exists idx_documents_uploader on public.documents (uploaded_
 create index if not exists idx_notifications_user on public.notifications (user_id, is_read, created_at desc);
 create index if not exists idx_program_requests_status on public.program_change_requests (status, created_at);
 create index if not exists idx_program_requests_user on public.program_change_requests (requested_by, created_at desc);
+create index if not exists idx_program_requests_institution on public.program_change_requests (institution_id);
+create index if not exists idx_program_requests_program on public.program_change_requests (program_id);
+create index if not exists idx_program_requests_reviewer on public.program_change_requests (reviewed_by);
+create index if not exists idx_courses_created_by on public.courses (created_by);
+create index if not exists idx_notifications_document on public.notifications (document_id);
 
 -- ---------------------------------------------------------------------
 -- 4. Règles d'accès (Row Level Security)
@@ -231,6 +236,9 @@ begin
     return new;
 end;
 $$;
+
+-- Fonction réservée au déclencheur : personne ne peut l'appeler via l'API.
+revoke all on function public.handle_new_user() from public, anon, authenticated;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created

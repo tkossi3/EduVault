@@ -10,6 +10,6 @@
 window.EDUVAULT_CONFIG = {
     API_BASE_URL: window.EDUVAULT_API_URL || "",
     API_AVAILABLE: Boolean(window.EDUVAULT_API_URL),
-    SUPABASE_URL: "https://VOTRE-PROJECT-REF.supabase.co",
-    SUPABASE_ANON_KEY: "sb_publishable_VOTRE_CLE"
+    SUPABASE_URL: "https://eyvkvqnyzwjeeweledro.supabase.co",
+    SUPABASE_ANON_KEY: "sb_publishable_qfTUiRKUsBkajMZ3DzkofA_iVxCfKdq"
 };

@@ -29,8 +29,7 @@
             program: params.get("program") || "Génie Logiciel (GL)",
             semester: parseInt(params.get("semester") || "3", 10),
             category: params.get("category") || "Support de Cours",
-            academic_year: params.get("year") || currentAcademicYear(),
-            file_name: "document.pdf"
+            academic_year: params.get("year") || currentAcademicYear()
         };
     }
 
@@ -398,28 +397,62 @@
         renderCurrentMode();
     });
 
-    // Plein Écran
-    btnFullscreen?.addEventListener("click", () => {
-        if (!document.fullscreenElement) {
-            if (readerContainer?.requestFullscreen) {
-                readerContainer.requestFullscreen().catch(() => {
-                    readerContainer.classList.toggle("is-fullscreen");
-                });
-            } else {
-                readerContainer?.classList.toggle("is-fullscreen");
-            }
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen().catch(() => {});
+    // Plein Écran — API standard, préfixe WebKit (Safari), sinon plein écran simulé en CSS (iPhone).
+    const exitFullscreenBtn = document.querySelector("#exit-fullscreen");
+    const nativeFullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+    const isFullscreen = () => Boolean(nativeFullscreenElement()) || Boolean(readerContainer?.classList.contains("is-fullscreen"));
+
+    const syncFullscreenUI = () => {
+        const active = isFullscreen();
+        readerContainer?.classList.toggle("is-fullscreen", active);
+        // Le curseur personnalisé est hors du lecteur : on rend le vrai curseur visible en plein écran.
+        document.documentElement.classList.toggle("has-fullscreen", active);
+        document.body.style.overflow = active && !nativeFullscreenElement() ? "hidden" : "";
+        if (fullscreenText) fullscreenText.textContent = active ? "Quitter plein écran" : "Plein écran";
+        if (exitFullscreenBtn) exitFullscreenBtn.hidden = !active;
+        setTimeout(adjustFitWidth, 150);
+    };
+
+    const enterFullscreen = async () => {
+        if (!readerContainer) return;
+        const request = readerContainer.requestFullscreen || readerContainer.webkitRequestFullscreen;
+        if (request) {
+            try {
+                await request.call(readerContainer);
+                return;
+            } catch (error) {
+                console.warn("Plein écran natif refusé, bascule en plein écran simulé.", error);
             }
         }
-    });
+        readerContainer.classList.add("is-fullscreen");
+        syncFullscreenUI();
+    };
 
-    document.addEventListener("fullscreenchange", () => {
-        const isFs = Boolean(document.fullscreenElement);
-        readerContainer?.classList.toggle("is-fullscreen", isFs);
-        if (fullscreenText) fullscreenText.textContent = isFs ? "Quitter plein écran" : "Plein écran";
-        setTimeout(adjustFitWidth, 150);
+    const exitFullscreen = async () => {
+        if (nativeFullscreenElement()) {
+            const exit = document.exitFullscreen || document.webkitExitFullscreen;
+            try {
+                await exit?.call(document);
+            } catch (error) {
+                console.warn("Sortie du plein écran impossible.", error);
+            }
+        }
+        readerContainer?.classList.remove("is-fullscreen");
+        syncFullscreenUI();
+    };
+
+    btnFullscreen?.addEventListener("click", () => (isFullscreen() ? exitFullscreen() : enterFullscreen()));
+    exitFullscreenBtn?.addEventListener("click", exitFullscreen);
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && readerContainer?.classList.contains("is-fullscreen") && !nativeFullscreenElement()) {
+            exitFullscreen();
+        }
+    });
+    ["fullscreenchange", "webkitfullscreenchange"].forEach((eventName) => {
+        document.addEventListener(eventName, () => {
+            if (!nativeFullscreenElement()) readerContainer?.classList.remove("is-fullscreen");
+            syncFullscreenUI();
+        });
     });
 
     // Pleine Largeur du lecteur
@@ -484,7 +517,9 @@
 
     // Télécharger le document
     document.querySelector("#download-document")?.addEventListener("click", async () => {
-        const fileName = currentDoc.file_name || `${title.replace(/[^a-zA-Z0-9_-]/g, "_")}.pdf`;
+        // Nom du fichier = titre du document dans EduVault (accents conservés, caractères interdits retirés).
+        const safeTitle = title.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 150) || "document";
+        const fileName = /\.pdf$/i.test(safeTitle) ? safeTitle : `${safeTitle}.pdf`;
         try {
             const data = rawPdfBytes || (pdfDoc ? await pdfDoc.getData() : null);
             if (data) {
@@ -496,6 +531,10 @@
                 a.click();
                 document.body.removeChild(a);
                 setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+                if (/^[0-9a-f-]{36}$/i.test(currentDoc.id || "")) {
+                    window.EduVaultSupabase?.rpc("increment_document_downloads", { p_document_id: currentDoc.id })
+                        .then(({ error }) => error && console.warn("Compteur de téléchargements non mis à jour.", error));
+                }
             } else {
                 throw new Error("Le fichier PDF original n’est pas disponible au téléchargement.");
             }

@@ -234,7 +234,7 @@
 
             container.innerHTML = `
                 <div class="popup-user-header">
-                    <div class="popup-avatar">${initial}</div>
+                    <div class="popup-avatar">${avatarMarkup(profile)}</div>
                     <div class="popup-user-info">
                         <strong>${profile.name || "Étudiant EduVault"}</strong>
                         <small>${profile.email || "etudiant@eduvault.tg"}</small>
@@ -253,6 +253,10 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                         <span>Déposer un document</span>
                     </a>
+                    <a class="button button-outline button-full" href="${isInPages ? "moderation.html" : "pages/moderation.html"}" data-popup-moderation hidden>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+                        <span>Modération des documents</span>
+                    </a>
                     <hr class="popup-divider">
                     <button class="button button-danger button-full" id="btn-popup-logout" type="button">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
@@ -263,6 +267,10 @@
         }
 
         popup.showModal();
+        window.EduVaultApi?.isModerator?.().then((moderator) => {
+            const link = container.querySelector("[data-popup-moderation]");
+            if (link) link.hidden = !moderator;
+        });
 
         document.querySelector("#btn-popup-logout")?.addEventListener("click", async () => {
             if (client) {
@@ -286,11 +294,65 @@
         });
     };
 
+    const escapeAttr = (value = "") => String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[char]);
+
+    // Photo de profil si disponible, sinon initiale du nom.
+    const avatarMarkup = (profile) => {
+        const initial = escapeAttr((profile?.name || "E").slice(0, 1).toUpperCase());
+        if (!profile?.avatar_url) return `<span id="account-initials">${initial}</span>`;
+        return `<img class="avatar-photo" src="${escapeAttr(profile.avatar_url)}" alt="" referrerpolicy="no-referrer" data-initial="${initial}">`;
+    };
+    // Photo introuvable (lien expiré…) : on revient à l'initiale.
+    document.addEventListener("error", (event) => {
+        const image = event.target;
+        if (!(image instanceof HTMLImageElement) || !image.classList.contains("avatar-photo")) return;
+        const fallback = document.createElement("span");
+        fallback.textContent = image.dataset.initial || "E";
+        image.replaceWith(fallback);
+    }, true);
+
+    // Récupère une fois par page le profil enregistré dans Supabase (nom, établissement, photo…).
+    let remoteProfileRequest = null;
+    const syncRemoteProfile = (userId) => {
+        if (remoteProfileRequest || !window.EduVaultApi?.client) return remoteProfileRequest;
+        remoteProfileRequest = window.EduVaultApi.fetch("/profile/me")
+            .then((response) => (response.ok ? response.json() : null))
+            .then((remote) => {
+                if (!remote || !store) return null;
+                const local = store.getCurrentUserProfile();
+                const merged = {
+                    id: userId,
+                    name: remote.full_name || local.name,
+                    institution: remote.institution || local.institution,
+                    program: remote.program || local.program,
+                    level: remote.level || local.level,
+                    bio: remote.bio || local.bio,
+                    avatar_url: remote.avatar_url || "",
+                    google_avatar_url: remote.google_avatar_url || ""
+                };
+                const changed = Object.keys(merged).some((key) => (local[key] || "") !== (merged[key] || ""));
+                if (changed) store.saveUserProfile(merged);
+                return remote;
+            })
+            .catch((error) => {
+                console.warn("Profil distant indisponible.", error);
+                return null;
+            });
+        return remoteProfileRequest;
+    };
+
     // Mise à jour de l'icône de compte dans la barre supérieure
     const updateAccountUI = async () => {
         ensureDialogsInDOM();
         const session = await getSession();
+        if (client && !session?.user && store?.isLoggedIn()) {
+            // Session Supabase expirée ou fermée ailleurs : on aligne l'état local.
+            localStorage.removeItem("eduvault_auth_session_v2026");
+        }
         if (session?.user && store) {
+            syncRemoteProfile(session.user.id);
             const user = session.user;
             const metadata = user.user_metadata || {};
             const profile = store.getCurrentUserProfile();
@@ -319,6 +381,22 @@
             }
         });
 
+        // 1 bis. Lien « Modération » réservé aux comptes modérateurs
+        const moderator = isUserLoggedIn && await window.EduVaultApi?.isModerator?.();
+        const mainNav = document.querySelector("#main-nav, .main-nav");
+        let moderationLink = mainNav?.querySelector("a[data-moderation-link]");
+        if (moderator && mainNav && !moderationLink) {
+            moderationLink = document.createElement("a");
+            moderationLink.className = "nav-link";
+            moderationLink.dataset.moderationLink = "true";
+            moderationLink.href = isInPages ? "moderation.html" : "pages/moderation.html";
+            moderationLink.textContent = "Modération";
+            if (/moderation(\.html)?$/.test(window.location.pathname)) moderationLink.classList.add("is-active");
+            mainNav.appendChild(moderationLink);
+        } else if (!moderator && moderationLink) {
+            moderationLink.remove();
+        }
+
         // 2. Bouton d'action supérieur droit (Top bar)
         const actionsContainer = document.querySelector(".topbar-actions");
         if (!actionsContainer) return;
@@ -341,8 +419,8 @@
 
             if (accountSlot) {
                 accountSlot.outerHTML = `
-                <a class="avatar-button has-user" id="account-button" href="${profileUrl}" aria-label="Espace étudiant (${profile.name})" title="Connecté : ${profile.name}">
-                    <span id="account-initials">${initial}</span>
+                <a class="avatar-button has-user" id="account-button" href="${profileUrl}" aria-label="Espace étudiant (${escapeAttr(profile.name)})" title="Connecté : ${escapeAttr(profile.name)}">
+                    ${avatarMarkup(profile)}
                 </a>`;
             }
         }

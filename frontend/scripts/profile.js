@@ -24,6 +24,85 @@
         `).join("");
     };
 
+    // ==================== PHOTO DE PROFIL ====================
+    const api = window.EduVaultApi;
+    const remoteEnabled = Boolean(api?.client);
+
+    const renderAvatar = (profile) => {
+        const avatarEl = document.querySelector("#user-avatar-display");
+        if (!avatarEl) return;
+        const initial = (profile.name || "E").slice(0, 1).toUpperCase();
+        avatarEl.replaceChildren();
+        if (profile.avatar_url) {
+            const image = document.createElement("img");
+            image.src = profile.avatar_url;
+            image.alt = `Photo de profil de ${profile.name || "l'étudiant"}`;
+            image.referrerPolicy = "no-referrer";
+            image.addEventListener("error", () => { avatarEl.textContent = initial; }, { once: true });
+            avatarEl.appendChild(image);
+            avatarEl.classList.add("has-photo");
+        } else {
+            avatarEl.textContent = initial;
+            avatarEl.classList.remove("has-photo");
+        }
+
+        // Boutons : changer la photo, revenir à la photo Google, ou retirer la photo personnelle.
+        const editBtn = document.querySelector("#avatar-edit-btn");
+        const links = document.querySelector("#avatar-links");
+        const resetBtn = document.querySelector("#avatar-reset");
+        if (editBtn) editBtn.hidden = !remoteEnabled;
+        if (links) links.hidden = !remoteEnabled;
+        if (resetBtn) {
+            const customPhoto = Boolean(profile.avatar_url) && profile.avatar_url !== profile.google_avatar_url;
+            resetBtn.hidden = !customPhoto;
+            resetBtn.textContent = profile.google_avatar_url ? "Reprendre ma photo Google" : "Retirer la photo";
+        }
+    };
+
+    const avatarFeedback = (message, isSuccess = false) => {
+        const feedback = document.querySelector("#avatar-feedback");
+        if (!feedback) return;
+        feedback.className = isSuccess ? "form-feedback is-success" : "form-feedback";
+        feedback.textContent = message;
+    };
+
+    const applyAvatar = (avatarUrl) => {
+        const profile = store.getCurrentUserProfile();
+        store.saveUserProfile({ ...profile, avatar_url: avatarUrl || "" });
+        renderAvatar(store.getCurrentUserProfile());
+    };
+
+    document.querySelector("#avatar-input")?.addEventListener("change", async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = "";
+        if (!file) return;
+        avatarFeedback("Envoi de la photo…");
+        const body = new FormData();
+        body.append("file", file);
+        const response = await api.fetch("/profile/avatar", { method: "POST", body });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            avatarFeedback(result.detail || "La photo n'a pas pu être envoyée.");
+            return;
+        }
+        applyAvatar(result.avatar_url);
+        avatarFeedback("Photo de profil mise à jour.", true);
+        setTimeout(() => avatarFeedback(""), 3000);
+    });
+
+    document.querySelector("#avatar-reset")?.addEventListener("click", async () => {
+        avatarFeedback("Mise à jour…");
+        const response = await api.fetch("/profile/avatar", { method: "DELETE" });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            avatarFeedback(result.detail || "La photo n'a pas pu être modifiée.");
+            return;
+        }
+        applyAvatar(result.avatar_url);
+        avatarFeedback("Photo de profil mise à jour.", true);
+        setTimeout(() => avatarFeedback(""), 3000);
+    });
+
     const updateProfileUI = () => {
         const isUserLoggedIn = store.isLoggedIn();
         const profileLayout = document.querySelector(".profile-layout");
@@ -107,8 +186,7 @@
             if (instEl) instEl.textContent = profile.institution || "École Polytechnique de Lomé (EPL)";
             if (bioEl) bioEl.textContent = profile.bio || "Membre de la communauté académique EduVault.";
             
-            const initial = (profile.name || "E").slice(0, 1).toUpperCase();
-            if (avatarEl) avatarEl.textContent = initial;
+            renderAvatar(profile);
 
             // Préremplissage du formulaire
             const inputName = document.querySelector("#edit-name");
@@ -120,7 +198,11 @@
             if (inputName) inputName.value = profile.name || "";
             if (inputEmail) inputEmail.value = profile.email || "";
             if (inputProgram) inputProgram.value = profile.program || "";
-            if (inputLevel) inputLevel.value = profile.level || "Licence 3 (L3)";
+            if (inputLevel) {
+                // Niveau inconnu de la liste (ancien format, compte Google…) : on garde une valeur valide.
+                const levels = [...inputLevel.options].map((option) => option.value);
+                inputLevel.value = levels.includes(profile.level) ? profile.level : "Licence 3 (L3)";
+            }
             if (inputBio) inputBio.value = profile.bio || "";
 
             populateInstitutionsSelect(profile.institution);
@@ -269,7 +351,7 @@
     };
 
     // Soumission du formulaire de mise à jour du profil
-    document.querySelector("#profile-edit-form, #profile-form")?.addEventListener("submit", (event) => {
+    document.querySelector("#profile-edit-form, #profile-form")?.addEventListener("submit", async (event) => {
         event.preventDefault();
         const feedback = document.querySelector("#profile-feedback");
         const name = document.querySelector("#edit-name")?.value.trim() || "";
@@ -279,7 +361,24 @@
         const level = document.querySelector("#edit-level")?.value || "";
         const bio = document.querySelector("#edit-bio")?.value.trim() || "";
 
-        const updated = store.saveUserProfile({ name, email, institution, program, level, bio });
+        const updated = store.saveUserProfile({ ...store.getCurrentUserProfile(), name, email, institution, program, level, bio });
+
+        if (remoteEnabled) {
+            // Enregistre aussi dans Supabase pour retrouver son profil sur tous ses appareils.
+            const response = await api.fetch("/profile/me", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ full_name: name, institution, program, level, bio })
+            });
+            if (!response.ok) {
+                const result = await response.json().catch(() => ({}));
+                if (feedback) {
+                    feedback.className = "form-feedback";
+                    feedback.textContent = result.detail || "Le profil n'a pas pu être enregistré en ligne.";
+                }
+                return;
+            }
+        }
 
         if (feedback) {
             feedback.className = "form-feedback is-success";
@@ -292,8 +391,10 @@
     });
 
     // Bouton de déconnexion depuis la page profil
-    document.querySelector("#profile-logout-btn, #sign-out")?.addEventListener("click", () => {
+    document.querySelector("#profile-logout-btn, #sign-out")?.addEventListener("click", async () => {
         if (confirm("Voulez-vous vraiment vous déconnecter de votre compte EduVault ?")) {
+            // Ferme aussi la session Supabase, sinon l'utilisateur serait reconnecté à la page suivante.
+            await window.EduVaultSupabase?.auth.signOut().catch((error) => console.warn("Déconnexion Supabase :", error));
             store.logoutUser();
             auth.showToast("Vous avez été déconnecté avec succès.", "info");
             document.dispatchEvent(new CustomEvent("eduvault:auth_state_changed", { detail: { isLoggedIn: false } }));

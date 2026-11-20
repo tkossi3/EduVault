@@ -224,13 +224,15 @@ security definer
 set search_path = ''
 as $$
 begin
-    insert into public.profiles (id, full_name, institution, program, level)
+    insert into public.profiles (id, full_name, institution, program, level, avatar_url)
     values (
         new.id,
         coalesce(new.raw_user_meta_data ->> 'full_name', new.raw_user_meta_data ->> 'name', split_part(new.email, '@', 1), ''),
         coalesce(new.raw_user_meta_data ->> 'institution', ''),
         coalesce(new.raw_user_meta_data ->> 'program', ''),
-        coalesce(new.raw_user_meta_data ->> 'level', '')
+        coalesce(new.raw_user_meta_data ->> 'level', ''),
+        -- Photo du compte Google (connexion Google), sinon vide : l'interface affiche l'initiale.
+        coalesce(new.raw_user_meta_data ->> 'avatar_url', new.raw_user_meta_data ->> 'picture', '')
     )
     on conflict (id) do nothing;
     return new;
@@ -383,3 +385,39 @@ create policy "EduVault : suppression de ses PDF" on storage.objects for delete 
             or (select public.is_moderator())
         )
     );
+
+-- ---------------------------------------------------------------------
+-- 9. Photos de profil (bucket public « avatars », une photo par utilisateur)
+-- Chemin : <user_id>/avatar.jpg — lecture publique, écriture dans son propre dossier uniquement.
+-- ---------------------------------------------------------------------
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', true, 2097152, array['image/jpeg', 'image/png', 'image/webp'])
+on conflict (id) do update set
+    public = true,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "EduVault : envoi de sa photo" on storage.objects;
+create policy "EduVault : envoi de sa photo" on storage.objects for insert to authenticated
+    with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = (select auth.uid())::text);
+
+drop policy if exists "EduVault : remplacement de sa photo" on storage.objects;
+create policy "EduVault : remplacement de sa photo" on storage.objects for update to authenticated
+    using (bucket_id = 'avatars' and (storage.foldername(name))[1] = (select auth.uid())::text)
+    with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = (select auth.uid())::text);
+
+drop policy if exists "EduVault : lecture de sa photo" on storage.objects;
+create policy "EduVault : lecture de sa photo" on storage.objects for select to authenticated
+    using (bucket_id = 'avatars' and (storage.foldername(name))[1] = (select auth.uid())::text);
+
+drop policy if exists "EduVault : suppression de sa photo" on storage.objects;
+create policy "EduVault : suppression de sa photo" on storage.objects for delete to authenticated
+    using (bucket_id = 'avatars' and (storage.foldername(name))[1] = (select auth.uid())::text);
+
+-- Comptes Google déjà inscrits sans photo : reprendre celle de Google.
+update public.profiles p
+set avatar_url = coalesce(u.raw_user_meta_data ->> 'avatar_url', u.raw_user_meta_data ->> 'picture')
+from auth.users u
+where u.id = p.id
+  and p.avatar_url = ''
+  and coalesce(u.raw_user_meta_data ->> 'avatar_url', u.raw_user_meta_data ->> 'picture', '') <> '';

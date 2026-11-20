@@ -58,7 +58,19 @@
         <div class="profile-layout">
             <!-- CARTE LATÉRALE UTILISATEUR -->
             <aside class="profile-card">
-                <div class="profile-avatar-large" id="user-avatar-display">K</div>
+                <div class="profile-avatar-wrapper">
+                    <div class="profile-avatar-large" id="user-avatar-display">K</div>
+                    <label class="profile-avatar-edit" for="avatar-input" id="avatar-edit-btn" title="Changer la photo de profil" hidden>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                        <span class="visually-hidden">Changer la photo de profil</span>
+                    </label>
+                    <input type="file" id="avatar-input" accept="image/jpeg,image/png,image/webp" hidden>
+                </div>
+                <div class="profile-avatar-links" id="avatar-links" hidden>
+                    <label class="text-button" for="avatar-input">Changer la photo</label>
+                    <button class="text-button" type="button" id="avatar-reset" hidden></button>
+                </div>
+                <p class="form-feedback" id="avatar-feedback" role="status"></p>
                 <h2 id="user-name-display">Kossi Tech</h2>
                 <div class="profile-campus" id="user-institution-display">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="12"></line><line x1="15" y1="12" x2="15" y2="22"></line></svg>
@@ -141,6 +153,7 @@
                                     <option selected>Licence 3 (L3)</option>
                                     <option>Master 1 (M1)</option>
                                     <option>Master 2 (M2)</option>
+                                    <option>Cycle ingénieur</option>
                                     <option>Doctorat & Recherche</option>
                                 </select>
                             </div>
@@ -148,7 +161,7 @@
 
                         <div class="field-group" style="margin-top: 14px;">
                             <label class="field-label" for="edit-program">Filière / Parcours d'études</label>
-                            <input class="field-control" id="edit-program" name="program" placeholder="Ex. Génie Logiciel, Mathématiques, Économie..." required>
+                            <input class="field-control" id="edit-program" name="program" placeholder="Ex. Génie Logiciel, Mathématiques, Économie...">
                         </div>
 
                         <div class="field-group" style="margin-top: 14px;">

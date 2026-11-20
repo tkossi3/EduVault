@@ -36,6 +36,7 @@ export default defineConfig({
         library: resolve(frontendRoot, 'pages/library.html'),
         login: resolve(frontendRoot, 'pages/login.html'),
         notifications: resolve(frontendRoot, 'pages/notifications.html'),
+        moderation: resolve(frontendRoot, 'pages/moderation.html'),
         parcours: resolve(frontendRoot, 'pages/parcours.html'),
         profile: resolve(frontendRoot, 'pages/profile.html'),
         register: resolve(frontendRoot, 'pages/register.html'),

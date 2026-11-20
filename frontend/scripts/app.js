@@ -32,10 +32,13 @@
         .toLowerCase()
         .replace(/[^a-z0-9]/g, "");
 
-    // Défilement continu (marquee) : même comportement sur ordinateur et mobile, sans pause.
+    // Défilement continu en boucle : avance tout seul, et l'utilisateur peut faire glisser
+    // dans les deux sens (deux doigts sur pavé tactile, doigt sur mobile/tablette, Maj + molette).
     const MARQUEE_SPEED_PX_PER_SECOND = 45;
     const MARQUEE_GAP = 16;
+    const USER_IDLE_DELAY_MS = 700; // reprise du défilement automatique après un geste
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const marqueeStates = new WeakMap();
 
     const marqueeCardWidth = (containerWidth) => {
         if (containerWidth >= 1000) return (containerWidth - MARQUEE_GAP * 3) / 4;
@@ -43,8 +46,43 @@
         return Math.min(containerWidth * 0.84, 340);
     };
 
+    const stopMarquee = (container) => {
+        const state = marqueeStates.get(container);
+        if (state?.frame) cancelAnimationFrame(state.frame);
+        if (state) state.frame = null;
+    };
+
+    const bindMarqueeInteractions = (container) => {
+        let state = marqueeStates.get(container);
+        if (state) return state;
+        state = { frame: null, position: 0, lastSet: 0, loop: 0, userUntil: 0 };
+        marqueeStates.set(container, state);
+
+        const markUserActive = () => { state.userUntil = performance.now() + USER_IDLE_DELAY_MS; };
+        container.addEventListener("touchstart", markUserActive, { passive: true });
+        container.addEventListener("touchmove", markUserActive, { passive: true });
+        container.addEventListener("wheel", (event) => {
+            if (Math.abs(event.deltaX) > 0 || event.shiftKey) markUserActive();
+        }, { passive: true });
+        container.addEventListener("scroll", () => {
+            if (!state.loop) return;
+            // Défilement provoqué par l'utilisateur : on reprend sa position et on boucle si besoin.
+            if (Math.abs(container.scrollLeft - state.lastSet) > 1) {
+                markUserActive();
+                let left = container.scrollLeft;
+                if (left >= state.loop) left -= state.loop;
+                else if (left <= 0) left += state.loop;
+                if (left !== container.scrollLeft) container.scrollLeft = left;
+                state.position = left;
+                state.lastSet = container.scrollLeft;
+            }
+        }, { passive: true });
+        return state;
+    };
+
     const syncAutoCarousel = (container) => {
         if (!container) return;
+        stopMarquee(container);
 
         const existingTrack = container.querySelector(":scope > .marquee-track");
         if (existingTrack) {
@@ -54,44 +92,56 @@
         container.classList.remove("is-marquee");
 
         const cards = [...container.children];
-        if (!container.classList.contains("is-carousel") || !cards.length || reducedMotion.matches) return;
+        if (!container.classList.contains("is-carousel") || !cards.length) return;
 
         const containerWidth = container.clientWidth;
         if (!containerWidth) return;
         const cardWidth = marqueeCardWidth(containerWidth);
         const stride = cardWidth + MARQUEE_GAP;
 
+        // Pas assez de cartes pour remplir la largeur : affichage fixe, sans copies visibles.
+        if (cards.length * stride <= containerWidth + MARQUEE_GAP) return;
+
         const track = document.createElement("div");
         track.className = "marquee-track";
         track.style.setProperty("--marquee-card-width", `${cardWidth}px`);
         track.style.setProperty("--marquee-gap", `${MARQUEE_GAP}px`);
         track.append(...cards);
-
-        const makeClone = (card) => {
+        // Une copie de la série : la position boucle sur la première série, dans les deux sens.
+        cards.forEach((card) => {
             const clone = card.cloneNode(true);
             clone.dataset.carouselClone = "true";
             clone.setAttribute("aria-hidden", "true");
             clone.setAttribute("tabindex", "-1");
-            clone.setAttribute("inert", "");
-            return clone;
-        };
-
-        // 1. Remplir au moins la largeur visible pour éviter un « trou » dans la boucle.
-        const group = [...cards];
-        while (group.length * stride < containerWidth + stride) {
-            cards.forEach((card) => {
-                const clone = makeClone(card);
-                group.push(clone);
-                track.append(clone);
-            });
-        }
-        // 2. Dupliquer le groupe complet : l'animation se décale de -50 % puis recommence sans saut.
-        group.forEach((card) => track.append(makeClone(card)));
-
-        const loopDistance = group.length * stride;
-        track.style.setProperty("--marquee-duration", `${Math.max(12, loopDistance / MARQUEE_SPEED_PX_PER_SECOND)}s`);
+            clone.querySelectorAll("a, button").forEach((element) => element.setAttribute("tabindex", "-1"));
+            track.append(clone);
+        });
         container.append(track);
         container.classList.add("is-marquee");
+
+        const state = bindMarqueeInteractions(container);
+        state.loop = cards.length * stride;
+        state.position = Math.min(Math.max(state.position, 1), state.loop - 1);
+        container.scrollLeft = state.position;
+        state.lastSet = container.scrollLeft;
+
+        if (reducedMotion.matches) return; // défilement manuel uniquement
+
+        let previous = 0;
+        const step = (time) => {
+            const elapsed = previous ? Math.min(time - previous, 100) : 0;
+            previous = time;
+            if (!document.hidden && time >= state.userUntil && elapsed) {
+                state.position += (elapsed / 1000) * MARQUEE_SPEED_PX_PER_SECOND;
+                if (state.position >= state.loop) state.position -= state.loop;
+                container.scrollLeft = state.position;
+                state.lastSet = container.scrollLeft;
+            } else if (time < state.userUntil) {
+                state.position = container.scrollLeft;
+            }
+            state.frame = requestAnimationFrame(step);
+        };
+        state.frame = requestAnimationFrame(step);
     };
 
     const formatSize = (bytes) => {

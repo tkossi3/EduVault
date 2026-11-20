@@ -95,8 +95,8 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-    html.has-custom-cursor:not(.has-open-dialog),
-    html.has-custom-cursor:not(.has-open-dialog) * {
+    html.has-custom-cursor:not(.has-open-dialog):not(.has-fullscreen),
+    html.has-custom-cursor:not(.has-open-dialog):not(.has-fullscreen) * {
         cursor: none !important;
     }
 
@@ -139,7 +139,9 @@
     }
 
     html.has-open-dialog .cursor-dot,
-    html.has-open-dialog .cursor-ring {
+    html.has-open-dialog .cursor-ring,
+    html.has-fullscreen .cursor-dot,
+    html.has-fullscreen .cursor-ring {
         display: none;
     }
 }

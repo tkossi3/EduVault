@@ -1844,3 +1844,167 @@
         padding: 28px 24px;
     }
 }
+/* ===== ESPACE MODÉRATEUR ===== */
+.moderation-list {
+    display: grid;
+    gap: 14px;
+    margin-top: 20px;
+}
+
+.moderation-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 18px 20px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+}
+
+.moderation-card-main {
+    min-width: 0;
+}
+
+.moderation-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.moderation-card h3 {
+    margin: 0 0 6px;
+    font-family: var(--font-display);
+    font-size: 17px;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+.moderation-card-meta,
+.moderation-card-author {
+    margin: 0;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+.moderation-card-author {
+    margin-top: 6px;
+}
+
+.moderation-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+@media (max-width: 720px) {
+    .moderation-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .moderation-card-actions {
+        justify-content: stretch;
+    }
+
+    .moderation-card-actions > * {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+}
+
+/* Plein écran simulé (iPhone) et barre d'outils toujours accessible */
+.reader-viewer-container:fullscreen,
+.reader-viewer-container:-webkit-full-screen {
+    width: 100vw;
+    height: 100vh;
+}
+
+.reader-viewer-container.is-fullscreen .reader-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    flex-wrap: wrap;
+}
+
+.reader-viewer-container.is-fullscreen .reader-viewport {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex: 1 1 0;
+    padding: 16px 0 !important;
+}
+
+.reader-viewer-container.is-fullscreen {
+    height: 100dvh !important;
+}
+
+/* ===== PHOTO DE PROFIL ===== */
+.profile-avatar-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 8px;
+}
+
+.profile-avatar-wrapper .profile-avatar-large {
+    margin-bottom: 0;
+    overflow: hidden;
+}
+
+.profile-avatar-large.has-photo {
+    background: var(--surface-raised);
+}
+
+.profile-avatar-large img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.profile-avatar-edit {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 2px solid var(--surface);
+    border-radius: 50%;
+    background: var(--primary);
+    color: #ffffff;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+}
+
+.profile-avatar-edit[hidden],
+.profile-avatar-links[hidden] {
+    display: none !important;
+}
+
+.profile-avatar-edit:hover {
+    filter: brightness(1.1);
+}
+
+.profile-avatar-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px 14px;
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+.profile-avatar-links .text-button {
+    cursor: pointer;
+}
+
+#avatar-feedback:empty {
+    display: none;
+}

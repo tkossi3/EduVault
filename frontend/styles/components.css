@@ -1092,3 +1092,23 @@ textarea.field-control {
     white-space: nowrap !important;
     border: 0 !important;
 }
+
+.button[hidden] {
+    display: none !important;
+}
+
+/* Photo de profil dans la barre du haut et le menu du compte */
+.avatar-button .avatar-photo,
+.popup-avatar .avatar-photo {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+.avatar-button:has(.avatar-photo),
+.popup-avatar:has(.avatar-photo) {
+    overflow: hidden;
+    padding: 0;
+}

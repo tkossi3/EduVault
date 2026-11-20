@@ -306,6 +306,152 @@
         return null;
     };
 
+    // ==================== PROFIL & PHOTO ====================
+    const AVATAR_BUCKET = "avatars";
+    const AVATAR_SIZE = 320;
+    const PROFILE_FIELDS = ["full_name", "institution", "program", "level", "bio"];
+
+    const googlePhoto = (user) => user?.user_metadata?.avatar_url || user?.user_metadata?.picture || "";
+
+    const getMyProfile = async () => {
+        const user = await requireUser();
+        let profile = check(
+            await client.from("profiles").select("id,full_name,institution,program,level,bio,avatar_url").eq("id", user.id).maybeSingle(),
+            "Profil indisponible."
+        );
+        if (!profile) {
+            // Compte créé avant l'installation du déclencheur : on crée le profil maintenant.
+            profile = check(
+                await client.from("profiles").insert({
+                    id: user.id,
+                    full_name: user.user_metadata?.full_name || user.user_metadata?.name || (user.email || "").split("@")[0],
+                    avatar_url: googlePhoto(user)
+                }).select("id,full_name,institution,program,level,bio,avatar_url").single(),
+                "Profil indisponible."
+            );
+        }
+        return { ...profile, email: user.email || "", google_avatar_url: googlePhoto(user) };
+    };
+
+    const updateMyProfile = async (payload) => {
+        const user = await requireUser();
+        const changes = { updated_at: new Date().toISOString() };
+        PROFILE_FIELDS.forEach((field) => {
+            if (payload[field] !== undefined) changes[field] = String(payload[field] || "").trim().slice(0, field === "bio" ? 500 : 160);
+        });
+        return check(
+            await client.from("profiles").update(changes).eq("id", user.id)
+                .select("id,full_name,institution,program,level,bio,avatar_url").single(),
+            "Le profil n'a pas pu être enregistré."
+        );
+    };
+
+    // Recadre au centre et réduit l'image en carré JPEG (photo légère, envoi rapide).
+    const resizeAvatar = async (file) => {
+        const bitmap = await createImageBitmap(file).catch(() => null);
+        if (!bitmap) throw new ApiError(415, "Cette image ne peut pas être lue. Utilisez une photo JPEG, PNG ou WebP.");
+        const side = Math.min(bitmap.width, bitmap.height);
+        const canvas = document.createElement("canvas");
+        canvas.width = AVATAR_SIZE;
+        canvas.height = AVATAR_SIZE;
+        canvas.getContext("2d").drawImage(
+            bitmap,
+            (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side,
+            0, 0, AVATAR_SIZE, AVATAR_SIZE
+        );
+        bitmap.close?.();
+        return new Promise((resolve, reject) => canvas.toBlob(
+            (blob) => (blob ? resolve(blob) : reject(new ApiError(500, "Conversion de l'image impossible."))),
+            "image/jpeg",
+            0.88
+        ));
+    };
+
+    const uploadAvatar = async (formData) => {
+        const user = await requireUser();
+        const file = formData.get("file");
+        if (!(file instanceof Blob) || !file.size) throw new ApiError(422, "Choisissez une image.");
+        if (!/^image\//.test(file.type)) throw new ApiError(415, "Le fichier choisi n'est pas une image.");
+        if (file.size > 15 * 1024 * 1024) throw new ApiError(413, "L'image dépasse 15 Mo.");
+        const blob = await resizeAvatar(file);
+        const path = `${user.id}/avatar.jpg`;
+        const { error } = await client.storage.from(AVATAR_BUCKET)
+            .upload(path, blob, { contentType: "image/jpeg", upsert: true, cacheControl: "3600" });
+        if (error) {
+            console.error("Envoi de la photo impossible.", error);
+            throw new ApiError(502, "La photo n'a pas pu être envoyée. Réessayez.");
+        }
+        const publicUrl = client.storage.from(AVATAR_BUCKET).getPublicUrl(path).data.publicUrl;
+        const avatarUrl = `${publicUrl}?v=${Date.now()}`; // évite l'ancienne photo en cache
+        return check(
+            await client.from("profiles").update({ avatar_url: avatarUrl, updated_at: new Date().toISOString() })
+                .eq("id", user.id).select("avatar_url").single(),
+            "La photo n'a pas pu être enregistrée."
+        );
+    };
+
+    // Retire la photo personnelle : retour à la photo Google si elle existe, sinon à l'initiale.
+    const resetAvatar = async () => {
+        const user = await requireUser();
+        await client.storage.from(AVATAR_BUCKET).remove([`${user.id}/avatar.jpg`]);
+        return check(
+            await client.from("profiles").update({ avatar_url: googlePhoto(user), updated_at: new Date().toISOString() })
+                .eq("id", user.id).select("avatar_url").single(),
+            "La photo n'a pas pu être retirée."
+        );
+    };
+
+    // ==================== MODÉRATION ====================
+    const MODERATION_STATUSES = new Set(["pending", "approved", "rejected"]);
+
+    const moderationDocuments = async (params) => {
+        const user = await requireUser();
+        if (!isModerator(user)) throw new ApiError(403, "Droits de modération requis.");
+        const status = MODERATION_STATUSES.has(params.get("status")) ? params.get("status") : "pending";
+        const [list, counts] = await Promise.all([
+            client.from("documents").select(`${DOCUMENT_FIELDS},uploaded_by,file_size`)
+                .eq("status", status).order("created_at", { ascending: status === "pending" }).limit(200),
+            client.from("documents").select("status")
+        ]);
+        const documents = check(list, "Documents à modérer indisponibles.").map(flattenDocument);
+        const countByStatus = { pending: 0, approved: 0, rejected: 0 };
+        check(counts, "Compteurs indisponibles.").forEach((row) => { countByStatus[row.status] = (countByStatus[row.status] || 0) + 1; });
+
+        // Nom des auteurs (les profils sont publics en lecture).
+        const authorIds = [...new Set(documents.map((document) => document.uploaded_by))];
+        const authors = new Map();
+        if (authorIds.length) {
+            const profiles = check(
+                await client.from("profiles").select("id,full_name,institution").in("id", authorIds),
+                "Profils des auteurs indisponibles."
+            );
+            profiles.forEach((profile) => authors.set(profile.id, profile));
+        }
+        return {
+            status,
+            counts: countByStatus,
+            documents: documents.map((document) => ({
+                ...document,
+                uploader_name: authors.get(document.uploaded_by)?.full_name || "Auteur inconnu"
+            }))
+        };
+    };
+
+    const moderateDocument = async (documentId, action) => {
+        const user = await requireUser();
+        if (!isModerator(user)) throw new ApiError(403, "Droits de modération requis.");
+        const status = { approve: "approved", reject: "rejected", reset: "pending" }[action];
+        if (!status) throw new ApiError(422, "Action de modération invalide.");
+        const updated = check(
+            await client.from("documents").update({ status }).eq("id", documentId).select("id,title,status"),
+            "La décision n'a pas pu être enregistrée."
+        );
+        if (!updated.length) {
+            throw new ApiError(403, "Décision refusée par la base : reconnectez-vous pour actualiser votre rôle de modérateur.");
+        }
+        return updated[0];
+    };
+
     // ==================== ROUTEUR ====================
     const route = async (method, pathname, params, init) => {
         let match;
@@ -336,6 +482,14 @@
             await deleteDocument(decodeURIComponent(match[1]));
             return [null, 204];
         }
+        if (method === "GET" && pathname === "/profile/me") return getMyProfile();
+        if (method === "PATCH" && pathname === "/profile/me") return updateMyProfile(readBody(init));
+        if (method === "POST" && pathname === "/profile/avatar") return uploadAvatar(init.body);
+        if (method === "DELETE" && pathname === "/profile/avatar") return resetAvatar();
+        if (method === "GET" && pathname === "/moderation/documents") return moderationDocuments(params);
+        if (method === "POST" && (match = pathname.match(/^\/moderation\/documents\/([^/]+)$/))) {
+            return moderateDocument(decodeURIComponent(match[1]), readBody(init).action);
+        }
         throw new ApiError(404, `Route inconnue : ${method} ${pathname}`);
     };
 
@@ -361,5 +515,14 @@
         }
     };
 
-    window.EduVaultApi = { fetch: apiFetch, client };
+    window.EduVaultApi = {
+        fetch: apiFetch,
+        client,
+        // Vrai si la session courante porte le rôle modérateur (app_metadata, non modifiable par l'utilisateur).
+        isModerator: async () => {
+            if (!client) return false;
+            const { data } = await client.auth.getSession();
+            return isModerator(data?.session?.user);
+        }
+    };
 })();

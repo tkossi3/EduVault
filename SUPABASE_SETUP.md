@@ -202,7 +202,13 @@ Sans cette étape, Google et les e-mails de confirmation renvoient vers `localho
 
 Il n'y a aucun serveur à héberger : les règles de sécurité installées par `schema.sql` empêchent un étudiant de valider son propre document.
 
-### Méthode simple : Table Editor
+### Méthode recommandée : l'espace Modération du site
+
+Connecté avec un compte modérateur, ouvrez **Modération** dans le menu (ou `https://eduvaultcampus.vercel.app/pages/moderation`). Vous y voyez les documents **En attente**, **Approuvés** et **Refusés**, avec l'auteur, la matière et la date. Le bouton **Voir le PDF** permet de vérifier le document avant de cliquer sur **Approuver** ou **Refuser**.
+
+Le compte `kossivitinek@gmail.com` a déjà le rôle modérateur.
+
+### Méthode alternative : Table Editor
 
 1. Supabase → **Table Editor** → table `documents`.
 2. Repérez les lignes dont `status` vaut `pending`. Le titre est dans la colonne `title`.

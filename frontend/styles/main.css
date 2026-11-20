@@ -1255,22 +1255,31 @@ img {
     }
 }
 /* ===== DÉFILEMENT CONTINU (établissements & documents) — ordinateur et mobile ===== */
+/* La zone reste défilable à la main (deux doigts, doigt, Maj + molette); le JS fait avancer en continu. */
 .home-document-carousel.is-carousel.is-marquee,
 .institution-grid.is-carousel.is-marquee {
     display: block;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
     scroll-snap-type: none;
+    scroll-behavior: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
     padding: 6px 0 16px;
     -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 3%, #000 97%, transparent 100%);
     mask-image: linear-gradient(90deg, transparent 0, #000 3%, #000 97%, transparent 100%);
+}
+
+.home-document-carousel.is-carousel.is-marquee::-webkit-scrollbar,
+.institution-grid.is-carousel.is-marquee::-webkit-scrollbar {
+    display: none;
 }
 
 .is-carousel.is-marquee > .marquee-track {
     display: flex;
     flex: none;
     width: max-content;
-    animation: eduvault-marquee var(--marquee-duration, 40s) linear infinite;
-    will-change: transform;
 }
 
 .is-carousel.is-marquee > .marquee-track > * {
@@ -1278,11 +1287,7 @@ img {
     width: var(--marquee-card-width, 300px);
     min-width: 0;
     margin-inline-end: var(--marquee-gap, 16px);
-}
-
-@keyframes eduvault-marquee {
-    from { transform: translate3d(0, 0, 0); }
-    to { transform: translate3d(-50%, 0, 0); }
+    scroll-snap-align: none;
 }
 
 /* ===== PASTILLES FILIÈRE / ÉTABLISSEMENT DU HÉRO ===== */
@@ -1346,4 +1351,23 @@ img {
     .float-chip-bottom {
         translate: -50% 0;
     }
+}
+
+/* ===== CARTE DOCUMENT ENTIÈREMENT CLIQUABLE ===== */
+.document-card {
+    position: relative;
+    cursor: pointer;
+}
+
+.document-card .action-read::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+}
+
+.document-card:focus-within {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
 }

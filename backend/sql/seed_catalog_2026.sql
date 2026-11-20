@@ -1,6 +1,23 @@
 -- EduVault — Catalogue des établissements et filières informatiques au Togo (novembre 2026)
 -- Idempotent : peut être rejoué. Généré depuis frontend/scripts/store.js.
 begin;
+
+-- 1. Harmoniser les anciens noms créés par schema.sql (évite les doublons)
+update public.institutions set name = 'Institut Africain d''Informatique (IAI-Togo)' where name = 'Institut Africain d''Informatique — Représentation du Togo (IAI-Togo)';
+update public.institutions set name = 'ESGIS Togo' where name = 'École Supérieure de Gestion, d''Informatique et des Sciences (ESGIS)';
+update public.institutions set name = 'UCAO — Unité Universitaire du Togo (UCAO-UUT)' where name = 'Université Catholique de l''Afrique de l''Ouest — Unité Universitaire du Togo (UCAO-UUT)';
+update public.institutions set name = 'ESIG Global Success' where name = 'École Supérieure d''Informatique et de Gestion (ESIG Global Success)';
+update public.institutions set name = 'Institut Africain d''Administration et d''Études Commerciales (IAEC)' where name = 'IAEC Université (Pôle Technologies & Informatique)';
+update public.institutions set name = 'CIB-INTA' where name = 'Centre Informatique et Bureautique (CIB-INTA)';
+update public.institutions set name = 'CIFOP Lomé' where name = 'Centre Informatique de Formation et d''Orientation Professionnelles (CIFOP)';
+update public.institutions set name = 'ISTA Kara' where name = 'Institut des Sciences, Technologies et Arts de Kara (ISTA-Kara)';
+update public.institutions set name = 'IFNTI Sokodé' where name = 'Institut de Formation aux Normes et Technologies de l''Informatique (IFNTI)';
+delete from public.institutions where name = 'Formation ENP signalée à Kara — à vérifier';
+
+-- 2. Masquer toutes les filières; seules celles du catalogue vérifié ci-dessous redeviennent visibles
+update public.programs set is_listed = false;
+
+-- 3. Catalogue vérifié
 insert into public.institutions (name, city, country, description, sector, aliases, verification, website)
 values ('École Polytechnique de Lomé (EPL)', 'Lomé', 'Togo', 'École d''ingénieurs publique de l''Université de Lomé (issue de l''ENSI et du CIC), présentée en 2026 comme École Nationale Polytechnique (ENP) avec un campus à Kara. Parcours : génie logiciel, systèmes et réseaux, informatique et systèmes, IA et Big Data.', 'public', array['EPL','ENP','École Nationale Polytechnique']::text[], 'Vérifié (sources publiques, nov. 2026)', 'https://univ-lome.tg/')
 on conflict (name) do update set city = excluded.city, country = excluded.country, description = excluded.description, sector = excluded.sector, aliases = excluded.aliases, verification = excluded.verification, website = excluded.website;

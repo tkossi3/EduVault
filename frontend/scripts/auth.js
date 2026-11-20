@@ -426,7 +426,7 @@
 
             try {
                 const result = currentAuthTab === "signup"
-                    ? await client.auth.signUp({ email, password, options: { data: { name, institution } } })
+                    ? await client.auth.signUp({ email, password, options: { data: { name, full_name: name, institution }, emailRedirectTo: `${window.location.origin}/pages/login` } })
                     : await client.auth.signInWithPassword({ email, password });
 
                 if (result.error) {
@@ -480,7 +480,7 @@
             try {
                 const { error } = await client.auth.signInWithOAuth({
                     provider: "google",
-                    options: { redirectTo: window.location.href }
+                    options: { redirectTo: `${window.location.origin}${window.location.pathname}` }
                 });
                 if (error) {
                     const feedback = document.querySelector("#auth-feedback");

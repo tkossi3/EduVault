@@ -3,3 +3,5 @@ frontend/dist/
 frontend/.env.local
 frontend/.env.*.local
 .vercel
+backend/.env
+.env

@@ -71,9 +71,9 @@
             </div>
             
             <div class="reader-top-actions">
-                <button class="button button-outline" id="toggle-view-mode" type="button" title="Basculer entre le défilement continu et la lecture page par page">
+                <button class="button button-outline" id="toggle-view-mode" type="button" title="Basculer entre le mode défilement et le mode page par page">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-                    <span id="toggle-view-text">Lecture page par page</span>
+                    <span id="toggle-view-text">Mode page par page</span>
                 </button>
                 <button class="button button-outline" id="btn-fullscreen" type="button" title="Plein écran (Agrandir au maximum)">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
@@ -114,7 +114,7 @@
                 </div>
 
                 <div class="reader-toolbar-group" id="continuous-info-group" style="display: none;">
-                    <span class="badge badge-primary" id="continuous-page-count" style="font-size: 12px; font-weight: 700;">Vue Défilement Continu · Document complet</span>
+                    <span class="badge badge-primary" id="continuous-page-count" style="font-size: 12px; font-weight: 700;">Document complet</span>
                 </div>
 
                 <div class="reader-toolbar-group">
@@ -133,7 +133,7 @@
                 </div>
 
                 <div class="reader-toolbar-group">
-                    <span class="badge badge-accent" id="reader-mode-tag">Document Original Intégral</span>
+                    <span class="badge badge-accent" id="reader-mode-tag">Mode défilement</span>
                 </div>
             </div>
 
@@ -168,7 +168,7 @@
     <script src="../scripts/icons.js"></script>
     <script src="../scripts/store.js"></script>
     <script src="../scripts/config.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../scripts/vendor/supabase.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="../scripts/theme.js"></script>
     <script src="../scripts/auth.js"></script>

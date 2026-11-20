@@ -67,7 +67,10 @@
                 ? await client.auth.signUp({
                     email,
                     password,
-                    options: { data: profile }
+                    options: {
+                        data: { ...profile, full_name: profile.name },
+                        emailRedirectTo: `${window.location.origin}/pages/login`
+                    }
                 })
                 : await client.auth.signInWithPassword({ email, password });
 
@@ -84,7 +87,7 @@
             saveAuthenticatedProfile(result.data.user, profile);
             showFeedback(isSignup ? "Compte créé. Redirection…" : "Connexion réussie. Redirection…", true);
             window.setTimeout(() => {
-                window.location.assign(new URL("profile.html", window.location.href).href);
+                window.location.assign(`${window.location.origin}/pages/profile`);
             }, 350);
         } catch (error) {
             console.error("Échec de l’authentification.", error);
@@ -103,7 +106,7 @@
             const { error } = await client.auth.signInWithOAuth({
                 provider: "google",
                 options: {
-                    redirectTo: new URL("profile.html", window.location.href).href
+                    redirectTo: `${window.location.origin}/pages/profile`
                 }
             });
             if (error) showFeedback(error.message);

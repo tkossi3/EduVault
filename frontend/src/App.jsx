@@ -150,29 +150,45 @@ function LegacyPage({ loadTemplate }) {
     }
 
     let cancelled = false;
+    // Les scripts externes consécutifs sont insérés ensemble avec async=false :
+    // le navigateur les télécharge en parallèle mais les exécute dans l'ordre.
+    // Un script inline attend la fin du groupe externe qui le précède.
     const loadScripts = async () => {
       const errors = [];
+      let pendingGroup = [];
+
+      const flushGroup = async () => {
+        if (!pendingGroup.length) return;
+        const group = pendingGroup;
+        pendingGroup = [];
+        await Promise.all(group.map((scriptInfo) => new Promise((resolve) => {
+          const script = document.createElement('script');
+          if (scriptInfo.type) script.type = scriptInfo.type;
+          script.src = new URL(scriptInfo.src, window.location.href).href;
+          script.async = false;
+          script.addEventListener('load', resolve, { once: true });
+          script.addEventListener('error', () => {
+            errors.push(`Impossible de charger le script ${scriptInfo.src}`);
+            resolve();
+          }, { once: true });
+          document.body.appendChild(script);
+        })));
+      };
+
       for (const scriptInfo of page.scripts) {
+        if (cancelled) return;
+        if (scriptInfo.src) {
+          pendingGroup.push(scriptInfo);
+          continue;
+        }
+        await flushGroup();
         if (cancelled) return;
         const script = document.createElement('script');
         if (scriptInfo.type) script.type = scriptInfo.type;
-
-        if (scriptInfo.src) {
-          script.src = new URL(scriptInfo.src, window.location.href).href;
-          script.async = false;
-          const loaded = await new Promise((resolve) => {
-            script.addEventListener('load', resolve, { once: true });
-            script.addEventListener('error', () => resolve(false), { once: true });
-            document.body.appendChild(script);
-          });
-          if (loaded === false) {
-            errors.push(`Impossible de charger le script ${scriptInfo.src}`);
-          }
-        } else {
-          script.textContent = scriptInfo.text;
-          document.body.appendChild(script);
-        }
+        script.textContent = scriptInfo.text;
+        document.body.appendChild(script);
       }
+      await flushGroup();
       if (!cancelled && errors.length) {
         errors.forEach((message) => console.error(message));
         setScriptError(errors.join(' ; '));

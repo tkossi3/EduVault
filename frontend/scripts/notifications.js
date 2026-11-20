@@ -89,7 +89,11 @@
         });
     }
 
-    document.addEventListener("DOMContentLoaded", refresh);
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", refresh);
+    } else {
+        refresh();
+    }
     document.addEventListener("eduvault:auth", refresh);
     window.EduVaultNotifications = { refresh };
 })();

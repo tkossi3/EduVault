@@ -1254,3 +1254,96 @@ img {
         min-height: 64px;
     }
 }
+/* ===== DÉFILEMENT CONTINU (établissements & documents) — ordinateur et mobile ===== */
+.home-document-carousel.is-carousel.is-marquee,
+.institution-grid.is-carousel.is-marquee {
+    display: block;
+    overflow: hidden;
+    scroll-snap-type: none;
+    padding: 6px 0 16px;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 3%, #000 97%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 3%, #000 97%, transparent 100%);
+}
+
+.is-carousel.is-marquee > .marquee-track {
+    display: flex;
+    flex: none;
+    width: max-content;
+    animation: eduvault-marquee var(--marquee-duration, 40s) linear infinite;
+    will-change: transform;
+}
+
+.is-carousel.is-marquee > .marquee-track > * {
+    flex: 0 0 var(--marquee-card-width, 300px);
+    width: var(--marquee-card-width, 300px);
+    min-width: 0;
+    margin-inline-end: var(--marquee-gap, 16px);
+}
+
+@keyframes eduvault-marquee {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(-50%, 0, 0); }
+}
+
+/* ===== PASTILLES FILIÈRE / ÉTABLISSEMENT DU HÉRO ===== */
+.hero-art {
+    padding: 56px 0;
+}
+
+.float-chip {
+    max-width: min(300px, 80%);
+    white-space: nowrap;
+}
+
+.float-chip > span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.float-chip .badge {
+    flex-shrink: 0;
+}
+
+.float-chip-top {
+    top: 8px;
+    right: auto;
+    left: 50%;
+    translate: calc(-50% - 90px) 0;
+}
+
+.float-chip-bottom {
+    top: auto;
+    bottom: 8px;
+    left: 50%;
+    right: auto;
+    translate: calc(-50% + 90px) 0;
+}
+
+@media (max-width: 900px) {
+    .hero-art {
+        min-height: 0;
+        padding: 52px 0;
+    }
+
+    .float-chip-top {
+        top: 6px;
+        translate: calc(-50% - 50px) 0;
+    }
+
+    .float-chip-bottom {
+        bottom: 6px;
+        translate: calc(-50% + 50px) 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .float-chip {
+        max-width: calc(100% - 24px);
+    }
+
+    .float-chip-top,
+    .float-chip-bottom {
+        translate: -50% 0;
+    }
+}

@@ -1,5 +1,5 @@
 /* Visionneuse HD et Lecteur de Documents PDF — EduVault 2026
-   Supporte le Mode Page par Page et la Vue Navigateur (Défilement Continu Plein Écran) */
+   Supporte le mode page par page et le mode défilement */
 (async () => {
     const params = new URLSearchParams(location.search);
     const documentId = params.get("id");
@@ -185,7 +185,7 @@
         updateUIIndicators();
     };
 
-    // ==================== RENDU VUE NAVIGATEUR (DÉFILEMENT CONTINU PLEIN ÉCRAN) ====================
+    // ==================== RENDU MODE DÉFILEMENT ====================
     const renderContinuousView = async () => {
         if (!continuousWrapper) return;
         const targetPageNum = pageNum;
@@ -252,15 +252,15 @@
             if (pageNavGroup) pageNavGroup.style.display = "none";
             if (continuousInfoGroup) continuousInfoGroup.style.display = "flex";
             if (continuousPageCount) {
-                continuousPageCount.textContent = `Défilement continu · ${totalPages} pages`;
+                continuousPageCount.textContent = `${totalPages} page${totalPages > 1 ? "s" : ""}`;
             }
-            if (toggleViewText) toggleViewText.textContent = "Lecture page par page";
-            if (modeTag) modeTag.textContent = "Défilement continu";
+            if (toggleViewText) toggleViewText.textContent = "Mode page par page";
+            if (modeTag) modeTag.textContent = "Mode défilement";
         } else {
             if (pageNavGroup) pageNavGroup.style.display = "flex";
             if (continuousInfoGroup) continuousInfoGroup.style.display = "none";
-            if (toggleViewText) toggleViewText.textContent = "Défilement continu";
-            if (modeTag) modeTag.textContent = "Lecture page par page";
+            if (toggleViewText) toggleViewText.textContent = "Mode défilement";
+            if (modeTag) modeTag.textContent = "Mode page par page";
         }
     };
 
@@ -395,7 +395,7 @@
 
     // ==================== ÉVÉNEMENTS & INTERACTIONS ====================
 
-    // Basculer Mode Page par Page <-> Vue Navigateur (Défilement continu)
+    // Basculer mode page par page <-> mode défilement
     toggleViewBtn?.addEventListener("click", () => {
         viewMode = viewMode === "single" ? "continuous" : "single";
         renderCurrentMode();

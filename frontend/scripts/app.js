@@ -32,101 +32,66 @@
         .toLowerCase()
         .replace(/[^a-z0-9]/g, "");
 
-    const carouselStates = new Map();
+    // Défilement continu (marquee) : même comportement sur ordinateur et mobile, sans pause.
+    const MARQUEE_SPEED_PX_PER_SECOND = 45;
+    const MARQUEE_GAP = 16;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const marqueeCardWidth = (containerWidth) => {
+        if (containerWidth >= 1000) return (containerWidth - MARQUEE_GAP * 3) / 4;
+        if (containerWidth >= 640) return Math.min(340, containerWidth * 0.42);
+        return Math.min(containerWidth * 0.84, 340);
+    };
+
     const syncAutoCarousel = (container) => {
         if (!container) return;
-        let state = carouselStates.get(container.id);
-        if (!state) {
-            state = { timer: null, frame: null, hovered: false, focused: false, bound: false };
-            carouselStates.set(container.id, state);
-        }
-        if (state.timer) clearInterval(state.timer);
-        if (state.frame) cancelAnimationFrame(state.frame);
 
-        const isCampusCarousel = container.id === "institution-list";
-        if (isCampusCarousel) {
-            container.classList.remove("is-continuous-carousel");
-            container.querySelectorAll(":scope > [data-carousel-clone]").forEach((clone) => clone.remove());
+        const existingTrack = container.querySelector(":scope > .marquee-track");
+        if (existingTrack) {
+            const originals = [...existingTrack.children].filter((child) => !child.dataset.carouselClone);
+            container.replaceChildren(...originals);
         }
-        const canScroll = container.classList.contains("is-carousel")
-            && container.children.length > 1
-            && container.scrollWidth > container.clientWidth + 4
-            && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        if (!canScroll) return;
+        container.classList.remove("is-marquee");
 
-        if (isCampusCarousel) {
-            const cards = [...container.children];
+        const cards = [...container.children];
+        if (!container.classList.contains("is-carousel") || !cards.length || reducedMotion.matches) return;
+
+        const containerWidth = container.clientWidth;
+        if (!containerWidth) return;
+        const cardWidth = marqueeCardWidth(containerWidth);
+        const stride = cardWidth + MARQUEE_GAP;
+
+        const track = document.createElement("div");
+        track.className = "marquee-track";
+        track.style.setProperty("--marquee-card-width", `${cardWidth}px`);
+        track.style.setProperty("--marquee-gap", `${MARQUEE_GAP}px`);
+        track.append(...cards);
+
+        const makeClone = (card) => {
+            const clone = card.cloneNode(true);
+            clone.dataset.carouselClone = "true";
+            clone.setAttribute("aria-hidden", "true");
+            clone.setAttribute("tabindex", "-1");
+            clone.setAttribute("inert", "");
+            return clone;
+        };
+
+        // 1. Remplir au moins la largeur visible pour éviter un « trou » dans la boucle.
+        const group = [...cards];
+        while (group.length * stride < containerWidth + stride) {
             cards.forEach((card) => {
-                const clone = card.cloneNode(true);
-                clone.dataset.carouselClone = "true";
-                clone.setAttribute("aria-hidden", "true");
-                clone.setAttribute("inert", "");
-                container.append(clone);
+                const clone = makeClone(card);
+                group.push(clone);
+                track.append(clone);
             });
-            const firstCard = cards[0];
-            const firstClone = container.querySelector(":scope > [data-carousel-clone]");
-            state.loopDistance = firstClone.getBoundingClientRect().left - firstCard.getBoundingClientRect().left;
-            state.position = container.scrollLeft;
-            state.lastRenderedScroll = container.scrollLeft;
-            container.classList.add("is-continuous-carousel");
-            if (!state.scrollBound) {
-                container.addEventListener("scroll", () => {
-                    if (Math.abs(container.scrollLeft - state.lastRenderedScroll) > 1) {
-                        state.position = container.scrollLeft;
-                    }
-                }, { passive: true });
-                state.scrollBound = true;
-            }
-            let previousFrameTime = 0;
-            const animate = (time) => {
-                if (document.hidden) {
-                    previousFrameTime = 0;
-                } else if (previousFrameTime) {
-                    state.position += (time - previousFrameTime) * 0.025;
-                    if (state.position >= state.loopDistance) {
-                        state.position -= state.loopDistance;
-                    }
-                    container.scrollLeft = state.position;
-                    state.lastRenderedScroll = container.scrollLeft;
-                }
-                previousFrameTime = time;
-                state.frame = requestAnimationFrame(animate);
-            };
-            state.frame = requestAnimationFrame(animate);
-            return;
         }
+        // 2. Dupliquer le groupe complet : l'animation se décale de -50 % puis recommence sans saut.
+        group.forEach((card) => track.append(makeClone(card)));
 
-        if (!state.bound) {
-            container.addEventListener("pointerenter", () => { state.hovered = true; });
-            container.addEventListener("pointerleave", () => { state.hovered = false; });
-            container.addEventListener("focusin", () => { state.focused = true; });
-            container.addEventListener("focusout", (event) => {
-                state.focused = container.contains(event.relatedTarget);
-            });
-            container.addEventListener("touchstart", () => { state.hovered = true; }, { passive: true });
-            container.addEventListener("touchend", () => {
-                window.setTimeout(() => { state.hovered = false; }, 2500);
-            }, { passive: true });
-            state.bound = true;
-        }
-
-        state.timer = window.setInterval(() => {
-            if (state.hovered || state.focused || document.hidden) return;
-            const firstCard = container.firstElementChild;
-            if (!firstCard) return;
-            const gap = parseFloat(getComputedStyle(container).gap) || 0;
-            const stride = firstCard.getBoundingClientRect().width + gap;
-            const maxScroll = container.scrollWidth - container.clientWidth;
-            if (container.scrollLeft >= maxScroll - 6) {
-                container.scrollTo({ left: 0, behavior: "smooth" });
-            } else {
-                const nextLeft = container.scrollLeft + stride;
-                container.scrollTo({
-                    left: Math.min(nextLeft, maxScroll),
-                    behavior: "smooth"
-                });
-            }
-        }, 3600);
+        const loopDistance = group.length * stride;
+        track.style.setProperty("--marquee-duration", `${Math.max(12, loopDistance / MARQUEE_SPEED_PX_PER_SECOND)}s`);
+        container.append(track);
+        container.classList.add("is-marquee");
     };
 
     const formatSize = (bytes) => {
@@ -389,9 +354,17 @@
         if (programChip) programChip.textContent = profile?.program || "Votre parcours";
     }
 
+    // Recalcul uniquement si la largeur change (la barre d'adresse mobile déclenche des « resize » verticaux).
+    let lastViewportWidth = window.innerWidth;
+    let resizeTimer = null;
     window.addEventListener("resize", () => {
-        if (isExplorerPage && !currentQuery) render();
-        renderInstitutions();
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            if (window.innerWidth === lastViewportWidth) return;
+            lastViewportWidth = window.innerWidth;
+            if (isExplorerPage && !currentQuery) render();
+            renderInstitutions();
+        }, 200);
     });
 
     // Initialisation

@@ -129,7 +129,8 @@
                 institution: institutionName,
                 program: programName,
                 semester,
-                category: item.category || "Support de cours"
+                category: item.category || "Support de cours",
+                year: item.academic_year || currentAcademicYear()
             });
             
             const categoryBadgeClass = item.category === "Examen/Annales" 
@@ -200,11 +201,11 @@
 
         try {
             if (isLibraryPage && courseId) {
-                const response = await fetch(`${config.API_BASE_URL}/catalog/courses/${encodeURIComponent(courseId)}/documents`);
+                const response = await window.EduVaultApi.fetch(`/catalog/courses/${encodeURIComponent(courseId)}/documents`);
                 if (!response.ok) throw new Error(`Chargement du cours impossible (${response.status}).`);
                 currentDocuments = await response.json();
             } else {
-                const response = await fetch(`${config.API_BASE_URL}/documents/search?q=${encodeURIComponent(query)}`);
+                const response = await window.EduVaultApi.fetch(`/documents/search?q=${encodeURIComponent(query)}`);
                 if (!response.ok) throw new Error("API Offline");
                 const data = await response.json();
                 currentDocuments = data.documents || [];
@@ -239,7 +240,7 @@
         currentInstitutions = institutions;
         renderInstitutions();
         try {
-            const response = await fetch(`${config.API_BASE_URL}/catalog`);
+            const response = await window.EduVaultApi.fetch(`/catalog`);
             if (!response.ok) throw new Error(`Réponse API ${response.status}`);
             const data = await response.json();
             const localInstitutions = store?.loadState().institutions || [];

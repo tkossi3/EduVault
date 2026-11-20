@@ -1,20 +1,14 @@
 ﻿/* Gestionnaire d'Authentification et d'Identité EduVault 2026 */
 (() => {
     const config = window.EDUVAULT_CONFIG || {};
-    const sdk = window.supabase;
     const store = window.EduVaultStore;
     
     let client = null;
     let requestedAction = null;
     let currentAuthTab = "login"; // 'login' | 'signup'
 
-    if (sdk?.createClient && config?.SUPABASE_URL && !config.SUPABASE_URL.includes("your-project")) {
-        try {
-            client = sdk.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
-        } catch (e) {
-            console.warn("Supabase init error:", e);
-        }
-    }
+    // Client partagé créé par scripts/supabase-api.js (null si Supabase n'est pas configuré).
+    client = window.EduVaultSupabase || null;
 
     const getSession = async () => {
         if (!client) return null;

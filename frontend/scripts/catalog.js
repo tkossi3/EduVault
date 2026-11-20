@@ -353,7 +353,7 @@
         }
 
         try {
-            const response = await fetch(`${config.API_BASE_URL}/catalog/courses`, {
+            const response = await window.EduVaultApi.fetch(`/catalog/courses`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${session.access_token}`,
@@ -384,7 +384,7 @@
         }
 
         try {
-            const response = await fetch(`${config.API_BASE_URL}/catalog/program-requests`, {
+            const response = await window.EduVaultApi.fetch(`/catalog/program-requests`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${session.access_token}`,
@@ -445,7 +445,7 @@
         const session = await auth?.getSession();
         if (!session?.access_token) return;
         try {
-            const response = await fetch(`${config.API_BASE_URL}/catalog/program-requests`, {
+            const response = await window.EduVaultApi.fetch(`/catalog/program-requests`, {
                 headers: { "Authorization": `Bearer ${session.access_token}` }
             });
             if (!response.ok) throw new Error(`Réponse API ${response.status}`);
@@ -461,7 +461,7 @@
         const session = await auth?.getSession();
         if (!session?.access_token) return;
         try {
-            const response = await fetch(`${config.API_BASE_URL}/catalog/program-requests/${encodeURIComponent(requestId)}/review`, {
+            const response = await window.EduVaultApi.fetch(`/catalog/program-requests/${encodeURIComponent(requestId)}/review`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${session.access_token}`,
@@ -490,7 +490,7 @@
 
     const loadCatalog = async () => {
         try {
-            const response = await fetch(`${config.API_BASE_URL}/catalog`);
+            const response = await window.EduVaultApi.fetch(`/catalog`);
             if (!response.ok) throw new Error(`Réponse API ${response.status}`);
             const remoteData = await response.json();
             const localData = store.loadState();

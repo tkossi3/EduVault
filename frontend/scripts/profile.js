@@ -139,7 +139,7 @@
         if (session?.access_token) {
             usingRemoteDocuments = true;
             try {
-                const response = await fetch(`${config.API_BASE_URL}/auth/my-documents`, {
+                const response = await window.EduVaultApi.fetch(`/auth/my-documents`, {
                     headers: { "Authorization": `Bearer ${session.access_token}` }
                 });
                 if (!response.ok) throw new Error(`Réponse API ${response.status}`);
@@ -243,7 +243,7 @@
                             return;
                         }
                         try {
-                            const response = await fetch(`${config.API_BASE_URL}/documents/${encodeURIComponent(docId)}`, {
+                            const response = await window.EduVaultApi.fetch(`/documents/${encodeURIComponent(docId)}`, {
                                 method: "DELETE",
                                 headers: { "Authorization": `Bearer ${activeSession.access_token}` }
                             });

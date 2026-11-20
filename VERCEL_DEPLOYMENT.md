@@ -1,6 +1,6 @@
 # 🚀 Guide de Déploiement sur Vercel (EduVault 2026)
 
-Ce guide déploie le frontend statique **EduVault** sur **Vercel**. Le backend FastAPI et la base Supabase sont des services séparés : le dépôt ne configure ni ne déploie automatiquement l'API.
+Ce guide déploie **EduVault** sur **Vercel**. Le site parle directement à Supabase : il n'y a aucun serveur à héberger en plus.
 
 ---
 
@@ -29,16 +29,13 @@ Ce guide déploie le frontend statique **EduVault** sur **Vercel**. Le backend F
 
    Ces paramètres sont également enregistrés dans [`vercel.json`](./vercel.json).
 
-### Étape 3 : Configurer Supabase et l'API
+### Étape 3 : Configurer Supabase
 
-1. Exécutez d'abord les étapes du [guide Supabase](./SUPABASE_SETUP.md).
-2. Déployez le backend FastAPI sur un hébergeur compatible séparément, puis définissez `VITE_API_BASE_URL` dans les variables d'environnement Vercel avec son URL publique suivie de `/api`. Autorisez le domaine Vercel dans `CORS_ORIGINS`.
-3. Renseignez l'URL Supabase et la clé `anon` publique dans `frontend/scripts/config.js`.
-4. Ne placez jamais la clé Supabase `service_role` dans le frontend ou dans une variable exposée au navigateur; elle appartient uniquement au backend.
+1. Suivez le [guide Supabase](./SUPABASE_SETUP.md) : il crée la base, la sécurité, le stockage des PDF et la connexion Google.
+2. Renseignez l'URL Supabase et la clé **Publishable** dans `frontend/scripts/config.js`.
+3. Ne placez jamais la clé **Secret** (`service_role`) dans le frontend, dans GitHub ou dans une variable Vercel : le site n'en a pas besoin.
 
-Sans backend public configuré, les appels API distants ne sont pas disponibles. Les documents déposés en local restent dans le navigateur concerné et ne sont pas partagés entre les visiteurs.
-
-Le lecteur affiche le fichier PDF original associé à son identifiant. Si le PDF, le backend ou son URL signée n’est pas accessible, une erreur est affichée : aucun faux document n’est généré à la place.
+Le lecteur affiche le fichier PDF original via un lien temporaire Supabase. Si le PDF n'est pas accessible (document pas encore validé, par exemple), une erreur est affichée.
 
 ### Étape 4 : Déployer
 1. Cliquez sur **"Deploy"**.
@@ -65,7 +62,7 @@ vercel --prod
 
 ## 🔄 Configuration de routage
 
-Vercel construit les neuf entrées HTML React de Vite et publie `frontend/dist`, qui contient aussi les ressources statiques historiques nécessaires au fonctionnement des pages. Il ne redirige volontairement pas `/api` vers `localhost` : une telle adresse désignerait l'ordinateur de chaque visiteur, pas votre backend.
+Vercel construit les neuf entrées HTML React de Vite et publie `frontend/dist`, qui contient aussi les ressources statiques historiques nécessaires au fonctionnement des pages. 
 
 ---
 

@@ -307,13 +307,10 @@
             if (!pdfSource && currentDoc.id) {
                 const config = window.EDUVAULT_CONFIG || {};
                 const session = await window.EduVaultAuth?.getSession();
-                if (!config.API_BASE_URL) {
-                    throw new Error("L’adresse de l’API n’est pas configurée.");
-                }
                 const endpoint = session?.access_token
-                    ? `${config.API_BASE_URL}/documents/${encodeURIComponent(currentDoc.id)}/owner-view-url`
-                    : `${config.API_BASE_URL}/documents/${encodeURIComponent(currentDoc.id)}/view-url`;
-                const response = await fetch(endpoint, {
+                    ? `/documents/${encodeURIComponent(currentDoc.id)}/owner-view-url`
+                    : `/documents/${encodeURIComponent(currentDoc.id)}/view-url`;
+                const response = await window.EduVaultApi.fetch(endpoint, {
                     headers: session?.access_token
                         ? { "Authorization": `Bearer ${session.access_token}` }
                         : {}

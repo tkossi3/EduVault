@@ -118,6 +118,11 @@
             )
             : store.getProgramsByInstitutionAndDegree(instId || instName, degreeType);
 
+        if (remoteCatalog && !programs.length) {
+            // Aucun parcours pour ce cycle : on propose toutes les filières de l'établissement.
+            programs = remoteCatalog.programs.filter((program) => program.institution_id === instId);
+        }
+
         if (!remoteCatalog && (!programs || !programs.length)) {
             programs = store.getProgramsByInstitution(instId || instName);
         }
@@ -421,23 +426,49 @@
         const progId = selectedProgOption?.dataset?.id || selectedProgOption?.value || "prog-1";
 
         if (remoteCatalog) {
-            const course = remoteCatalog.courses.find((item) =>
-                item.program_id === progId &&
-                item.semester === semester &&
-                item.name.trim().toLowerCase() === courseName.toLowerCase()
-            );
-            if (!course) {
-                feedback.className = "form-feedback";
-                feedback.textContent = "Choisissez une matière déjà enregistrée pour cette filière et ce semestre.";
-                return;
-            }
-
             const session = await window.EduVaultAuth?.getSession();
             if (!session?.access_token) {
                 feedback.className = "form-feedback";
-                feedback.textContent = "Connectez-vous avec Supabase pour déposer un document.";
+                feedback.textContent = "Connectez-vous pour déposer un document.";
                 window.EduVaultAuth?.open("login", "Connectez-vous pour déposer votre document dans la bibliothèque.");
                 return;
+            }
+
+            const semesterNumber = parseInt(semester, 10) || 1;
+            if (!progId || !remoteCatalog.programs.some((program) => program.id === progId)) {
+                feedback.className = "form-feedback";
+                feedback.textContent = "Choisissez une filière dans la liste.";
+                return;
+            }
+            let course = remoteCatalog.courses.find((item) =>
+                item.program_id === progId &&
+                item.semester === semesterNumber &&
+                item.name.trim().toLowerCase() === courseName.toLowerCase()
+            );
+            if (!course) {
+                // Nouvelle matière : elle est ajoutée au catalogue de la filière pour ce semestre.
+                const courseResponse = await window.EduVaultApi.fetch("/catalog/courses", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: courseName, program_id: progId, semester: semesterNumber })
+                });
+                const courseResult = await courseResponse.json().catch(() => ({}));
+                if (courseResponse.status === 409) {
+                    const refreshed = await window.EduVaultApi.fetch("/catalog");
+                    if (refreshed.ok) remoteCatalog = await refreshed.json();
+                    course = remoteCatalog.courses.find((item) =>
+                        item.program_id === progId && item.semester === semesterNumber
+                        && item.name.trim().toLowerCase() === courseName.toLowerCase()
+                    );
+                } else if (courseResponse.ok) {
+                    course = courseResult;
+                    remoteCatalog.courses.push(courseResult);
+                }
+                if (!course) {
+                    feedback.className = "form-feedback";
+                    feedback.textContent = courseResult.detail || "La matière n'a pas pu être ajoutée. Réessayez.";
+                    return;
+                }
             }
 
             feedback.className = "form-feedback";
@@ -450,7 +481,7 @@
             uploadData.append("file", fileToUpload, fileToUpload.name);
 
             try {
-                const response = await fetch(`${config.API_BASE_URL}/documents/upload`, {
+                const response = await window.EduVaultApi.fetch(`/documents/upload`, {
                     method: "POST",
                     headers: { "Authorization": `Bearer ${session.access_token}` },
                     body: uploadData
@@ -461,7 +492,7 @@
                 }
                 const created = await response.json();
                 feedback.className = "form-feedback is-success";
-                feedback.textContent = `Document envoyé. Il sera visible après validation par un modérateur. Référence : ${created.id}`;
+                feedback.textContent = "Document envoyé ! Il sera visible dans la bibliothèque après validation par un modérateur. Vous pouvez suivre son état dans votre profil.";
                 selectedFile = null;
                 fileDataUrl = null;
                 if (fileInput) fileInput.value = "";
@@ -527,7 +558,7 @@
         const submitButton = form?.querySelector('[type="submit"]');
         if (submitButton) submitButton.disabled = true;
         try {
-            const response = await fetch(`${config.API_BASE_URL}/catalog`);
+            const response = await window.EduVaultApi.fetch(`/catalog`);
             if (!response.ok) throw new Error(`Réponse API ${response.status}`);
             const catalog = await response.json();
             if (!Array.isArray(catalog.institutions) || !Array.isArray(catalog.programs) || !Array.isArray(catalog.courses)) {

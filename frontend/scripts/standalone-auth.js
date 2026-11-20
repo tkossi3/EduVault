@@ -1,7 +1,6 @@
 /* Authentication for the dedicated login and registration pages. */
 (() => {
     const config = window.EDUVAULT_CONFIG || {};
-    const sdk = window.supabase;
     const store = window.EduVaultStore;
     const form = document.querySelector("#standalone-login-form, #standalone-register-form");
     const feedback = document.querySelector("#login-feedback, #register-feedback");
@@ -9,14 +8,8 @@
 
     if (!form || !feedback) return;
 
-    let client = null;
-    if (sdk?.createClient && config.SUPABASE_URL && config.SUPABASE_ANON_KEY) {
-        try {
-            client = sdk.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
-        } catch (error) {
-            console.error("Initialisation de l’authentification Supabase impossible.", error);
-        }
-    }
+    // Client partagé créé par scripts/supabase-api.js (null si Supabase n'est pas configuré).
+    const client = window.EduVaultSupabase || null;
 
     const isSignup = form.id === "standalone-register-form";
     const showFeedback = (message, isSuccess = false) => {

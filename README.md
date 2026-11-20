@@ -35,14 +35,10 @@
 
 ```
 EduVault/
-├── backend/                  # API Python FastAPI & Supabase
-│   ├── models/               # Schémas Pydantic
-│   ├── routes/               # Routes FastAPI (auth, catalog, documents, notifications)
-│   ├── sql/
-│   │   └── schema.sql        # Schéma PostgreSQL Supabase 2026
-│   ├── config.py
-│   ├── main.py
-│   └── requirements.txt
+├── supabase/                 # Base de données (aucun serveur à héberger)
+│   ├── schema.sql            # Tables, règles de sécurité (RLS) et stockage des PDF
+│   ├── catalog.sql           # Écoles et filières (généré)
+│   └── generate-catalog.mjs  # Régénère catalog.sql depuis frontend/scripts/store.js
 ├── frontend/                 # Application React/Vite et interface EduVault
 │   ├── src/
 │   │   ├── templates/        # Maquettes HTML historiques montées par React
@@ -94,7 +90,6 @@ EduVault/
 ### Prérequis
 
 - Node.js **20.19+** ou **22.12+** (LTS recommandé).
-- Python **3.11+** uniquement pour démarrer l’API.
 - Un projet Supabase configuré pour consulter les documents stockés en ligne. Voir le [guide Supabase](./SUPABASE_SETUP.md).
 
 ### 1. Démarrer l’interface
@@ -114,29 +109,15 @@ Copy-Item .env.example .env.local
 npm run dev
 ```
 
-La copie de `.env.example` est à faire une seule fois. Gardez `VITE_API_BASE_URL=http://localhost:8000/api` pour le démarrage local. Ouvrez l’URL affichée par Vite, généralement <http://localhost:5173>. Pour préparer le déploiement depuis la racine, utilisez `npm run build`.
+La copie de `.env.example` est à faire une seule fois; laissez `VITE_API_BASE_URL` vide. Ouvrez l’URL affichée par Vite, généralement <http://localhost:5173>. Pour préparer le déploiement depuis la racine, utilisez `npm run build`.
 
 Les pages Explorer, Bibliothèque, Parcours, dépôt, profil, connexion, notifications et lecteur sont accessibles depuis cette adresse. N’ouvrez pas les fichiers HTML directement avec `file://`.
 
-### 2. Démarrer l’API pour lire les PDF en ligne
+### 2. Connexion à Supabase
 
-Dans un deuxième terminal PowerShell :
+Il n'y a aucun serveur à lancer : le site parle directement à Supabase (`frontend/scripts/supabase-api.js`), et la sécurité est assurée par les règles de `supabase/schema.sql`. Renseignez l'URL et la clé **Publishable** du projet dans `frontend/scripts/config.js` (voir le [guide Supabase](./SUPABASE_SETUP.md)).
 
-```powershell
-cd backend
-python -m venv .venv
-.\.venv\Scripts\activate
-pip install -r requirements.txt
-$env:SUPABASE_URL = "https://votre-projet.supabase.co"
-$env:SUPABASE_ANON_KEY = "votre-cle-anon"
-$env:SUPABASE_SERVICE_ROLE_KEY = "votre-cle-service-role"
-$env:CORS_ORIGINS = '["http://localhost:5173"]'
-uvicorn main:app --reload --port 8000
-```
-
-Renseignez les valeurs privées depuis votre projet Supabase; ne publiez jamais la clé `service_role`. Les fichiers PDF sont lus à partir du fichier effectivement déposé ou de son URL Supabase signée. Si le fichier ou l’API est indisponible, le lecteur affiche une erreur au lieu de fabriquer un document de substitution.
-
-Sans API/Supabase, Vite permet d’explorer l’interface, mais ne peut pas charger les fichiers distants. Un PDF enregistré localement dans ce navigateur reste lisible depuis ce même navigateur.
+Sans Supabase configuré, l'interface reste consultable et les dépôts sont enregistrés uniquement dans le navigateur.
 
 ### 3. Créer le build de production
 

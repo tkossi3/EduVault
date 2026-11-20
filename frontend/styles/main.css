@@ -1371,3 +1371,19 @@ img {
     outline: 2px solid var(--primary);
     outline-offset: 2px;
 }
+
+/* Bandeau (peu de cartes) : la série se déplace sans copie; glisser horizontalement la fait défiler. */
+.home-document-carousel.is-carousel.is-marquee.is-ticker,
+.institution-grid.is-carousel.is-marquee.is-ticker {
+    overflow: hidden;
+    touch-action: pan-y;
+    user-select: none;
+}
+
+.is-carousel.is-ticker > .marquee-track {
+    will-change: transform;
+}
+
+.is-carousel.is-ticker a {
+    -webkit-user-drag: none;
+}

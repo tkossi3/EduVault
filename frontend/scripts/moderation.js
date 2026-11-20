@@ -155,10 +155,6 @@
                 `<a class="button button-primary" href="login.html" style="margin-top: 14px;">Se connecter</a>`);
             return;
         }
-        // Rafraîchit le jeton pour prendre en compte un rôle attribué depuis la dernière connexion.
-        if (!(await api.isModerator())) {
-            await api.client.auth.refreshSession().catch(() => {});
-        }
         if (!(await api.isModerator())) {
             showGate("Accès réservé", "Cet espace est réservé aux modérateurs EduVault.");
             return;

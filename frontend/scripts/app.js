@@ -54,8 +54,9 @@
 
     const bindMarqueeInteractions = (container) => {
         let state = marqueeStates.get(container);
-        if (state) return state;
-        state = { frame: null, position: 0, lastSet: 0, loop: 0, userUntil: 0 };
+        if (state?.bound) return state;
+        state = state || { frame: null, position: 0, lastSet: 0, loop: 0, userUntil: 0 };
+        state.bound = true;
         marqueeStates.set(container, state);
 
         const markUserActive = () => { state.userUntil = performance.now() + USER_IDLE_DELAY_MS; };
@@ -80,6 +81,78 @@
         return state;
     };
 
+    // Bandeau : la série de cartes traverse la zone de droite à gauche puis revient par la droite.
+    // Aucune copie n'est créée. On peut la faire glisser (doigt, souris, deux doigts sur pavé tactile).
+    const tickerStates = new WeakMap();
+    const startTicker = (container, track, trackWidth) => {
+        let state = tickerStates.get(container);
+        if (!state) {
+            state = { x: null, userUntil: 0, drag: null, moved: false };
+            tickerStates.set(container, state);
+            const markUserActive = () => { state.userUntil = performance.now() + USER_IDLE_DELAY_MS; };
+            container.addEventListener("wheel", (event) => {
+                const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : (event.shiftKey ? event.deltaY : 0);
+                if (!delta || !state.track) return;
+                event.preventDefault();
+                markUserActive();
+                state.x -= delta;
+            }, { passive: false });
+            container.addEventListener("pointerdown", (event) => {
+                if (!state.track || (event.pointerType === "mouse" && event.button !== 0)) return;
+                state.drag = { startX: event.clientX, startY: event.clientY, originX: state.x, id: event.pointerId };
+                state.moved = false;
+                markUserActive();
+            });
+            container.addEventListener("pointermove", (event) => {
+                if (!state.drag || event.pointerId !== state.drag.id) return;
+                const dx = event.clientX - state.drag.startX;
+                const dy = event.clientY - state.drag.startY;
+                if (!state.moved && Math.abs(dx) > 6 && Math.abs(dx) > Math.abs(dy)) {
+                    state.moved = true;
+                    container.setPointerCapture?.(event.pointerId);
+                }
+                if (state.moved) {
+                    markUserActive();
+                    state.x = state.drag.originX + dx;
+                }
+            });
+            const endDrag = () => { if (state.drag) { state.drag = null; markUserActive(); } };
+            container.addEventListener("pointerup", endDrag);
+            container.addEventListener("pointercancel", endDrag);
+            // Un glissement ne doit pas ouvrir le document sous le doigt.
+            container.addEventListener("click", (event) => {
+                if (state.moved) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    state.moved = false;
+                }
+            }, true);
+        }
+        state.track = track;
+        state.width = trackWidth;
+        const containerWidth = container.clientWidth;
+        if (state.x === null || state.x > containerWidth || state.x < -trackWidth) state.x = 0;
+
+        const wrap = () => {
+            if (state.x < -trackWidth) state.x += containerWidth + trackWidth;
+            else if (state.x > containerWidth) state.x -= containerWidth + trackWidth;
+        };
+        let previous = 0;
+        const step = (time) => {
+            const elapsed = previous ? Math.min(time - previous, 100) : 0;
+            previous = time;
+            if (!document.hidden && time >= state.userUntil && !state.drag && !reducedMotion.matches) {
+                state.x -= (elapsed / 1000) * MARQUEE_SPEED_PX_PER_SECOND;
+            }
+            wrap();
+            track.style.transform = `translate3d(${state.x}px, 0, 0)`;
+            marqueeStates.get(container).frame = requestAnimationFrame(step);
+        };
+        if (!marqueeStates.has(container)) marqueeStates.set(container, { frame: null, position: 0, lastSet: 0, loop: 0, userUntil: 0 });
+        marqueeStates.get(container).loop = 0; // le défilement natif n'est pas utilisé en mode bandeau
+        marqueeStates.get(container).frame = requestAnimationFrame(step);
+    };
+
     const syncAutoCarousel = (container) => {
         if (!container) return;
         stopMarquee(container);
@@ -89,7 +162,8 @@
             const originals = [...existingTrack.children].filter((child) => !child.dataset.carouselClone);
             container.replaceChildren(...originals);
         }
-        container.classList.remove("is-marquee");
+        container.classList.remove("is-marquee", "is-ticker");
+        container.scrollLeft = 0;
 
         const cards = [...container.children];
         if (!container.classList.contains("is-carousel") || !cards.length) return;
@@ -99,14 +173,21 @@
         const cardWidth = marqueeCardWidth(containerWidth);
         const stride = cardWidth + MARQUEE_GAP;
 
-        // Pas assez de cartes pour remplir la largeur : affichage fixe, sans copies visibles.
-        if (cards.length * stride <= containerWidth + MARQUEE_GAP) return;
-
         const track = document.createElement("div");
         track.className = "marquee-track";
         track.style.setProperty("--marquee-card-width", `${cardWidth}px`);
         track.style.setProperty("--marquee-gap", `${MARQUEE_GAP}px`);
         track.append(...cards);
+
+        // Peu de cartes (elles ne remplissent pas la largeur) : bandeau sans copie.
+        if (cards.length * stride <= containerWidth + MARQUEE_GAP) {
+            container.append(track);
+            container.classList.add("is-marquee", "is-ticker");
+            startTicker(container, track, cards.length * stride);
+            return;
+        }
+        container.classList.remove("is-ticker");
+        track.style.transform = "";
         // Une copie de la série : la position boucle sur la première série, dans les deux sens.
         cards.forEach((card) => {
             const clone = card.cloneNode(true);

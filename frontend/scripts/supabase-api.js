@@ -405,8 +405,8 @@
     const MODERATION_STATUSES = new Set(["pending", "approved", "rejected"]);
 
     const moderationDocuments = async (params) => {
-        const user = await requireUser();
-        if (!isModerator(user)) throw new ApiError(403, "Droits de modération requis.");
+        await requireUser();
+        if (!(await window.EduVaultApi.isModerator())) throw new ApiError(403, "Droits de modération requis.");
         const status = MODERATION_STATUSES.has(params.get("status")) ? params.get("status") : "pending";
         const [list, counts] = await Promise.all([
             client.from("documents").select(`${DOCUMENT_FIELDS},uploaded_by,file_size`)
@@ -438,8 +438,8 @@
     };
 
     const moderateDocument = async (documentId, action) => {
-        const user = await requireUser();
-        if (!isModerator(user)) throw new ApiError(403, "Droits de modération requis.");
+        await requireUser();
+        if (!(await window.EduVaultApi.isModerator())) throw new ApiError(403, "Droits de modération requis.");
         const status = { approve: "approved", reject: "rejected", reset: "pending" }[action];
         if (!status) throw new ApiError(422, "Action de modération invalide.");
         const updated = check(
@@ -515,14 +515,35 @@
         }
     };
 
+    let moderatorCheck = null;
+    client?.auth.onAuthStateChange((event) => {
+        if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") moderatorCheck = null;
+    });
+
     window.EduVaultApi = {
         fetch: apiFetch,
         client,
         // Vrai si la session courante porte le rôle modérateur (app_metadata, non modifiable par l'utilisateur).
-        isModerator: async () => {
-            if (!client) return false;
-            const { data } = await client.auth.getSession();
-            return isModerator(data?.session?.user);
+        isModerator: () => {
+            moderatorCheck = moderatorCheck || (async () => {
+                if (!client) return false;
+                const { data } = await client.auth.getSession();
+                const sessionUser = data?.session?.user;
+                if (!sessionUser) return false;
+                if (isModerator(sessionUser)) return true;
+                // Rôle attribué après la connexion : on interroge Supabase, puis on renouvelle
+                // la session pour que la base reconnaisse aussi le rôle (règles RLS).
+                const { data: fresh } = await client.auth.getUser();
+                if (!isModerator(fresh?.user)) return false;
+                const { error } = await client.auth.refreshSession();
+                if (error) console.warn("Renouvellement de session impossible.", error);
+                return true;
+            })().catch((error) => {
+                console.warn("Vérification du rôle modérateur impossible.", error);
+                moderatorCheck = null;
+                return false;
+            });
+            return moderatorCheck;
         }
     };
 })();

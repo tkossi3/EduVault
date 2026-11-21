@@ -49,6 +49,7 @@
             console.error(detail, error);
             if (error.code === "23505") throw new ApiError(409, "Cet élément existe déjà.");
             if (error.code === "42501") throw new ApiError(403, "Action non autorisée pour ce compte.");
+            if (error.code === "23503") throw new ApiError(404, "La filière ou l’établissement sélectionné est introuvable.");
             throw new ApiError(status, detail);
         }
         return data;
@@ -111,28 +112,44 @@
     );
 
     const createCourse = async (payload) => {
-        await requireUser();
+        const user = await requireUser();
         const name = cleanName(payload.name);
         const semester = parseInt(payload.semester, 10);
         if (name.length < 2) throw new ApiError(422, "Le nom doit contenir au moins 2 caractères.");
         if (!(semester >= 1 && semester <= 10)) throw new ApiError(422, "Semestre invalide.");
-        const existing = check(
-            await client.from("courses").select("id,name,code,semester,program_id")
-                .eq("program_id", payload.program_id).eq("semester", semester),
-            "Impossible de vérifier les cours existants."
+        if (!payload.program_id) throw new ApiError(422, "Filière invalide.");
+
+        const program = check(
+            await client.from("programs").select("id").eq("id", payload.program_id).eq("is_listed", true).maybeSingle(),
+            "Impossible de vérifier la filière sélectionnée."
         );
-        const duplicate = existing.find((course) => sameName(course.name, name));
-        if (duplicate) return { duplicate: true, course: duplicate };
+        if (!program) throw new ApiError(404, "La filière sélectionnée est introuvable.");
+
+        const existing = await client.from("courses").select("id,name,code,semester,program_id")
+            .eq("program_id", payload.program_id).eq("semester", semester);
+        if (!existing.error) {
+            const duplicate = (existing.data || []).find((course) => sameName(course.name, name));
+            if (duplicate) return { duplicate: true, course: duplicate };
+        }
+
         const created = check(
             await client.from("courses").insert({
                 program_id: payload.program_id,
                 name,
                 semester,
+                created_by: user.id,
+                is_demo: false,
                 code: payload.code ? String(payload.code).trim() || null : null
             }).select("id,name,code,semester,program_id").single(),
             "Impossible d'ajouter le cours au catalogue."
         );
-        return { duplicate: false, course: created };
+        const visible = check(
+            await client.from("courses").select("id,name,code,semester,program_id")
+                .eq("id", created.id).eq("is_demo", false).maybeSingle(),
+            "Le cours a été créé mais n'est pas visible dans le catalogue."
+        );
+        if (!visible) throw new ApiError(503, "Le cours n'est pas visible immédiatement dans le catalogue.");
+        return { duplicate: false, course: visible };
     };
 
     const courseDocuments = async (courseId) => check(

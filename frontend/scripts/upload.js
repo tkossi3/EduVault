@@ -491,7 +491,20 @@
                     );
                 } else if (courseResponse.ok) {
                     course = courseResult;
-                    remoteCatalog.courses.push(courseResult);
+                    const refreshed = await window.EduVaultApi.fetch("/catalog");
+                    if (refreshed.ok) {
+                        remoteCatalog = await refreshed.json();
+                    } else {
+                        remoteCatalog.courses.push(courseResult);
+                    }
+                    course = remoteCatalog.courses.find((item) =>
+                        item.id === courseResult.id
+                        || (
+                            item.program_id === progId
+                            && item.semester === semesterNumber
+                            && item.name.trim().toLowerCase() === courseName.toLowerCase()
+                        )
+                    ) || courseResult;
                 }
                 if (!course) {
                     feedback.className = "form-feedback";

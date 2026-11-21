@@ -137,8 +137,8 @@
 
     const courseDocuments = async (courseId) => check(
         await client.from("documents")
-            .select("id,title,category,academic_year,file_size,created_at")
-            .eq("course_id", courseId).eq("is_public", true).eq("status", "approved")
+            .select("id,title,category,academic_year,file_size,status,uploaded_by,created_at")
+            .eq("course_id", courseId)
             .order("created_at", { ascending: false }).limit(50),
         "Documents du cours indisponibles."
     );
@@ -160,6 +160,7 @@
         const user = await requireUser();
         const name = cleanName(payload.name);
         if (name.length < 2) throw new ApiError(422, "Le nom doit contenir au moins 2 caractères.");
+        if (!["add", "rename", "delete"].includes(payload.request_type)) throw new ApiError(422, "Type de demande invalide.");
         if ((payload.request_type === "add") !== !payload.program_id) {
             throw new ApiError(422, "La filière ciblée ne correspond pas au type de demande.");
         }
@@ -192,6 +193,49 @@
         if (!isModerator(user)) throw new ApiError(403, "Droits de modération requis.");
         const rows = check(
             await client.rpc("review_program_change_request", { p_request_id: requestId, p_action: action }),
+            "La modération n'a pas pu être enregistrée.",
+            409
+        );
+        return single(rows);
+    };
+
+    const listInstitutionRequests = async () => {
+        const user = await requireUser();
+        let query = client.from("institution_change_requests")
+            .select("id,institution_id,request_type,requested_name,requested_by,status,created_at,reviewed_at")
+            .order("created_at", { ascending: false }).limit(100);
+        query = isModerator(user) ? query : query.eq("requested_by", user.id);
+        const requests = check(await query, "Impossible de charger les demandes d’établissement.");
+        return { can_review: isModerator(user), requests };
+    };
+
+    const createInstitutionRequest = async (payload) => {
+        const user = await requireUser();
+        const name = cleanName(payload.name);
+        if (name.length < 2) throw new ApiError(422, "Le nom doit contenir au moins 2 caractères.");
+        if (!["add", "rename"].includes(payload.request_type)) throw new ApiError(422, "Type de demande invalide.");
+        if (payload.request_type === "rename" && !payload.institution_id) throw new ApiError(422, "Établissement cible requis.");
+
+        const institutions = check(await client.from("institutions").select("id,name"), "Impossible de vérifier les établissements.");
+        if (institutions.some((institution) => sameName(institution.name, name) && institution.id !== payload.institution_id)) {
+            throw new ApiError(409, "Un établissement portant ce nom existe déjà.");
+        }
+        return check(
+            await client.from("institution_change_requests").insert({
+                institution_id: payload.institution_id || null,
+                request_type: payload.request_type,
+                requested_name: name,
+                requested_by: user.id
+            }).select().single(),
+            "Impossible d'enregistrer la demande d’établissement."
+        );
+    };
+
+    const reviewInstitutionRequest = async (requestId, action) => {
+        const user = await requireUser();
+        if (!isModerator(user)) throw new ApiError(403, "Droits de modération requis.");
+        const rows = check(
+            await client.rpc("review_institution_change_request", { p_request_id: requestId, p_action: action }),
             "La modération n'a pas pu être enregistrée.",
             409
         );
@@ -471,6 +515,13 @@
         }
         if (method === "POST" && (match = pathname.match(/^\/catalog\/program-requests\/([^/]+)\/review$/))) {
             return reviewProgramRequest(decodeURIComponent(match[1]), readBody(init).action);
+        }
+        if (method === "GET" && pathname === "/catalog/institution-requests") return listInstitutionRequests();
+        if (method === "POST" && pathname === "/catalog/institution-requests") {
+            return [await createInstitutionRequest(readBody(init)), 201];
+        }
+        if (method === "POST" && (match = pathname.match(/^\/catalog\/institution-requests\/([^/]+)\/review$/))) {
+            return reviewInstitutionRequest(decodeURIComponent(match[1]), readBody(init).action);
         }
         if (method === "GET" && pathname === "/documents/search") return searchDocuments(params);
         if (method === "POST" && pathname === "/documents/upload") return [await uploadDocument(init.body), 201];

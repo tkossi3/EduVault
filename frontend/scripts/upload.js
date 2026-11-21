@@ -78,17 +78,12 @@
     const populateSemesters = () => {
         if (!semSelect || !store) return;
         const selectedProg = progSelect?.value;
-        const semesters = remoteCatalog
-            ? Array.from(new Set(remoteCatalog.courses.filter((course) => course.program_id === selectedProg).map((course) => course.semester))).sort((a, b) => a - b)
-            : store.getSemestersForProgram(selectedProg);
         const currentProgram = remoteCatalog?.programs.find((program) => program.id === selectedProg);
         const remoteDegree = currentProgram?.degree || "";
         const defaultSemesterCount = /ingénieur/i.test(remoteDegree) ? 10 : /master/i.test(remoteDegree) ? 4 : 6;
-        const semesterOptions = semesters.length
-            ? semesters
-            : remoteCatalog
-                ? Array.from({ length: defaultSemesterCount }, (_, index) => index + 1)
-                : store.getSemestersForProgram(selectedProg);
+        const semesterOptions = remoteCatalog
+            ? Array.from({ length: defaultSemesterCount }, (_, index) => index + 1)
+            : Array.from({ length: 6 }, (_, index) => index + 1);
 
         const currentVal = semSelect.value || "1";
         semSelect.innerHTML = semesterOptions.map((s) => `
@@ -105,6 +100,39 @@
     };
 
     // 3. Charger les filières selon l'établissement et le cycle
+    const degreeCategory = (degree = "") => {
+        if (/ingénieur|ingenieur|engineer/i.test(degree)) return "Ingénieur";
+        if (/master/i.test(degree)) return "Master";
+        if (/licence|bachelor/i.test(degree) || !degree.trim()) return "Licence";
+        return degree;
+    };
+
+    const populateDegrees = () => {
+        if (!degreeSelect || !instSelect) return;
+        const selectedOption = instSelect.selectedOptions[0];
+        const instId = selectedOption?.dataset.id;
+        const currentValue = degreeSelect.value || "";
+        const programs = remoteCatalog
+            ? remoteCatalog.programs.filter((program) => program.institution_id === instId)
+            : [];
+
+        const categories = remoteCatalog
+            ? [...new Set(programs.map((program) => degreeCategory(program.degree)).filter(Boolean))]
+            : ["Licence", "Master", "Ingénieur"];
+
+        degreeSelect.innerHTML = categories.map((category) => `
+            <option value="${escapeHtml(category)}">${category === "Ingénieur" ? "Cycle Ingénieur" : category === "Licence" ? "Licence / Licence Professionnelle" : escapeHtml(category)}</option>
+        `).join("");
+
+        if (categories.includes(currentValue)) {
+            degreeSelect.value = currentValue;
+        } else if (categories.includes("Licence")) {
+            degreeSelect.value = "Licence";
+        } else if (categories.length) {
+            degreeSelect.value = categories[0];
+        }
+    };
+
     const populatePrograms = () => {
         if (!progSelect || !store || !instSelect) return;
         const selectedOption = instSelect.selectedOptions[0];
@@ -114,14 +142,10 @@
 
         let programs = remoteCatalog
             ? remoteCatalog.programs.filter((program) =>
-                program.institution_id === instId && (!program.degree || program.degree === degreeType || program.degree === "Licence / Master")
+                program.institution_id === instId
+                && degreeCategory(program.degree) === degreeType
             )
             : store.getProgramsByInstitutionAndDegree(instId || instName, degreeType);
-
-        if (remoteCatalog && !programs.length) {
-            // Aucun parcours pour ce cycle : on propose toutes les filières de l'établissement.
-            programs = remoteCatalog.programs.filter((program) => program.institution_id === instId);
-        }
 
         if (!remoteCatalog && (!programs || !programs.length)) {
             programs = store.getProgramsByInstitution(instId || instName);
@@ -152,6 +176,7 @@
             </option>
         `).join("") + (remoteCatalog ? "" : `<option value="__NEW__">+ Ajouter un nouvel établissement...</option>`);
 
+        populateDegrees();
         populatePrograms();
 
         if (userProfile.program && progSelect) {
@@ -174,6 +199,7 @@
                 .find((option) => option.dataset.id === institutionId);
             if (institutionOption) {
                 instSelect.value = institutionOption.value;
+                populateDegrees();
                 populatePrograms();
             }
         }
@@ -213,12 +239,14 @@
                 }
                 populateInstitutions();
                 instSelect.value = duplicate.name;
+                populateDegrees();
                 populatePrograms();
             } else {
                 try {
                     const created = store.addInstitution(trimmed, "Lomé", "Togo");
                     populateInstitutions();
                     instSelect.value = created.name;
+                    populateDegrees();
                     populatePrograms();
                     if (alertBox) alertBox.style.display = "none";
                 } catch (e) {
@@ -227,6 +255,7 @@
                 }
             }
         } else {
+            populateDegrees();
             populatePrograms();
         }
     });

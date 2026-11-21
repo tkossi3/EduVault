@@ -48,6 +48,18 @@ create table if not exists public.institutions (
     created_at timestamptz not null default now()
 );
 
+create table if not exists public.institution_change_requests (
+    id uuid primary key default gen_random_uuid(),
+    institution_id uuid references public.institutions(id) on delete cascade,
+    request_type text not null check (request_type in ('add', 'rename')),
+    requested_name text not null check (char_length(trim(requested_name)) between 2 and 160),
+    requested_by uuid not null references auth.users(id) on delete cascade,
+    status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+    reviewed_by uuid references auth.users(id) on delete set null,
+    reviewed_at timestamptz,
+    created_at timestamptz not null default now()
+);
+
 create table if not exists public.programs (
     id uuid primary key default gen_random_uuid(),
     institution_id uuid not null references public.institutions(id) on delete cascade,
@@ -64,14 +76,14 @@ create table if not exists public.program_change_requests (
     id uuid primary key default gen_random_uuid(),
     institution_id uuid not null references public.institutions(id) on delete cascade,
     program_id uuid references public.programs(id) on delete restrict,
-    request_type text not null check (request_type in ('add', 'rename')),
+    request_type text not null check (request_type in ('add', 'rename', 'delete')),
     requested_name text not null check (char_length(trim(requested_name)) between 2 and 100),
     requested_by uuid not null references auth.users(id) on delete cascade,
     status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
     reviewed_by uuid references auth.users(id) on delete set null,
     reviewed_at timestamptz,
     created_at timestamptz not null default now(),
-    check ((request_type = 'add' and program_id is null) or (request_type = 'rename' and program_id is not null))
+    check ((request_type = 'add' and program_id is null) or (request_type in ('rename', 'delete') and program_id is not null))
 );
 
 create table if not exists public.courses (
@@ -135,6 +147,7 @@ create index if not exists idx_notifications_document on public.notifications (d
 -- ---------------------------------------------------------------------
 alter table public.profiles enable row level security;
 alter table public.institutions enable row level security;
+alter table public.institution_change_requests enable row level security;
 alter table public.programs enable row level security;
 alter table public.program_change_requests enable row level security;
 alter table public.courses enable row level security;
@@ -195,6 +208,14 @@ create policy "Lecture de ses demandes de filière" on public.program_change_req
 
 drop policy if exists "Soumission de demandes de filière" on public.program_change_requests;
 create policy "Soumission de demandes de filière" on public.program_change_requests for insert to authenticated
+    with check (requested_by = (select auth.uid()) and status = 'pending' and reviewed_by is null);
+
+drop policy if exists "Lecture de ses demandes d'établissement" on public.institution_change_requests;
+create policy "Lecture de ses demandes d'établissement" on public.institution_change_requests for select to authenticated
+    using (requested_by = (select auth.uid()) or (select public.is_moderator()));
+
+drop policy if exists "Soumission de demandes d'établissement" on public.institution_change_requests;
+create policy "Soumission de demandes d'établissement" on public.institution_change_requests for insert to authenticated
     with check (requested_by = (select auth.uid()) and status = 'pending' and reviewed_by is null);
 
 -- Profils
@@ -311,6 +332,15 @@ begin
             insert into public.programs (institution_id, name)
             values (pending_request.institution_id, pending_request.requested_name)
             returning id into changed_program_id;
+        elsif pending_request.request_type = 'delete' then
+            delete from public.programs p
+            where p.id = pending_request.program_id
+              and p.institution_id = pending_request.institution_id
+            returning p.id into changed_program_id;
+
+            if changed_program_id is null then
+                raise exception 'La filière à supprimer est introuvable.';
+            end if;
         else
             update public.programs p
             set name = pending_request.requested_name
@@ -341,6 +371,79 @@ $$;
 
 revoke all on function public.review_program_change_request(uuid, text) from public, anon;
 grant execute on function public.review_program_change_request(uuid, text) to authenticated;
+
+create or replace function public.review_institution_change_request(p_request_id uuid, p_action text)
+returns table (request_id uuid, status text, institution_id uuid)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+    pending_request public.institution_change_requests%rowtype;
+    changed_institution_id uuid;
+begin
+    if not public.is_moderator() then
+        raise exception 'Droits de modération requis.' using errcode = '42501';
+    end if;
+    if p_action not in ('approve', 'reject') then
+        raise exception 'Action de modération invalide.';
+    end if;
+
+    select * into pending_request
+    from public.institution_change_requests r
+    where r.id = p_request_id and r.status = 'pending'
+    for update;
+    if not found then
+        raise exception 'Demande introuvable ou déjà traitée.';
+    end if;
+
+    if p_action = 'approve' and pending_request.request_type = 'add' then
+        insert into public.institutions (name)
+        values (pending_request.requested_name)
+        returning id into changed_institution_id;
+    elsif p_action = 'approve' then
+        update public.institutions i
+        set name = pending_request.requested_name
+        where i.id = pending_request.institution_id
+        returning i.id into changed_institution_id;
+        if changed_institution_id is null then
+            raise exception 'L’établissement à renommer est introuvable.';
+        end if;
+    else
+        changed_institution_id := pending_request.institution_id;
+    end if;
+
+    update public.institution_change_requests r
+    set status = case when p_action = 'approve' then 'approved' else 'rejected' end,
+        reviewed_by = auth.uid(),
+        reviewed_at = now()
+    where r.id = p_request_id;
+
+    return query
+    select p_request_id,
+           case when p_action = 'approve' then 'approved' else 'rejected' end,
+           changed_institution_id;
+end;
+$$;
+
+revoke all on function public.review_institution_change_request(uuid, text) from public, anon;
+grant execute on function public.review_institution_change_request(uuid, text) to authenticated;
+
+do $$
+begin
+    begin
+        alter table public.program_change_requests drop constraint if exists program_change_requests_request_type_check;
+        alter table public.program_change_requests add constraint program_change_requests_request_type_check
+            check (request_type in ('add', 'rename', 'delete'));
+    exception when duplicate_object then null;
+    end;
+    begin
+        alter table public.program_change_requests drop constraint if exists program_change_requests_check;
+        alter table public.program_change_requests add constraint program_change_requests_check
+            check ((request_type = 'add' and program_id is null) or (request_type in ('rename', 'delete') and program_id is not null));
+    exception when duplicate_object then null;
+    end;
+end $$;
 
 -- ---------------------------------------------------------------------
 -- 8. Stockage des PDF (bucket privé « academic-documents »)

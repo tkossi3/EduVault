@@ -172,6 +172,13 @@ create policy "Ajout de cours par les membres" on public.courses for insert to a
         and exists (select 1 from public.programs p where p.id = program_id and p.is_listed)
     );
 
+-- Droits de table nécessaires aux clients Supabase, en plus des politiques RLS.
+grant usage on schema public to anon, authenticated;
+grant select on public.institutions, public.programs, public.courses to anon, authenticated;
+grant insert on public.courses to authenticated;
+grant select, insert on public.program_change_requests to authenticated;
+grant select, insert on public.institution_change_requests to authenticated;
+
 -- Documents : tout le monde voit les documents approuvés; chacun voit les siens; le modérateur voit tout.
 drop policy if exists "Lecture des documents publics" on public.documents;
 drop policy if exists "Lecture des documents" on public.documents;

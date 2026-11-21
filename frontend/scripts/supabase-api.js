@@ -50,7 +50,8 @@
             if (error.code === "23505") throw new ApiError(409, "Cet élément existe déjà.");
             if (error.code === "42501") throw new ApiError(403, "Action non autorisée pour ce compte.");
             if (error.code === "23503") throw new ApiError(404, "La filière ou l’établissement sélectionné est introuvable.");
-            throw new ApiError(status, detail);
+            const technicalDetail = String(error.message || "").trim();
+            throw new ApiError(status, technicalDetail ? `${detail} (${technicalDetail})` : detail);
         }
         return data;
     };
@@ -92,15 +93,31 @@
 
     // ==================== CATALOGUE ====================
     const getCatalog = async () => {
-        const [institutions, programs, courses] = await Promise.all([
+        const [institutions, programs, courses, linkedDocuments] = await Promise.all([
             client.from("institutions").select("id,name,city,country,description,sector,aliases,verification,website").order("name"),
             client.from("programs").select("id,name,degree,institution_id,is_listed,verification,source_url").eq("is_listed", true).order("name"),
-            client.from("courses").select("id,name,code,semester,program_id,is_demo").eq("is_demo", false).order("semester")
+            client.from("courses").select("id,name,code,semester,program_id,is_demo").eq("is_demo", false).order("semester"),
+            client.from("documents").select("course_id,status")
         ]);
+        const checkedCourses = check(courses, "Catalogue indisponible.");
+        const documentCounts = new Map();
+        check(linkedDocuments, "Nombre de documents indisponible.", 503).forEach((document) => {
+            if (!document.course_id) return;
+            const current = documentCounts.get(document.course_id) || { total: 0, approved: 0, pending: 0 };
+            current.total += 1;
+            if (document.status === "approved") current.approved += 1;
+            if (document.status === "pending") current.pending += 1;
+            documentCounts.set(document.course_id, current);
+        });
         return {
             institutions: check(institutions, "Catalogue indisponible."),
             programs: check(programs, "Catalogue indisponible."),
-            courses: check(courses, "Catalogue indisponible.")
+            courses: checkedCourses.map((course) => ({
+                ...course,
+                document_count: documentCounts.get(course.id)?.total || 0,
+                approved_document_count: documentCounts.get(course.id)?.approved || 0,
+                pending_document_count: documentCounts.get(course.id)?.pending || 0
+            }))
         };
     };
 
@@ -123,7 +140,19 @@
             .eq("program_id", payload.program_id).eq("semester", semester);
         if (!existing.error) {
             const duplicate = (existing.data || []).find((course) => sameName(course.name, name));
-            if (duplicate) return { duplicate: true, course: duplicate };
+            if (duplicate) {
+                const linked = await client.from("documents").select("id,status").eq("course_id", duplicate.id);
+                const linkedDocuments = linked.error ? [] : (linked.data || []);
+                return {
+                    duplicate: true,
+                    course: {
+                        ...duplicate,
+                        document_count: linkedDocuments.length,
+                        approved_document_count: linkedDocuments.filter((document) => document.status === "approved").length,
+                        pending_document_count: linkedDocuments.filter((document) => document.status === "pending").length
+                    }
+                };
+            }
         }
 
         const created = check(
@@ -143,7 +172,17 @@
             "Le cours a été créé mais n'est pas visible dans le catalogue."
         );
         if (!visible) throw new ApiError(503, "Le cours n'est pas visible immédiatement dans le catalogue.");
-        return { duplicate: false, course: visible };
+        const linked = await client.from("documents").select("id,status").eq("course_id", visible.id);
+        const linkedDocuments = linked.error ? [] : (linked.data || []);
+        return {
+            duplicate: false,
+            course: {
+                ...visible,
+                document_count: linkedDocuments.length,
+                approved_document_count: linkedDocuments.filter((document) => document.status === "approved").length,
+                pending_document_count: linkedDocuments.filter((document) => document.status === "pending").length
+            }
+        };
     };
 
     const courseDocuments = async (courseId) => check(
@@ -514,8 +553,7 @@
         if (method === "GET" && pathname === "/catalog/courses") return listCourses();
         if (method === "POST" && pathname === "/catalog/courses") {
             const result = await createCourse(readBody(init));
-            if (result.duplicate) throw new ApiError(409, "Ce cours existe déjà dans ce semestre.");
-            return [result.course, 201];
+            return [result.course, result.duplicate ? 200 : 201];
         }
         if (method === "GET" && (match = pathname.match(/^\/catalog\/courses\/([^/]+)\/documents$/))) {
             return courseDocuments(decodeURIComponent(match[1]));

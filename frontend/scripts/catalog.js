@@ -173,7 +173,7 @@
                                     <small>${escapeHtml(program.degree || program.degree_type || "Parcours en informatique")}</small>
                                 </div>
                                 <span class="badge badge-outline" style="margin-left: auto; font-size: 11px;">
-                                    ${courses.length} cours
+                                    ${courses.length} cours · ${courses.reduce((total, course) => total + (course.document_count || 0), 0)} documents
                                 </span>
                                 <span class="accordion-chevron" style="margin-left: 10px; color: var(--muted);">▾</span>
                             </summary>
@@ -212,7 +212,7 @@
                                                     semester
                                                 })}">
                                                     <span>${escapeHtml(course.name)}</span>
-                                                    <span style="font-size: 11px; color: var(--muted);">${escapeHtml(course.code || "UE")}</span>
+                                                    <span style="font-size: 11px; color: var(--muted);">${escapeHtml(course.code || "UE")} · ${Number(course.document_count || 0)} document(s)</span>
                                                 </a>
                                             </div>
                                         `).join("") : `

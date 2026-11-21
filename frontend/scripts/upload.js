@@ -25,6 +25,15 @@
     let fileDataUrl = null;
     let remoteCatalog = null;
 
+    const isUuid = (value = "") => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value));
+    const catalogNameKey = (value = "") => String(value)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
     const currentAcademicYear = () => {
         const year = new Date().getFullYear();
         return `${year}-${year + 1}`;
@@ -452,7 +461,21 @@
         }
 
         const selectedProgOption = progSelect?.selectedOptions ? progSelect.selectedOptions[0] : null;
-        const progId = selectedProgOption?.dataset?.id || selectedProgOption?.value || "prog-1";
+        let progId = selectedProgOption?.dataset?.id || "";
+        if (!isUuid(progId) && remoteCatalog) {
+            const selectedName = selectedProgOption?.value || program;
+            const matchingProgram = remoteCatalog.programs.find((item) =>
+                isUuid(item.id)
+                && (
+                    catalogNameKey(item.name) === catalogNameKey(selectedName)
+                    || catalogNameKey(item.name) === catalogNameKey(program)
+                )
+            );
+            progId = matchingProgram?.id || "";
+        }
+        if (!isUuid(progId) && !remoteCatalog) {
+            progId = selectedProgOption?.dataset?.id || selectedProgOption?.value || "";
+        }
 
         if (remoteCatalog) {
             const session = await window.EduVaultAuth?.getSession();
@@ -478,7 +501,10 @@
                 // Nouvelle matière : elle est ajoutée au catalogue de la filière pour ce semestre.
                 const courseResponse = await window.EduVaultApi.fetch("/catalog/courses", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Authorization": `Bearer ${session.access_token}`,
+                        "Content-Type": "application/json"
+                    },
                     body: JSON.stringify({ name: courseName, program_id: progId, semester: semesterNumber })
                 });
                 const courseResult = await courseResponse.json().catch(() => ({}));

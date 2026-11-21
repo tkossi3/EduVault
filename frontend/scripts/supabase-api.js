@@ -43,6 +43,7 @@
     const single = (value) => (Array.isArray(value) ? value[0] || {} : value || {});
     const cleanName = (value) => String(value || "").split(/\s+/).filter(Boolean).join(" ");
     const sameName = (a, b) => cleanName(a).toLocaleLowerCase("fr") === cleanName(b).toLocaleLowerCase("fr");
+    const isUuid = (value = "") => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value));
 
     const check = ({ data, error }, detail, status = 503) => {
         if (error) {
@@ -134,7 +135,14 @@
         const semester = parseInt(payload.semester, 10);
         if (name.length < 2) throw new ApiError(422, "Le nom doit contenir au moins 2 caractères.");
         if (!(semester >= 1 && semester <= 10)) throw new ApiError(422, "Semestre invalide.");
-        if (!payload.program_id) throw new ApiError(422, "Filière invalide.");
+        if (!isUuid(payload.program_id)) throw new ApiError(422, "Filière invalide.");
+
+        const program = await client.from("programs")
+            .select("id,is_listed")
+            .eq("id", payload.program_id)
+            .maybeSingle();
+        if (program.error) throw new ApiError(502, "Impossible de vérifier la filière.");
+        if (!program.data || program.data.is_listed === false) throw new ApiError(422, "Filière invalide.");
 
         const existing = await client.from("courses").select("id,name,code,semester,program_id")
             .eq("program_id", payload.program_id).eq("semester", semester);
@@ -340,7 +348,10 @@
         if (title.length < 5 || title.length > 160) throw new ApiError(422, "Le titre doit contenir entre 5 et 160 caractères.");
         if (!CATEGORIES.has(category)) throw new ApiError(422, "Catégorie de document invalide.");
         if (!/^\d{4}-\d{4}$/.test(academicYear)) throw new ApiError(422, "Année universitaire invalide (format 2025-2026).");
-        if (!courseId) throw new ApiError(422, "Choisissez une matière.");
+        if (!isUuid(courseId)) throw new ApiError(422, "Choisissez une matière valide.");
+        const course = await client.from("courses").select("id").eq("id", courseId).eq("is_demo", false).maybeSingle();
+        if (course.error) throw new ApiError(502, "Impossible de vérifier la matière.");
+        if (!course.data) throw new ApiError(422, "Cette matière n'existe pas dans le catalogue universitaire.");
         if (!(file instanceof Blob) || !file.size) throw new ApiError(422, "Sélectionnez un fichier PDF.");
         if (file.size > MAX_PDF_BYTES) throw new ApiError(413, "Le fichier dépasse 20 Mo.");
         if (!(await hasPdfSignature(file))) throw new ApiError(415, "Le fichier ne contient pas une signature PDF valide.");

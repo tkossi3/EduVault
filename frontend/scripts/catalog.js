@@ -35,6 +35,8 @@
         .replace(/\s+/g, " ")
         .trim();
 
+    const isUuid = (value = "") => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value));
+
     const uniqueByName = (items) => [...new Map(items.map((item) => [catalogNameKey(item.name), item])).values()];
     const isCatalogProgram = (program) => {
         if (!program || program.is_listed === false) return false;
@@ -386,6 +388,23 @@
             return false;
         }
 
+        let remoteProgramId = payload.program_id;
+        if (!isUuid(remoteProgramId)) {
+            const localProgram = currentData.programs.find((program) => program.id === payload.program_id);
+            const remoteProgram = currentData.programs.find((program) =>
+                isUuid(program.id)
+                && (
+                    (localProgram && catalogNameKey(program.name) === catalogNameKey(localProgram.name))
+                    || catalogNameKey(program.name) === catalogNameKey(localProgram?.name || "")
+                )
+            );
+            remoteProgramId = remoteProgram?.id || "";
+        }
+        if (!isUuid(remoteProgramId)) {
+            auth?.showToast("Ce parcours n'est pas encore synchronisé avec le catalogue universitaire.", "error");
+            return false;
+        }
+
         try {
             const response = await window.EduVaultApi.fetch(`/catalog/courses`, {
                 method: "POST",
@@ -393,7 +412,7 @@
                     "Authorization": `Bearer ${session.access_token}`,
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ ...payload, name })
+                body: JSON.stringify({ ...payload, program_id: remoteProgramId, name })
             });
             if (!response.ok) {
                 const result = await response.json();
@@ -625,27 +644,7 @@
                     is_listed: known ? known.is_listed !== false : institution.is_listed === true
                 };
             });
-            localData.institutions.forEach((institution) => {
-                const exists = remoteData.institutions.some((remoteInstitution) =>
-                    [remoteInstitution.name, ...(remoteInstitution.aliases || [])]
-                        .some((name) => catalogNameKey(name) === catalogNameKey(institution.name))
-                );
-                if (!exists) remoteData.institutions.push(institution);
-            });
-            const localInstitutionById = new Map(localData.institutions.map((institution) => [institution.id, institution]));
-            remoteData.programs = [
-                ...(remoteData.programs || []).filter(isCatalogProgram),
-                ...localData.programs.filter(isCatalogProgram).map((program) => {
-                    const localInstitution = localInstitutionById.get(program.institution_id);
-                    const remoteInstitution = localInstitution && remoteData.institutions.find((institution) =>
-                        [institution.name, ...(institution.aliases || [])]
-                            .some((name) => catalogNameKey(name) === catalogNameKey(localInstitution.name))
-                    );
-                    return remoteInstitution
-                        ? { ...program, institution_id: remoteInstitution.id }
-                        : program;
-                })
-            ];
+            remoteData.programs = (remoteData.programs || []).filter(isCatalogProgram);
             remoteData.documents = [];
             usingRemoteCatalog = true;
             render(remoteData);

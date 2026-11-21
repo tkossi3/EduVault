@@ -119,12 +119,6 @@
         if (!(semester >= 1 && semester <= 10)) throw new ApiError(422, "Semestre invalide.");
         if (!payload.program_id) throw new ApiError(422, "Filière invalide.");
 
-        const program = check(
-            await client.from("programs").select("id").eq("id", payload.program_id).eq("is_listed", true).maybeSingle(),
-            "Impossible de vérifier la filière sélectionnée."
-        );
-        if (!program) throw new ApiError(404, "La filière sélectionnée est introuvable.");
-
         const existing = await client.from("courses").select("id,name,code,semester,program_id")
             .eq("program_id", payload.program_id).eq("semester", semester);
         if (!existing.error) {

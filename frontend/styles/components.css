@@ -280,7 +280,9 @@
 }
 
 .eduvault-dialog {
-    width: min(460px, calc(100% - 32px));
+    box-sizing: border-box;
+    width: min(560px, calc(100vw - 48px));
+    margin: auto;
     max-height: min(90vh, 640px);
     padding: 0;
     overflow-y: auto;

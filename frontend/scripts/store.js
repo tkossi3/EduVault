@@ -368,13 +368,14 @@
         }
     ];
 
+    const welcomeNotificationCreatedAt = new Date().toISOString();
     const initialNotifications = [
         {
             id: "notif-1",
             title: "Bienvenue sur EduVault — Le coffre-fort académique universitaire 2026 !",
             type: "welcome",
             document_id: null,
-            created_at: "2026-03-01T08:00:00Z",
+            created_at: welcomeNotificationCreatedAt,
             is_read: false
         },
         {
@@ -611,9 +612,16 @@
                 localStorage.setItem(NOTIF_KEY, JSON.stringify(initialNotifications));
                 return initialNotifications;
             }
-            return JSON.parse(raw).map((notification) =>
-                notification.id === "notif-2" ? { ...notification, is_demo: true } : notification
-            );
+            let migratedWelcomeDate = false;
+            const notifications = JSON.parse(raw).map((notification) => {
+                if (notification.id === "notif-1" && notification.created_at === "2026-03-01T08:00:00Z") {
+                    migratedWelcomeDate = true;
+                    return { ...notification, created_at: welcomeNotificationCreatedAt };
+                }
+                return notification.id === "notif-2" ? { ...notification, is_demo: true } : notification;
+            });
+            if (migratedWelcomeDate) localStorage.setItem(NOTIF_KEY, JSON.stringify(notifications));
+            return notifications;
         } catch {
             return initialNotifications;
         }

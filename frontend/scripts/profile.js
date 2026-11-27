@@ -317,7 +317,7 @@
         docsContainer.querySelectorAll(".btn-delete-doc").forEach((btn) => {
             btn.addEventListener("click", async () => {
                 const docId = btn.dataset.docId;
-                if (confirm("Êtes-vous sûr de vouloir supprimer ce document ?")) {
+                if (await window.EduVaultDialog.confirm("Êtes-vous sûr de vouloir supprimer ce document ?")) {
                     if (usingRemoteDocuments) {
                         const activeSession = await auth?.getSession();
                         if (!activeSession?.access_token) {
@@ -392,7 +392,7 @@
 
     // Bouton de déconnexion depuis la page profil
     document.querySelector("#profile-logout-btn, #sign-out")?.addEventListener("click", async () => {
-        if (confirm("Voulez-vous vraiment vous déconnecter de votre compte EduVault ?")) {
+        if (await window.EduVaultDialog.confirm("Voulez-vous vraiment vous déconnecter de votre compte EduVault ?")) {
             // Ferme aussi la session Supabase, sinon l'utilisateur serait reconnecté à la page suivante.
             await window.EduVaultSupabase?.auth.signOut().catch((error) => console.warn("Déconnexion Supabase :", error));
             store.logoutUser();

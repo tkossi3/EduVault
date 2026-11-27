@@ -4,9 +4,14 @@ const institutionMark = (institution = {}) => {
     const suffix = name.match(/\(([^()]*)\)\s*$/)?.[1];
     const alias = (institution.aliases || []).find((value) => /^[A-Z0-9-]{2,8}$/i.test(value));
     const candidate = alias || suffix;
+    const initials = name.split(/\s+/)
+        .map((word) => word.replace(/^(?:d|l)['’]/i, "").replace(/^[^A-Za-zÀ-ÿ0-9]+|[^A-Za-zÀ-ÿ0-9]+$/g, ""))
+        .filter((word) => word && !["de", "des", "du", "et", "la", "le", "les"].includes(word.toLowerCase()))
+        .map((word) => word[0])
+        .join("");
     const mark = (candidate
         ? candidate.split(/[-\s]/)[0]
-        : name.split(/\s+/).filter((word) => !["de", "des", "du", "et", "la", "le", "les"].includes(word.toLowerCase())).map((word) => word[0]).join("")
+        : initials
     ).slice(0, 4).toUpperCase().replace(/[&<>"']/g, (char) => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
     })[char]);

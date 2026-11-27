@@ -227,9 +227,9 @@
     };
 
     // Événements cascade hiérarchique
-    instSelect?.addEventListener("change", () => {
+    instSelect?.addEventListener("change", async () => {
         if (instSelect.value === "__NEW__") {
-            const newName = prompt("Entrez le nom complet du nouvel établissement universitaire :");
+            const newName = await window.EduVaultDialog.prompt("Entrez le nom complet du nouvel établissement universitaire :");
             if (!newName || !newName.trim()) {
                 populateInstitutions();
                 return;
@@ -259,7 +259,7 @@
                     populatePrograms();
                     if (alertBox) alertBox.style.display = "none";
                 } catch (e) {
-                    alert(e.message);
+                    await window.EduVaultDialog.alert(e.message);
                     populateInstitutions();
                 }
             }
@@ -271,9 +271,9 @@
 
     degreeSelect?.addEventListener("change", populatePrograms);
 
-    progSelect?.addEventListener("change", () => {
+    progSelect?.addEventListener("change", async () => {
         if (progSelect.value === "__NEW__") {
-            const newProgName = prompt("Entrez le nom de la nouvelle filière (ex: Génie Mécatronique) :");
+            const newProgName = await window.EduVaultDialog.prompt("Entrez le nom de la nouvelle filière (ex: Génie Mécatronique) :");
             if (newProgName && newProgName.trim()) {
                 const selectedInstOption = instSelect.selectedOptions[0];
                 const instId = selectedInstOption?.dataset.id || "inst-1";

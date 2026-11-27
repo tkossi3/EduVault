@@ -279,6 +279,78 @@
     z-index: 2;
 }
 
+.eduvault-dialog {
+    width: min(460px, calc(100% - 32px));
+    max-height: min(90vh, 640px);
+    padding: 0;
+    overflow-y: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow-soft);
+}
+
+.eduvault-dialog::backdrop {
+    background: rgb(15 23 42 / 65%);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.eduvault-dialog[open] {
+    animation: rise-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.eduvault-dialog-card {
+    display: grid;
+    gap: 14px;
+    padding: 24px;
+}
+
+.eduvault-dialog-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.eduvault-dialog-content {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+}
+
+.eduvault-dialog-label,
+.eduvault-dialog-message {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.eduvault-dialog-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.eduvault-dialog-actions .button {
+    min-width: 96px;
+}
+
+@media (max-width: 480px) {
+    .eduvault-dialog-card {
+        padding: 20px;
+    }
+
+    .eduvault-dialog-actions .button {
+        flex: 1 1 auto;
+    }
+}
+
 .google-button {
     width: 100%;
     gap: 12px;

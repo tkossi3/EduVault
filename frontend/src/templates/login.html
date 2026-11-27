@@ -143,6 +143,7 @@
     <script src="../scripts/config.js"></script>
     <script src="../scripts/vendor/supabase.js"></script>
     <script src="../scripts/supabase-api.js"></script>
+    <script src="../scripts/dialog.js"></script>
     <script src="../scripts/theme.js"></script>
     <script src="../scripts/standalone-auth.js"></script>
     <script>
@@ -156,9 +157,9 @@
                 passwordInput.type = isPassword ? "text" : "password";
             });
 
-            document.querySelector("#forgot-password-link")?.addEventListener("click", (e) => {
+            document.querySelector("#forgot-password-link")?.addEventListener("click", async (e) => {
                 e.preventDefault();
-                alert("Pour réinitialiser votre mot de passe, un lien sécurisé sera envoyé à votre adresse e-mail universitaire.");
+                await window.EduVaultDialog.alert("Pour réinitialiser votre mot de passe, un lien sécurisé sera envoyé à votre adresse e-mail universitaire.");
             });
         })();
     </script>

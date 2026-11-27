@@ -235,7 +235,7 @@
             button.addEventListener("click", async (event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                const name = window.prompt("Nom du nouveau parcours ou de la nouvelle filière :");
+                const name = await window.EduVaultDialog.prompt("Nom du nouveau parcours ou de la nouvelle filière :");
                 if (name === null) return;
                 await submitProgramChange({
                     institution_id: button.dataset.institutionId,
@@ -251,7 +251,7 @@
                 event.stopPropagation();
                 const program = data.programs.find((item) => item.id === button.dataset.programId);
                 if (!program) return;
-                const name = window.prompt("Modifier le nom de cette filière :", program.name);
+                const name = await window.EduVaultDialog.prompt("Modifier le nom de cette filière :", program.name);
                 if (name === null || name.trim() === program.name) return;
                 await submitProgramChange({
                     institution_id: program.institution_id,
@@ -266,7 +266,7 @@
             button.addEventListener("click", async (event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                const name = window.prompt("Modifier le nom de cet établissement :", button.dataset.institutionName || "");
+                const name = await window.EduVaultDialog.prompt("Modifier le nom de cet établissement :", button.dataset.institutionName || "");
                 if (name === null || name.trim() === button.dataset.institutionName) return;
                 await submitInstitutionChange({
                     institution_id: button.dataset.institutionId,
@@ -282,7 +282,7 @@
                 event.stopPropagation();
                 const program = data.programs.find((item) => item.id === button.dataset.programId);
                 if (!program) return;
-                if (!window.confirm(`Proposer la suppression de « ${program.name} » ? Cette demande sera validée par un modérateur.`)) return;
+                if (!await window.EduVaultDialog.confirm(`Proposer la suppression de « ${program.name} » ? Cette demande sera validée par un modérateur.`)) return;
                 await submitProgramChange({
                     institution_id: program.institution_id,
                     program_id: program.id,
@@ -615,7 +615,7 @@
     };
 
     document.querySelector("#institution-add")?.addEventListener("click", async () => {
-        const name = window.prompt("Nom complet de la nouvelle université ou école :");
+        const name = await window.EduVaultDialog.prompt("Nom complet de la nouvelle université ou école :");
         if (!name?.trim()) return;
         await submitInstitutionChange({
             request_type: "add",

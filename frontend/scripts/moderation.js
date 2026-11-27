@@ -109,7 +109,7 @@
         if (!button) return;
         const card = button.closest("[data-doc-id]");
         const action = button.dataset.action;
-        if (action === "reject" && !confirm("Refuser ce document ? Il ne sera pas visible dans la bibliothèque.")) return;
+        if (action === "reject" && !await window.EduVaultDialog.confirm("Refuser ce document ? Il ne sera pas visible dans la bibliothèque.")) return;
 
         card.querySelectorAll("button").forEach((item) => { item.disabled = true; });
         const response = await api.fetch(`/moderation/documents/${encodeURIComponent(card.dataset.docId)}`, {

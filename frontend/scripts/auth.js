@@ -126,11 +126,12 @@
         const toast = document.querySelector("#eduvault-toast");
         if (!toast) return;
         toast.className = `eduvault-toast is-${type} is-visible`;
-        toast.innerHTML = `
-            <div class="toast-inner">
-                <span>${message}</span>
-            </div>
-        `;
+        const inner = document.createElement("div");
+        inner.className = "toast-inner";
+        const text = document.createElement("span");
+        text.textContent = message;
+        inner.append(text);
+        toast.replaceChildren(inner);
         clearTimeout(toast._timer);
         toast._timer = setTimeout(() => {
             toast.classList.remove("is-visible");

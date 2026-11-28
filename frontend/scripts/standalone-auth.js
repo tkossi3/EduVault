@@ -28,6 +28,7 @@
             id: user.id,
             email: user.email || fallback.email || "",
             name: metadata.name || metadata.full_name || fallback.name || user.email?.split("@")[0] || "Étudiant",
+            created_at: user.created_at,
             institution: metadata.institution || fallback.institution,
             program: metadata.program || fallback.program,
             level: metadata.level || fallback.level

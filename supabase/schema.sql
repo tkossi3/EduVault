@@ -121,9 +121,13 @@ create table if not exists public.notifications (
     user_id uuid not null references auth.users(id) on delete cascade,
     document_id uuid references public.documents(id) on delete set null,
     title text not null,
+    type text not null default 'system',
     is_read boolean not null default false,
     created_at timestamptz not null default now()
 );
+
+alter table public.notifications
+    add column if not exists type text not null default 'system';
 
 -- ---------------------------------------------------------------------
 -- 3. Index
@@ -239,8 +243,17 @@ create policy "Création de profil" on public.profiles for insert to authenticat
 
 -- Notifications personnelles
 drop policy if exists "Gestion de ses propres notifications" on public.notifications;
-create policy "Gestion de ses propres notifications" on public.notifications for all to authenticated
+drop policy if exists "Lecture de ses notifications" on public.notifications;
+create policy "Lecture de ses notifications" on public.notifications for select to authenticated
+    using (user_id = (select auth.uid()));
+drop policy if exists "Mise à jour de ses notifications" on public.notifications;
+create policy "Mise à jour de ses notifications" on public.notifications for update to authenticated
     using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+drop policy if exists "Suppression de ses notifications" on public.notifications;
+create policy "Suppression de ses notifications" on public.notifications for delete to authenticated
+    using (user_id = (select auth.uid()));
+revoke insert on public.notifications from anon, authenticated;
+grant select, update, delete on public.notifications to authenticated;
 
 -- ---------------------------------------------------------------------
 -- 5. Profil créé automatiquement à l'inscription (e-mail ou Google)
@@ -263,6 +276,14 @@ begin
         coalesce(new.raw_user_meta_data ->> 'avatar_url', new.raw_user_meta_data ->> 'picture', '')
     )
     on conflict (id) do nothing;
+
+    insert into public.notifications (user_id, title, type, created_at)
+    values (
+        new.id,
+        'Bienvenue sur EduVault — Le coffre-fort académique universitaire !',
+        'welcome',
+        new.created_at
+    );
     return new;
 end;
 $$;
@@ -274,6 +295,60 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
     after insert on auth.users
     for each row execute function public.handle_new_user();
+
+insert into public.notifications (user_id, title, type, created_at)
+select
+    users.id,
+    'Bienvenue sur EduVault — Le coffre-fort académique universitaire !',
+    'welcome',
+    users.created_at
+from auth.users as users
+where not exists (
+    select 1
+    from public.notifications as notifications
+    where notifications.user_id = users.id and notifications.type = 'welcome'
+);
+
+create or replace function public.notify_document_status()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+    if tg_op = 'INSERT' then
+        insert into public.notifications (user_id, document_id, title, type)
+        values (
+            new.uploaded_by,
+            new.id,
+            format('Votre document « %s » a bien été déposé. Il est en attente de validation.', new.title),
+            'upload_success'
+        );
+    elsif old.status is distinct from new.status and new.status in ('approved', 'rejected') then
+        insert into public.notifications (user_id, document_id, title, type)
+        values (
+            new.uploaded_by,
+            new.id,
+            case new.status
+                when 'approved' then format('Votre document « %s » a été accepté et est maintenant disponible dans la bibliothèque.', new.title)
+                else format('Votre document « %s » a été refusé après modération.', new.title)
+            end,
+            case new.status
+                when 'approved' then 'approval'
+                else 'rejection'
+            end
+        );
+    end if;
+    return new;
+end;
+$$;
+
+revoke all on function public.notify_document_status() from public, anon, authenticated;
+
+drop trigger if exists on_document_notification_created_or_status_changed on public.documents;
+create trigger on_document_notification_created_or_status_changed
+    after insert or update of status on public.documents
+    for each row execute function public.notify_document_status();
 
 -- ---------------------------------------------------------------------
 -- 6. Compteurs de vues / téléchargements (documents approuvés uniquement)

@@ -281,7 +281,7 @@
 
 .eduvault-dialog {
     box-sizing: border-box;
-    width: min(560px, calc(100vw - 48px));
+    width: min(460px, calc(100vw - 48px));
     margin: auto;
     max-height: min(90vh, 640px);
     padding: 0;
@@ -291,6 +291,12 @@
     background: var(--surface);
     color: var(--text);
     box-shadow: var(--shadow-soft);
+}
+
+@media (min-width: 1280px) {
+    .eduvault-dialog {
+        width: min(640px, calc(100vw - 80px));
+    }
 }
 
 .eduvault-dialog::backdrop {

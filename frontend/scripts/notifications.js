@@ -1,8 +1,34 @@
 /* Synchronise le compteur de notifications dans la topbar sur toutes les pages */
 (() => {
     const store = window.EduVaultStore;
-    const refresh = () => {
+    const api = window.EduVaultApi;
+    const setBadgeCount = (notifications) => {
+        const unreadCount = notifications.filter((notification) => !notification.is_demo && !notification.is_read).length;
+        document.querySelectorAll("#notification-count, .notification-count").forEach((badge) => {
+            badge.textContent = unreadCount > 9 ? "9+" : String(unreadCount);
+            badge.hidden = unreadCount === 0;
+            badge.style.display = unreadCount ? "grid" : "none";
+        });
+    };
+    const load = async () => {
+        if (api?.fetch) {
+            try {
+                const response = await api.fetch("/notifications");
+                if (response.ok) return { notifications: await response.json(), remote: true };
+                if (response.status !== 401) {
+                    const result = await response.json().catch(() => ({}));
+                    console.error("Chargement des notifications distantes impossible :", result.detail || response.status);
+                }
+            } catch (error) {
+                console.error("Chargement des notifications distantes impossible :", error);
+            }
+        }
+        return { notifications: store?.getNotifications?.() || [], remote: false };
+    };
+    const refresh = async () => {
         store?.updateBadgeUI();
+        const { notifications } = await load();
+        setBadgeCount(notifications);
     };
 
     const trigger = document.querySelector(".notification-link");
@@ -26,9 +52,12 @@
         trigger.setAttribute("aria-haspopup", "dialog");
         trigger.setAttribute("aria-expanded", "false");
 
-        const renderPopup = () => {
+        const renderPopup = async () => {
             const list = popup.querySelector(".notification-popover-list");
-            const notifications = (store?.getNotifications?.() || []).filter((item) => !item.is_demo);
+            list.textContent = "Chargement des notifications…";
+            const { notifications: loadedNotifications, remote } = await load();
+            if (popup.hidden) return;
+            const notifications = loadedNotifications.filter((item) => !item.is_demo);
             const recent = notifications.slice(0, 4);
             if (!recent.length) {
                 list.textContent = "Aucune notification pour le moment.";
@@ -47,8 +76,20 @@
                     ? new Date(item.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
                     : "Récemment";
                 entry.append(title, date);
-                entry.addEventListener("click", () => {
-                    if (!item.is_read) store?.markNotificationAsRead?.(item.id);
+                entry.addEventListener("click", async () => {
+                    if (!item.is_read) {
+                        if (remote) {
+                            try {
+                                const response = await api.fetch(`/notifications/${encodeURIComponent(item.id)}/read`, { method: "PATCH" });
+                                if (!response.ok) throw new Error(`Réponse API ${response.status}`);
+                            } catch (error) {
+                                console.error("Mise à jour de la notification impossible :", error);
+                                window.EduVaultAuth?.showToast("La notification n'a pas pu être mise à jour.", "error");
+                            }
+                        }
+                        store?.markNotificationAsRead?.(item.id);
+                        refresh();
+                    }
                     closePopup();
                 });
                 return entry;
@@ -66,14 +107,14 @@
             popup.style.setProperty("--notification-popover-top", `${triggerRect.bottom + 10}px`);
         };
 
-        trigger.addEventListener("click", (event) => {
+        trigger.addEventListener("click", async (event) => {
             if (event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
             event.preventDefault();
             if (popup.hidden) {
-                renderPopup();
                 positionMobilePopup();
                 popup.hidden = false;
                 trigger.setAttribute("aria-expanded", "true");
+                await renderPopup();
             } else {
                 closePopup();
             }
@@ -95,5 +136,6 @@
         refresh();
     }
     document.addEventListener("eduvault:auth", refresh);
-    window.EduVaultNotifications = { refresh };
+    document.addEventListener("eduvault:auth_state_changed", refresh);
+    window.EduVaultNotifications = { load, refresh };
 })();

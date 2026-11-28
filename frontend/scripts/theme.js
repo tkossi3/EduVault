@@ -2,7 +2,7 @@
 (() => {
     const key = "eduvault-theme";
     // Thème clair par défaut explicite
-    const saved = localStorage.getItem(key) || "light";
+    const saved = document.documentElement.dataset.theme || localStorage.getItem(key) || "light";
     document.documentElement.dataset.theme = saved;
 
     const updateButtons = (theme) => {
@@ -21,6 +21,8 @@
     const applyTheme = (theme) => {
         document.documentElement.dataset.theme = theme;
         localStorage.setItem(key, theme);
+        const themeColor = document.querySelector('meta[name="theme-color"]');
+        if (themeColor) themeColor.content = theme === "dark" ? "#0b1120" : "#f8fafc";
         updateButtons(theme);
     };
 

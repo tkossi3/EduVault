@@ -95,6 +95,7 @@ function LegacyPage({ loadTemplate }) {
     const previousBodyAttributes = Array.from(document.body.attributes)
       .filter((attribute) => attribute.name !== 'class')
       .map((attribute) => [attribute.name, attribute.value]);
+    const currentTheme = document.documentElement.dataset.theme || 'light';
     const previousHtmlAttributes = Array.from(document.documentElement.attributes)
       .map((attribute) => [attribute.name, attribute.value]);
     const addedLinks = [];
@@ -112,7 +113,7 @@ function LegacyPage({ loadTemplate }) {
       document.documentElement.removeAttribute(attribute.name);
     }
     for (const [name, value] of page.htmlAttributes) {
-      document.documentElement.setAttribute(name, value);
+      document.documentElement.setAttribute(name, name === 'data-theme' ? currentTheme : value);
     }
 
     if (page.description) {
@@ -132,7 +133,7 @@ function LegacyPage({ loadTemplate }) {
         themeColor.name = 'theme-color';
         document.head.appendChild(themeColor);
       }
-      themeColor.content = page.themeColor;
+      themeColor.content = currentTheme === 'dark' ? '#0b1120' : page.themeColor;
     }
 
     for (const link of page.links) {

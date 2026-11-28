@@ -368,16 +368,7 @@
         }
     ];
 
-    const welcomeNotificationCreatedAt = new Date().toISOString();
     const initialNotifications = [
-        {
-            id: "notif-1",
-            title: "Bienvenue sur EduVault — Le coffre-fort académique universitaire 2026 !",
-            type: "welcome",
-            document_id: null,
-            created_at: welcomeNotificationCreatedAt,
-            is_read: false
-        },
         {
             id: "notif-2",
             title: "Nouveau document disponible : Examen Corrigé Algorithmique Avancée S3.",
@@ -574,6 +565,7 @@
                 id: profileData.id || current.id || `user-${Date.now()}`
             };
             localStorage.setItem(USER_KEY, JSON.stringify(updated));
+            ensureWelcomeNotification(updated);
             document.dispatchEvent(new CustomEvent("eduvault:auth_state_changed", { detail: { isLoggedIn: true, profile: updated } }));
             return updated;
         } catch (e) {
@@ -612,19 +604,35 @@
                 localStorage.setItem(NOTIF_KEY, JSON.stringify(initialNotifications));
                 return initialNotifications;
             }
-            let migratedWelcomeDate = false;
-            const notifications = JSON.parse(raw).map((notification) => {
-                if (notification.id === "notif-1" && notification.created_at === "2026-03-01T08:00:00Z") {
-                    migratedWelcomeDate = true;
-                    return { ...notification, created_at: welcomeNotificationCreatedAt };
-                }
-                return notification.id === "notif-2" ? { ...notification, is_demo: true } : notification;
-            });
-            if (migratedWelcomeDate) localStorage.setItem(NOTIF_KEY, JSON.stringify(notifications));
-            return notifications;
+            return JSON.parse(raw).map((notification) =>
+                notification.id === "notif-2" ? { ...notification, is_demo: true } : notification
+            );
         } catch {
             return initialNotifications;
         }
+    };
+
+    const ensureWelcomeNotification = (user) => {
+        const createdAt = new Date(user.created_at || "");
+        if (!user.id || Number.isNaN(createdAt.getTime())) return;
+
+        const notifications = getNotifications();
+        const welcomeId = `welcome-${user.id}`;
+        const existing = notifications.find((item) => item.id === welcomeId || item.id === "notif-1" || item.type === "welcome");
+        const welcome = {
+            id: welcomeId,
+            title: "Bienvenue sur EduVault — Le coffre-fort académique universitaire !",
+            type: "welcome",
+            document_id: null,
+            created_at: createdAt.toISOString(),
+            is_read: existing?.is_read || false
+        };
+        if (existing?.id === welcome.id && existing.created_at === welcome.created_at && existing.title === welcome.title) return;
+
+        saveNotifications([
+            welcome,
+            ...notifications.filter((item) => item !== existing && item.id !== welcomeId && item.id !== "notif-1" && item.type !== "welcome")
+        ]);
     };
 
     const saveNotifications = (list) => {

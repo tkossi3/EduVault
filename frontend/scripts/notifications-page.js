@@ -6,6 +6,8 @@
     const store = window.EduVaultStore;
     const icons = window.EduVaultIcons;
     let currentTab = "all"; // 'all' ou 'unread'
+    let currentNotifications = store?.getNotifications?.() || [];
+    let remoteNotifications = false;
 
     const escapeHtml = (value = "") => String(value).replace(/[&<>"']/g, (char) => ({ 
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" 
@@ -22,7 +24,7 @@
     };
 
     const render = () => {
-        const allNotifs = store ? store.getNotifications().filter((notification) => !notification.is_demo) : [];
+        const allNotifs = currentNotifications.filter((notification) => !notification.is_demo);
         const unreadCount = allNotifs.filter((n) => !n.is_read).length;
 
         // Mise à jour des compteurs d'onglets
@@ -42,7 +44,7 @@
                         ${icons?.bell || ''}
                     </div>
                     <h3>${currentTab === "unread" ? "Aucune notification non lue" : "Aucune notification"}</h3>
-                    <p>Vous recevrez des alertes dès qu'un nouveau document est partagé dans votre établissement.</p>
+                    <p>Vous recevrez une notification à chaque dépôt et à chaque décision de modération.</p>
                 </div>`;
             return;
         }
@@ -82,20 +84,50 @@
 
         // Attachement des écouteurs sur chaque bouton de carte
         root.querySelectorAll(".btn-mark-read").forEach((btn) => {
-            btn.addEventListener("click", () => {
+            btn.addEventListener("click", async () => {
                 const id = btn.dataset.id;
-                store.markNotificationAsRead(id);
+                if (!await updateRemoteNotification(`/notifications/${encodeURIComponent(id)}/read`, "PATCH")) return;
+                store?.markNotificationAsRead?.(id);
+                currentNotifications = currentNotifications.map((item) => item.id === id ? { ...item, is_read: true } : item);
                 render();
+                window.EduVaultNotifications?.refresh();
             });
         });
 
         root.querySelectorAll(".btn-delete-notif").forEach((btn) => {
-            btn.addEventListener("click", () => {
+            btn.addEventListener("click", async () => {
+                if (!await window.EduVaultDialog.confirm("Voulez-vous vraiment supprimer cette notification ?")) return;
                 const id = btn.dataset.id;
-                store.deleteNotification(id);
+                if (!await updateRemoteNotification(`/notifications/${encodeURIComponent(id)}`, "DELETE")) return;
+                store?.deleteNotification?.(id);
+                currentNotifications = currentNotifications.filter((item) => item.id !== id);
                 render();
+                window.EduVaultNotifications?.refresh();
             });
         });
+    };
+
+    const updateRemoteNotification = async (path, method) => {
+        if (!remoteNotifications) return true;
+        try {
+            const response = await window.EduVaultApi.fetch(path, { method });
+            if (response.ok) return true;
+            const result = await response.json().catch(() => ({}));
+            throw new Error(result.detail || `Réponse API ${response.status}`);
+        } catch (error) {
+            console.error("Modification de la notification impossible :", error);
+            window.EduVaultAuth?.showToast(error.message || "La notification n'a pas pu être mise à jour.", "error");
+            return false;
+        }
+    };
+
+    const loadNotifications = async () => {
+        const loaded = await window.EduVaultNotifications?.load();
+        if (loaded) {
+            currentNotifications = loaded.notifications;
+            remoteNotifications = loaded.remote;
+            render();
+        }
     };
 
     // Gestion des onglets
@@ -117,11 +149,16 @@
     });
 
     // Bouton tout marquer comme lu
-    document.querySelector("#mark-all-read-btn")?.addEventListener("click", () => {
-        store.markAllNotificationsAsRead();
+    document.querySelector("#mark-all-read-btn")?.addEventListener("click", async () => {
+        if (!await updateRemoteNotification("/notifications/read-all", "PATCH")) return;
+        store?.markAllNotificationsAsRead?.();
+        currentNotifications = currentNotifications.map((item) => ({ ...item, is_read: true }));
         render();
+        window.EduVaultNotifications?.refresh();
     });
 
     // Chargement initial
     render();
+    loadNotifications();
+    document.addEventListener("eduvault:auth_state_changed", loadNotifications);
 })();

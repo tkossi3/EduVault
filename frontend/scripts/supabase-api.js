@@ -506,6 +506,50 @@
         );
     };
 
+    // ==================== NOTIFICATIONS PERSONNELLES ====================
+    const NOTIFICATION_FIELDS = "id,title,type,document_id,is_read,created_at";
+    const listNotifications = async () => {
+        const user = await requireUser();
+        return check(
+            await client.from("notifications").select(NOTIFICATION_FIELDS)
+                .eq("user_id", user.id).order("created_at", { ascending: false }).limit(100),
+            "Les notifications n'ont pas pu être chargées."
+        );
+    };
+
+    const markNotificationRead = async (notificationId) => {
+        const user = await requireUser();
+        if (!isUuid(notificationId)) throw new ApiError(422, "Notification invalide.");
+        const updated = check(
+            await client.from("notifications").update({ is_read: true })
+                .eq("id", notificationId).eq("user_id", user.id).select(NOTIFICATION_FIELDS).maybeSingle(),
+            "La notification n'a pas pu être mise à jour."
+        );
+        if (!updated) throw new ApiError(404, "Notification introuvable.");
+        return updated;
+    };
+
+    const markAllNotificationsRead = async () => {
+        const user = await requireUser();
+        check(
+            await client.from("notifications").update({ is_read: true })
+                .eq("user_id", user.id).eq("is_read", false),
+            "Les notifications n'ont pas pu être mises à jour."
+        );
+        return null;
+    };
+
+    const deleteNotification = async (notificationId) => {
+        const user = await requireUser();
+        if (!isUuid(notificationId)) throw new ApiError(422, "Notification invalide.");
+        check(
+            await client.from("notifications").delete()
+                .eq("id", notificationId).eq("user_id", user.id),
+            "La notification n'a pas pu être supprimée."
+        );
+        return null;
+    };
+
     // ==================== MODÉRATION ====================
     const MODERATION_STATUSES = new Set(["pending", "approved", "rejected"]);
 
@@ -597,6 +641,15 @@
         if (method === "PATCH" && pathname === "/profile/me") return updateMyProfile(readBody(init));
         if (method === "POST" && pathname === "/profile/avatar") return uploadAvatar(init.body);
         if (method === "DELETE" && pathname === "/profile/avatar") return resetAvatar();
+        if (method === "GET" && pathname === "/notifications") return listNotifications();
+        if (method === "PATCH" && pathname === "/notifications/read-all") return markAllNotificationsRead();
+        if (method === "PATCH" && (match = pathname.match(/^\/notifications\/([^/]+)\/read$/))) {
+            return markNotificationRead(decodeURIComponent(match[1]));
+        }
+        if (method === "DELETE" && (match = pathname.match(/^\/notifications\/([^/]+)$/))) {
+            await deleteNotification(decodeURIComponent(match[1]));
+            return [null, 204];
+        }
         if (method === "GET" && pathname === "/moderation/documents") return moderationDocuments(params);
         if (method === "POST" && (match = pathname.match(/^\/moderation\/documents\/([^/]+)$/))) {
             return moderateDocument(decodeURIComponent(match[1]), readBody(init).action);
@@ -606,13 +659,14 @@
 
     const apiFetch = async (path, init = {}) => {
         const method = (init.method || "GET").toUpperCase();
-        if (config.API_AVAILABLE) {
+        const url = new URL(path, window.location.origin);
+        const isNotificationRoute = url.pathname === "/notifications" || url.pathname.startsWith("/notifications/");
+        if (config.API_AVAILABLE && !isNotificationRoute) {
             return fetch(`${config.API_BASE_URL}${path}`, init);
         }
         if (!client) {
             return jsonResponse({ detail: "Supabase n'est pas configuré (frontend/scripts/config.js)." }, 503);
         }
-        const url = new URL(path, window.location.origin);
         try {
             const result = await route(method, url.pathname, url.searchParams, init);
             const [data, status] = Array.isArray(result) && result.length === 2 && typeof result[1] === "number"

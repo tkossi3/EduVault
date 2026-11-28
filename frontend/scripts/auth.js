@@ -357,11 +357,12 @@
             const user = session.user;
             const metadata = user.user_metadata || {};
             const profile = store.getCurrentUserProfile();
-            if (!store.isLoggedIn() || profile.id !== user.id) {
+            if (!store.isLoggedIn() || profile.id !== user.id || profile.created_at !== user.created_at) {
                 store.loginUser({
                     id: user.id,
                     email: user.email || "",
                     name: metadata.name || metadata.full_name || user.email?.split("@")[0] || "Étudiant",
+                    created_at: user.created_at,
                     institution: metadata.institution || profile.institution,
                     program: metadata.program || profile.program,
                     level: metadata.level || profile.level
@@ -523,6 +524,7 @@
                         id: result.data.user?.id,
                         email,
                         name,
+                        created_at: result.data.user?.created_at,
                         institution
                     });
                 }

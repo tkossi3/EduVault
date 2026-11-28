@@ -42,9 +42,10 @@ Ce script crée en une fois :
 - les tables : profils, établissements, filières, matières, documents, notifications, propositions de filière ;
 - les **règles de sécurité** : chacun dépose uniquement en son nom, un document déposé est toujours « en attente », seul un modérateur peut l'approuver, et les visiteurs ne voient que les documents approuvés ;
 - l'espace de stockage privé des PDF, `academic-documents` (20 Mo maximum par fichier, PDF uniquement) ;
-- la création automatique du profil à chaque inscription (e-mail ou Google).
+- la création automatique du profil et de la notification de bienvenue à la date d'inscription (e-mail ou Google) ;
+- les notifications automatiques lors d'un dépôt et d'une décision de modération.
 
-Vous pouvez le relancer sans risque, par exemple après une mise à jour du fichier.
+Si le schéma avait déjà été installé, relancez ce script après sa mise à jour afin d'ajouter les notifications automatiques. Vous pouvez le relancer sans risque.
 
 ---
 
